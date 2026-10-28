@@ -5,19 +5,20 @@ College Student Council.
 
 ## Current implementation
 
-The development prototype includes a public catalog with debounced search,
-category filtering, record details, permitted public version history, and
-a keyboard-accessible quick-view modal.
+The Batch 2 development prototype includes:
 
-The public catalog displays eligible fictional releases. The sample request
-form demonstrates that an approved replacement remains unpublished until
-it has an authorized release.
+- A public catalog with debounced search and six-category filtering.
+- Record details with current release information and permitted public history.
+- A quick-view modal with keyboard controls and focus restoration.
+- An officer workspace preview showing six fictional records, eight versions,
+  three current public releases, and one sample turnover package.
+- Separate displays for the latest working version and current public release.
+- Loading, empty, unavailable-record, and error states with retry controls.
+- Shared navigation, an officer sign-in placeholder, and a Page Not Found screen.
 
-Shared navigation, an officer sign-in placeholder, an officer workspace
-placeholder, and a Page Not Found screen are also included.
-
-All records are fictional. Authentication, backend permissions, document
-storage, and operational workflows are not connected yet.
+All information is fictional. The workspace preview is publicly accessible.
+Authentication, position-based permissions, document storage, editing,
+approval, release actions, and turnover acknowledgment are not connected.
 
 Colors and layout are provisional.
 
@@ -76,3 +77,33 @@ Do not store real restricted records, backup exports, or credentials in the
 source repository.
 
 Git checkpoints preserve source code. They do not back up operational records.
+
+## Development mock testing
+
+While running the development server, the browser Session Storage setting
+`ea-csc:mock-mode` supports:
+
+- `normal`: usual fictional data.
+- `slow`: delayed responses for checking loading messages.
+- `empty`: empty service results.
+- `error`: simulated request failures.
+
+Change the setting under the origin matching the current development URL.
+Changes affect subsequent requests. Restore `normal` after testing.
+
+The normal production build ignores this setting.
+
+## Batch 2 verification
+
+Manual testing covered:
+
+- Search, category filtering, and empty search results.
+- Record details, permitted history, and unavailable record addresses.
+- The request form remaining at public version 1 while working version 2
+  is approved but unreleased.
+- Modal mouse and keyboard controls, Escape, and focus restoration.
+- Workspace totals and turnover package expansion.
+- Loading, empty, error, and successful retry behavior.
+- Navigation, refresh, and layouts at 375 and 1440 CSS pixels wide.
+
+Formatting, TypeScript checking, ESLint, and the production build passed.

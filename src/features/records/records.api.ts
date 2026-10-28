@@ -1,12 +1,6 @@
 import { mockRecords, mockReleases, mockVersions } from './records.mock'
 import type { PublicRecordItem, RecordItem, ReleaseItem } from './records.types'
-
-// Simulate a short request so the pages can display a loading state.
-function waitForMockResponse(): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, 250)
-  })
-}
+import { waitForMockResponse } from '../../lib/mockRequest'
 
 function hasDateArrived(value: string, now: number): boolean {
   const timestamp = Date.parse(value)
@@ -101,7 +95,11 @@ function findCurrentPublicRecord(
 }
 
 export async function getPublicRecords(): Promise<PublicRecordItem[]> {
-  await waitForMockResponse()
+  const mode = await waitForMockResponse()
+
+  if (mode === 'empty') {
+    return []
+  }
 
   const now = Date.now()
 
@@ -114,7 +112,11 @@ export async function getPublicRecords(): Promise<PublicRecordItem[]> {
 export async function getPublicRecord(
   recordId: string,
 ): Promise<PublicRecordItem | null> {
-  await waitForMockResponse()
+  const mode = await waitForMockResponse()
+
+  if (mode === 'empty') {
+    return null
+  }
 
   const record = mockRecords.find((item) => item.recordId === recordId)
 
@@ -128,7 +130,11 @@ export async function getPublicRecord(
 export async function getPublicRecordHistory(
   recordId: string,
 ): Promise<PublicRecordItem[]> {
-  await waitForMockResponse()
+  const mode = await waitForMockResponse()
+
+  if (mode === 'empty') {
+    return []
+  }
 
   const now = Date.now()
   const record = mockRecords.find((item) => item.recordId === recordId)
