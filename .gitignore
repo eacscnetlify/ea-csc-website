@@ -1,0 +1,22 @@
+# Downloaded dependencies
+node_modules/
+
+# Generated build and test output
+dist/
+dist-ssr/
+coverage/
+*.tsbuildinfo
+
+# Local environment files
+.env
+.env.*
+!.env.example
+*.local
+
+# Logs
+*.log
+
+# Operating system and other editor files
+.DS_Store
+Thumbs.db
+.idea/
