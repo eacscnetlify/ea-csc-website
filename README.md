@@ -5,9 +5,11 @@ College Student Council.
 
 ## Current implementation
 
-The project currently contains a static development screen and the initial
-source-folder structure. Authentication, records storage, review, publication,
-bulletins, and turnover workflows are not implemented yet.
+The project contains a development prototype with public library, record
+detail, officer sign-in, officer workspace preview, and Page Not Found routes.
+
+The shared layout includes navigation, an environment banner, and a footer.
+Record data, authentication, and backend permissions are not connected yet.
 
 Colors and layout are provisional.
 
