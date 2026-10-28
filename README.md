@@ -5,11 +5,19 @@ College Student Council.
 
 ## Current implementation
 
-The project contains a development prototype with public library, record
-detail, officer sign-in, officer workspace preview, and Page Not Found routes.
+The development prototype includes a public catalog with debounced search,
+category filtering, record details, permitted public version history, and
+a keyboard-accessible quick-view modal.
 
-The shared layout includes navigation, an environment banner, and a footer.
-Record data, authentication, and backend permissions are not connected yet.
+The public catalog displays eligible fictional releases. The sample request
+form demonstrates that an approved replacement remains unpublished until
+it has an authorized release.
+
+Shared navigation, an officer sign-in placeholder, an officer workspace
+placeholder, and a Page Not Found screen are also included.
+
+All records are fictional. Authentication, backend permissions, document
+storage, and operational workflows are not connected yet.
 
 Colors and layout are provisional.
 
