@@ -162,3 +162,27 @@ or DELETE privileges for anon or authenticated.
 The expected eight master_records constraints and nineteen
 record_versions constraints were confirmed. Data rejection tests
 and migration replay remain part of the Batch 3 integrity checks.
+
+The audit_events and update_bulletins tables have been created using:
+
+- supabase/migrations/20261029000500_audit_events.sql
+- supabase/migrations/20261030000100_update_bulletins.sql
+
+audit_events stores operational history with named actor references,
+record/version links, selected before-and-after snapshots, and timestamps.
+Its server-time and change-blocking triggers were confirmed present
+and enabled. All ten expected constraints were confirmed.
+
+update_bulletins stores bulletin identities and issue versions,
+coverage and cutoff details, audience, source snapshots, PDF and
+archive references, preparer/publisher references, and correction
+or withdrawal metadata. Its 27 expected constraints were confirmed.
+
+Both tables have RLS enabled, zero access policies, and no direct
+SELECT, INSERT, UPDATE, DELETE, or TRUNCATE privileges for anon,
+authenticated, or service_role.
+
+All five core tables now exist. Data-integrity tests and migration
+replay remain pending. Automatic audit integration, bulletin generation,
+source validation, and protection against editing issued bulletins
+will be implemented before their operational use.
