@@ -128,3 +128,17 @@ SQL Editor. Automatic GitHub database deployment is disabled.
 
 The public catalog and workspace still use fictional records.
 Officer authentication and operational permissions remain future work.
+
+The app_users table has been created using:
+supabase/migrations/20261029000200_app_users.sql
+
+It stores named officer profiles linked to Supabase Auth identities.
+Profiles default to inactive, with no assigned functional roles.
+
+Verification confirmed that Row Level Security is enabled, no access
+policies exist yet, and anon/authenticated have no direct SELECT,
+INSERT, UPDATE, or DELETE privileges on this table.
+
+The primary key, Auth foreign key, and validation constraints were
+confirmed through database metadata queries. Officer login and
+controlled profile operations will be implemented in later steps.
