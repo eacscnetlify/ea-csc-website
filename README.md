@@ -186,3 +186,25 @@ All five core tables now exist. Data-integrity tests and migration
 replay remain pending. Automatic audit integration, bulletin generation,
 source validation, and protection against editing issued bulletins
 will be implemented before their operational use.
+
+The following manual SQL integrity tests passed in the development project:
+
+- supabase/tests/001_records_versions_integrity.sql: 9 checks passed.
+- supabase/tests/002_profiles_audit_integrity.sql: 14 checks passed.
+- supabase/tests/003_bulletins_integrity.sql: 20 checks passed.
+
+Total: 43 passed checks.
+
+The tests verified selected valid inserts and relationships, rejection
+of invalid data, profile defaults, authoritative audit timestamps,
+audit UPDATE/DELETE/TRUNCATE protection, and bulletin metadata rules.
+
+All fictional application fixture rows were rolled back. The confirmed
+Auth identity batch3-integrity@example.invalid remains temporarily
+for testing and will be removed during cleanup.
+
+These scripts run manually through the administrative SQL Editor.
+Application authorization, actual file verification, publication
+workflows, and issued-bulletin immutability require their later tests.
+
+Migration replay in a separate empty database remains pending.
