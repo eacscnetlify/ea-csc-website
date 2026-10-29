@@ -142,3 +142,23 @@ INSERT, UPDATE, or DELETE privileges on this table.
 The primary key, Auth foreign key, and validation constraints were
 confirmed through database metadata queries. Officer login and
 controlled profile operations will be implemented in later steps.
+
+The master_records and record_versions tables have been created using:
+
+- supabase/migrations/20261029000300_master_records.sql
+- supabase/migrations/20261029000400_record_versions.sql
+
+master_records stores permanent document identities, classification,
+custody, and retention metadata. Its primary key and two text-search
+indexes were confirmed.
+
+record_versions stores individual document versions, predecessor links,
+file metadata, lifecycle states, and approval evidence references.
+
+Database metadata checks confirmed RLS is enabled on both tables,
+with zero access policies and no direct SELECT, INSERT, UPDATE,
+or DELETE privileges for anon or authenticated.
+
+The expected eight master_records constraints and nineteen
+record_versions constraints were confirmed. Data rejection tests
+and migration replay remain part of the Batch 3 integrity checks.
