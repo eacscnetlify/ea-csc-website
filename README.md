@@ -107,3 +107,24 @@ Manual testing covered:
 - Navigation, refresh, and layouts at 375 and 1440 CSS pixels wide.
 
 Formatting, TypeScript checking, ESLint, and the production build passed.
+
+## Batch 3 backend progress
+
+A Supabase development project has been provisioned in Singapore.
+
+The local frontend uses VITE_SUPABASE_URL and
+VITE_SUPABASE_PUBLISHABLE_KEY from the ignored .env.local file.
+The tracked .env.example contains placeholders.
+
+The shared client is defined in src/lib/supabase.ts.
+The development-only /dev/connection route checks the database through
+the eacsc_connection_check function.
+
+The connection-check migration is saved in:
+supabase/migrations/20261029000100_connection_check.sql
+
+Database migrations are currently applied manually through the Supabase
+SQL Editor. Automatic GitHub database deployment is disabled.
+
+The public catalog and workspace still use fictional records.
+Officer authentication and operational permissions remain future work.
