@@ -271,3 +271,19 @@ security tests remain pending. Batch 4 is not yet complete.
 
 The fictional Auth accounts and profiles remain temporarily for
 continued Batch 4 testing.
+
+### Batch 4 — Password recovery
+
+- Added password recovery request and password update routes.
+- Added the Forgot your password link to officer sign-in.
+- Verified recovery email delivery using an organization member's
+  project Auth test account.
+- Verified the recovery link opens the password update form.
+- Verified mismatched passwords are rejected.
+- Verified successful password update and current-session sign-out.
+- Verified the test account remains blocked from the workspace
+  because it has no application profile.
+- Formatting, TypeScript, ESLint, and production build checks passed.
+- The production build still reports a bundle-size warning.
+- Record-level permissions and direct API authorization tests remain
+  pending before Batch 4 is complete.

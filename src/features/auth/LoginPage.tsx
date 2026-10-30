@@ -160,7 +160,12 @@ export default function LoginPage() {
         {busy && <p role="status">Signing in. Please wait.</p>}
         {error && <p role="alert">{error}</p>}
       </form>
-
+      <Link
+        to="/auth/reset-password"
+        className="block font-semibold text-emerald-800 underline"
+      >
+        Forgot your password?
+      </Link>
       <Link to="/" className="font-semibold text-emerald-800 underline">
         Back to public library
       </Link>

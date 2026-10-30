@@ -1,6 +1,8 @@
 import { BrowserRouter, Route, Routes } from 'react-router'
 import LoginPage from '../features/auth/LoginPage'
 import RequireAuth from '../features/auth/RequireAuth'
+import ResetPasswordPage from '../features/auth/ResetPasswordPage'
+import UpdatePasswordPage from '../features/auth/UpdatePasswordPage'
 import ConnectionCheckPage from '../features/development/ConnectionCheckPage'
 import PublicLibraryPage from '../features/records/PublicLibraryPage'
 import RecordDetailPage from '../features/records/RecordDetailPage'
@@ -16,6 +18,9 @@ export default function AppRouter() {
           <Route index element={<PublicLibraryPage />} />
           <Route path="records/:recordId" element={<RecordDetailPage />} />
           <Route path="login" element={<LoginPage />} />
+
+          <Route path="auth/reset-password" element={<ResetPasswordPage />} />
+          <Route path="auth/update-password" element={<UpdatePasswordPage />} />
 
           <Route
             path="officer"
