@@ -22,7 +22,8 @@ export interface MockWorkspaceOverview {
 }
 
 // This service is for the fictional workspace preview only.
-// Authentication and position-based permissions are not implemented here.
+// Route entry is protected separately. This mock service does not apply
+// database record assignments and must not be used for operational records.
 export async function getMockWorkspaceOverview(): Promise<MockWorkspaceOverview> {
   const mode = await waitForMockResponse()
 

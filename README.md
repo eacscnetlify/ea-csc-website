@@ -5,22 +5,25 @@ College Student Council.
 
 ## Current implementation
 
-The Batch 2 development prototype includes:
+The development prototype currently includes:
 
-- A public catalog with debounced search and six-category filtering.
-- Record details with current release information and permitted public history.
-- A quick-view modal with keyboard controls and focus restoration.
-- An officer workspace preview showing six fictional records, eight versions,
-  three current public releases, and one sample turnover package.
-- Separate displays for the latest working version and current public release.
-- Loading, empty, unavailable-record, and error states with retry controls.
-- Shared navigation, an officer sign-in placeholder, and a Page Not Found screen.
+- A public mock catalog with search, six-category filtering, record details,
+  permitted history, and a keyboard-accessible quick-view modal.
+- Officer email/password sign-in and shared session tracking.
+- Workspace route entry requiring an active application profile and an
+  assigned functional role.
+- Current-session sign-out and password recovery/update pages.
+- Fictional workspace records, document versions, and a sample turnover package.
+- A Supabase schema with RLS, limited own-profile reads, and append-only audit
+  protections.
 
-All information is fictional. The workspace preview is publicly accessible.
-Authentication, position-based permissions, document storage, editing,
-approval, release actions, and turnover acknowledgment are not connected.
+The public catalog and workspace still use fictional mock records. Record-level
+reads will be connected after the new assignment migration is verified.
+Document storage, editing, approval, publication, and turnover acknowledgment
+remain pending. Batch 4 is not yet complete.
 
-Colors and layout are provisional.
+Colors and layout are provisional. The progress sections below document earlier
+checkpoints; this section describes the current implementation.
 
 ## Setup environment
 
@@ -41,7 +44,8 @@ The package lockfile records the resolved dependency versions.
 Run commands from the project folder.
 
 - `npm.cmd ci` — install the locked dependencies after obtaining a project copy
-- `npm.cmd run dev` — start the development server
+- `npm.cmd run dev -- --host localhost --port 5173 --strictPort` — start the
+  development server at the configured local authentication URL
 - `npm.cmd run lint` — run ESLint
 - `npm.cmd run typecheck` — run TypeScript checks
 - `npm.cmd run format` — format project files
@@ -49,13 +53,13 @@ Run commands from the project folder.
 - `npm.cmd run build` — generate production files in dist
 - `npm.cmd run preview` — serve the built files locally
 
-Use the URL printed by the server. Press Ctrl+C to stop it.
+For local authentication, use http://localhost:5173. Press Ctrl+C to stop it.
 
 ## Source layout
 
-- src/App.tsx — current development screen
+- src/App.tsx — application router entry
 - src/main.tsx — application entry point
-- src/app — future application layout and routing
+- src/app — shared application layout and routing
 - src/components/ui — reusable interface components
 - src/features — feature-specific screens and logic
 - src/lib — shared utilities and service clients
@@ -266,8 +270,8 @@ The build still reports a JavaScript chunk-size warning.
 
 The workspace continues to display fictional mock records.
 Operational record scopes, controlled database mutations, immediate
-backend permission revocation, password recovery, and direct API
-security tests remain pending. Batch 4 is not yet complete.
+backend permission revocation, and direct API security tests remain pending.
+Password recovery is documented in the next section. Batch 4 is not yet complete.
 
 The fictional Auth accounts and profiles remain temporarily for
 continued Batch 4 testing.
@@ -287,3 +291,20 @@ continued Batch 4 testing.
 - The production build still reports a bundle-size warning.
 - Record-level permissions and direct API authorization tests remain
   pending before Batch 4 is complete.
+
+### Batch 4 — Assigned record reads
+
+- Applied 20261030000300_record_read_access.sql in the development project.
+- Added explicit per-record functional assignments.
+- Protected reads require an active profile, an active matching assignment,
+  and additional permission for restricted records.
+- Author-only version reads are currently limited to Draft versions.
+- Application roles cannot directly modify records or assignments.
+- The revised single-block authorization test completed successfully
+  in the Supabase SQL Editor with 61 checks.
+- Cleanup checks confirmed fixture removal and profile restoration.
+- Metadata checks confirmed RLS, selected-column grants, denied anonymous
+  reads, denied authenticated writes, and zero stored fixture rows.
+- The website still displays fictional mock records.
+- Controlled mutations, direct HTTP tests, and database integration remain
+  pending. Batch 4 is not yet complete.

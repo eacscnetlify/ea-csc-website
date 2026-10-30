@@ -395,9 +395,9 @@ export default function OfficerWorkspacePage() {
       </p>
 
       <p className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
-        Authentication and position-based permissions are not connected. All
-        displayed information is fictional. Editing, approval, release, and
-        turnover acknowledgment are not enabled.
+        Officer sign-in and profile checks are connected. This screen still
+        displays fictional mock records. Record-level permissions, editing,
+        approval, release, and turnover acknowledgment are not connected here.
       </p>
 
       <div className="mt-8" aria-busy={state.status === 'loading'}>
