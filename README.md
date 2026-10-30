@@ -320,3 +320,17 @@ continued Batch 4 testing.
 - Direct application-table writes remain denied.
 - Actual HTTP authorization, retry, and concurrency tests remain pending.
 - The workspace still uses mock record data. Batch 4 remains in progress.
+
+### Batch 4 — HTTP authorization and controlled-edit verification
+
+- Applied `20261030000500_draft_conflict_http409.sql`.
+- Application revision conflicts now return PT409 / HTTP 409.
+- Passed all 100 hosted HTTP checks.
+- Passed the updated 61 read checks and 70 Draft command checks.
+- Passed all six conflict-repair checks and 12 retained-history checks.
+- Verified identical-request receipts, competing edits, and current-profile
+  deactivation using the original access token.
+- Restored the fictional Author to active status.
+- Retained fictional HTTP fixtures and their audit/receipt history.
+- Workspace record data remains mocked; frontend integration is pending.
+- Batch 4 remains in progress.

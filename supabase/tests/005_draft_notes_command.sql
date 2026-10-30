@@ -1,3 +1,4 @@
+-- Revision 3: expect PT409 application conflicts and scope receipt counts to this request.
 -- Batch 4: controlled Draft notes command. Run the ENTIRE file as postgres.
 -- ONE self-contained DO statement; all fixtures/schema fault injections roll back.
 -- Uses the four existing Batch 4 Auth identities and their original profiles.
@@ -185,7 +186,7 @@ begin
 
     perform pg_temp.expect_draft_error('Request reuse for another assigned version is rejected', format($sql$select public.eacsc_update_draft_notes(%L::uuid, 1, 'Updated Draft notes.', %L::uuid)$sql$, second_draft_id, request_author), '22023', null);
 
-    perform pg_temp.expect_draft_error('Stale revision is rejected', format($sql$select public.eacsc_update_draft_notes(%L::uuid, 1, 'Stale edit.', gen_random_uuid())$sql$, draft_id), '40001', null);
+    perform pg_temp.expect_draft_error('Stale revision is rejected', format($sql$select public.eacsc_update_draft_notes(%L::uuid, 1, 'Stale edit.', gen_random_uuid())$sql$, draft_id), 'PT409', null);
 
     perform pg_temp.expect_draft_error('Unchanged notes are rejected', format($sql$select public.eacsc_update_draft_notes(%L::uuid, 2, 'Updated Draft notes.', gen_random_uuid())$sql$, draft_id), '22023', null);
 
@@ -217,7 +218,7 @@ begin
 
     perform pg_temp.expect_draft_error('Approved notes cannot be edited', format($sql$select public.eacsc_update_draft_notes(%L::uuid, 1, 'Notes.', gen_random_uuid())$sql$, approved_id), '55000', null);
 
-    perform pg_temp.expect_draft_error('Direct private call also enforces the revision check', format($sql$select eacsc_private.update_draft_notes(%L::uuid, 1, 'Another Draft note.', gen_random_uuid())$sql$, draft_id), '40001', null);
+    perform pg_temp.expect_draft_error('Direct private call also enforces the revision check', format($sql$select eacsc_private.update_draft_notes(%L::uuid, 1, 'Another Draft note.', gen_random_uuid())$sql$, draft_id), 'PT409', null);
 
     perform pg_temp.expect_draft_error('Base version writes remain denied', $sql$update public.record_versions set change_summary='Bypass' where false$sql$, '42501', null);
 
@@ -231,7 +232,7 @@ begin
 
     perform pg_temp.check_draft('Rejected writes and retries add no audit events', (select count(*)=1 from public.audit_events where version_id=draft_id));
 
-    perform pg_temp.check_draft('Rejected writes and retries add no receipts', (select count(*)=1 from eacsc_private.mutation_receipts where actor_user_id=author_id));
+    perform pg_temp.check_draft('Rejected writes and retries add no receipts', (select count(*)=1 from eacsc_private.mutation_receipts where actor_user_id=author_id and request_id=request_author));
 
     execute 'reset role';
 

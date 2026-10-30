@@ -1,4 +1,5 @@
--- Batch 4 read authorization tests, revision 2 (single-block harness).
+-- Revision 3: count only this test's reserved records, allowing retained HTTP fixtures.
+-- Batch 4 read authorization tests, revision 3 (single-block harness).
 -- Run the ENTIRE file as postgres after applying migration 20261030000300.
 -- No migration changes are needed. Do not rerun the successful migration.
 -- This single DO statement creates its own temporary helpers and runs all checks.
@@ -154,11 +155,11 @@ $define_denial$;
 
   perform pg_temp.expect_read_denial_v2('Anonymous cannot read app_users', $sql$select user_id from public.app_users$sql$);
 
-  perform pg_temp.expect_read_denial_v2('Anonymous cannot read master_records', $sql$select record_id from public.master_records$sql$);
+  perform pg_temp.expect_read_denial_v2('Anonymous cannot read master_records', $sql$select record_id from public.master_records where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')$sql$);
 
-  perform pg_temp.expect_read_denial_v2('Anonymous cannot read record_versions', $sql$select record_id from public.record_versions$sql$);
+  perform pg_temp.expect_read_denial_v2('Anonymous cannot read record_versions', $sql$select record_id from public.record_versions where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')$sql$);
 
-  perform pg_temp.expect_read_denial_v2('Anonymous cannot read record_assignments', $sql$select record_id from public.record_assignments$sql$);
+  perform pg_temp.expect_read_denial_v2('Anonymous cannot read record_assignments', $sql$select record_id from public.record_assignments where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')$sql$);
 
   perform pg_temp.expect_read_denial_v2('Anonymous cannot execute private helper', $sql$select eacsc_private.can_read_record('EACSC-2099-TEST-9401',null,null)$sql$);
 
@@ -168,11 +169,11 @@ $define_denial$;
 
   execute 'set local role authenticated';
 
-  perform pg_temp.assert_read_v2('Author sees only assigned internal record', (select count(*) = 1 and min(record_id) = 'EACSC-2099-TEST-9401' from public.master_records));
+  perform pg_temp.assert_read_v2('Author sees only assigned internal record', (select count(*) = 1 and min(record_id) = 'EACSC-2099-TEST-9401' from public.master_records where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
-  perform pg_temp.assert_read_v2('Author sees only its assigned Draft version', (select count(*) = 1 and min(state) = 'Draft' from public.record_versions));
+  perform pg_temp.assert_read_v2('Author sees only its assigned Draft version', (select count(*) = 1 and min(state) = 'Draft' from public.record_versions where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
-  perform pg_temp.assert_read_v2('Author sees only permitted own assignment', (select count(*) = 1 and bool_and(user_id = author_id) from public.record_assignments));
+  perform pg_temp.assert_read_v2('Author sees only permitted own assignment', (select count(*) = 1 and bool_and(user_id = author_id) from public.record_assignments where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
   perform pg_temp.assert_read_v2('Author cannot read another profile', (select count(*) = 0 from public.app_users where user_id = custodian_id));
 
@@ -182,9 +183,9 @@ $define_denial$;
 
   perform pg_temp.expect_read_denial_v2('Author cannot select profile email', $sql$select email from public.app_users$sql$);
 
-  perform pg_temp.expect_read_denial_v2('Author cannot select private storage key', $sql$select storage_key from public.record_versions$sql$);
+  perform pg_temp.expect_read_denial_v2('Author cannot select private storage key', $sql$select storage_key from public.record_versions where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')$sql$);
 
-  perform pg_temp.expect_read_denial_v2('Author cannot select approval evidence', $sql$select approval_evidence_reference from public.record_versions$sql$);
+  perform pg_temp.expect_read_denial_v2('Author cannot select approval evidence', $sql$select approval_evidence_reference from public.record_versions where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')$sql$);
 
   perform pg_temp.expect_read_denial_v2('Author cannot assign itself more roles', $sql$update public.app_users set functional_roles = array['approver']::text[] where false$sql$);
 
@@ -206,11 +207,11 @@ $define_denial$;
 
   execute 'set local role authenticated';
 
-  perform pg_temp.assert_read_v2('Custodian sees exactly three permitted records', (select count(*) = 3 from public.master_records));
+  perform pg_temp.assert_read_v2('Custodian sees exactly three permitted records', (select count(*) = 3 from public.master_records where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
-  perform pg_temp.assert_read_v2('Custodian sees four permitted version rows', (select count(*) = 4 from public.record_versions));
+  perform pg_temp.assert_read_v2('Custodian sees four permitted version rows', (select count(*) = 4 from public.record_versions where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
-  perform pg_temp.assert_read_v2('Custodian sees three matching own assignments', (select count(*) = 3 and bool_and(user_id = custodian_id and assignment_function = 'custodian') from public.record_assignments));
+  perform pg_temp.assert_read_v2('Custodian sees three matching own assignments', (select count(*) = 3 and bool_and(user_id = custodian_id and assignment_function = 'custodian') from public.record_assignments where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
   perform pg_temp.assert_read_v2('Custodian cannot read restricted finance without extra permission', (select count(*) = 0 from public.master_records where record_id = 'EACSC-2099-TEST-9403'));
 
@@ -232,11 +233,11 @@ $define_denial$;
 
   execute 'set local role authenticated';
 
-  perform pg_temp.assert_read_v2('Deactivation immediately denies master_records with same claims', (select count(*) = 0 from public.master_records));
+  perform pg_temp.assert_read_v2('Deactivation immediately denies master_records with same claims', (select count(*) = 0 from public.master_records where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
-  perform pg_temp.assert_read_v2('Deactivation immediately denies record_versions with same claims', (select count(*) = 0 from public.record_versions));
+  perform pg_temp.assert_read_v2('Deactivation immediately denies record_versions with same claims', (select count(*) = 0 from public.record_versions where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
-  perform pg_temp.assert_read_v2('Deactivation immediately denies record_assignments with same claims', (select count(*) = 0 from public.record_assignments));
+  perform pg_temp.assert_read_v2('Deactivation immediately denies record_assignments with same claims', (select count(*) = 0 from public.record_assignments where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
   perform pg_temp.assert_read_v2('Deactivated officer can still read own inactive status', (select count(*) = 1 and bool_and(not is_active) from public.app_users));
 
@@ -250,7 +251,7 @@ $define_denial$;
 
   execute 'set local role authenticated';
 
-  perform pg_temp.assert_read_v2('Reactivation restores explicit read assignment', (select count(*) = 1 from public.master_records));
+  perform pg_temp.assert_read_v2('Reactivation restores explicit read assignment', (select count(*) = 1 from public.master_records where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
   execute 'reset role';
 
@@ -262,9 +263,9 @@ $define_denial$;
 
   execute 'set local role authenticated';
 
-  perform pg_temp.assert_read_v2('Assignment revocation immediately denies master read', (select count(*) = 0 from public.master_records));
+  perform pg_temp.assert_read_v2('Assignment revocation immediately denies master read', (select count(*) = 0 from public.master_records where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
-  perform pg_temp.assert_read_v2('Assignment revocation immediately denies version read', (select count(*) = 0 from public.record_versions));
+  perform pg_temp.assert_read_v2('Assignment revocation immediately denies version read', (select count(*) = 0 from public.record_versions where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
   execute 'reset role';
 
@@ -278,11 +279,11 @@ $define_denial$;
 
   execute 'set local role authenticated';
 
-  perform pg_temp.assert_read_v2('Technical administration alone does not authorize master_records', (select count(*) = 0 from public.master_records));
+  perform pg_temp.assert_read_v2('Technical administration alone does not authorize master_records', (select count(*) = 0 from public.master_records where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
-  perform pg_temp.assert_read_v2('Technical administration alone does not authorize record_versions', (select count(*) = 0 from public.record_versions));
+  perform pg_temp.assert_read_v2('Technical administration alone does not authorize record_versions', (select count(*) = 0 from public.record_versions where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
-  perform pg_temp.assert_read_v2('Technical administration alone does not authorize record_assignments', (select count(*) = 0 from public.record_assignments));
+  perform pg_temp.assert_read_v2('Technical administration alone does not authorize record_assignments', (select count(*) = 0 from public.record_assignments where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
   execute 'reset role';
 
@@ -308,11 +309,11 @@ $define_denial$;
 
   execute 'set local role authenticated';
 
-  perform pg_temp.assert_read_v2('Inactive fixture has no master_records access', (select count(*) = 0 from public.master_records));
+  perform pg_temp.assert_read_v2('Inactive fixture has no master_records access', (select count(*) = 0 from public.master_records where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
-  perform pg_temp.assert_read_v2('Inactive fixture has no record_versions access', (select count(*) = 0 from public.record_versions));
+  perform pg_temp.assert_read_v2('Inactive fixture has no record_versions access', (select count(*) = 0 from public.record_versions where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
-  perform pg_temp.assert_read_v2('Inactive fixture has no record_assignments access', (select count(*) = 0 from public.record_assignments));
+  perform pg_temp.assert_read_v2('Inactive fixture has no record_assignments access', (select count(*) = 0 from public.record_assignments where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
   execute 'reset role';
 
@@ -320,11 +321,11 @@ $define_denial$;
 
   execute 'set local role authenticated';
 
-  perform pg_temp.assert_read_v2('Missing profile fixture has no master_records access', (select count(*) = 0 from public.master_records));
+  perform pg_temp.assert_read_v2('Missing profile fixture has no master_records access', (select count(*) = 0 from public.master_records where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
-  perform pg_temp.assert_read_v2('Missing profile fixture has no record_versions access', (select count(*) = 0 from public.record_versions));
+  perform pg_temp.assert_read_v2('Missing profile fixture has no record_versions access', (select count(*) = 0 from public.record_versions where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
-  perform pg_temp.assert_read_v2('Missing profile fixture has no record_assignments access', (select count(*) = 0 from public.record_assignments));
+  perform pg_temp.assert_read_v2('Missing profile fixture has no record_assignments access', (select count(*) = 0 from public.record_assignments where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
   execute 'reset role';
 
@@ -332,11 +333,11 @@ $define_denial$;
 
   execute 'set local role authenticated';
 
-  perform pg_temp.assert_read_v2('Anonymous signed-in identity has no master_records access', (select count(*) = 0 from public.master_records));
+  perform pg_temp.assert_read_v2('Anonymous signed-in identity has no master_records access', (select count(*) = 0 from public.master_records where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
-  perform pg_temp.assert_read_v2('Anonymous signed-in identity has no record_versions access', (select count(*) = 0 from public.record_versions));
+  perform pg_temp.assert_read_v2('Anonymous signed-in identity has no record_versions access', (select count(*) = 0 from public.record_versions where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
-  perform pg_temp.assert_read_v2('Anonymous signed-in identity has no record_assignments access', (select count(*) = 0 from public.record_assignments));
+  perform pg_temp.assert_read_v2('Anonymous signed-in identity has no record_assignments access', (select count(*) = 0 from public.record_assignments where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
   execute 'reset role';
 
@@ -344,11 +345,11 @@ $define_denial$;
 
   execute 'set local role authenticated';
 
-  perform pg_temp.assert_read_v2('Missing anonymous claim has no master_records access', (select count(*) = 0 from public.master_records));
+  perform pg_temp.assert_read_v2('Missing anonymous claim has no master_records access', (select count(*) = 0 from public.master_records where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
-  perform pg_temp.assert_read_v2('Missing anonymous claim has no record_versions access', (select count(*) = 0 from public.record_versions));
+  perform pg_temp.assert_read_v2('Missing anonymous claim has no record_versions access', (select count(*) = 0 from public.record_versions where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
-  perform pg_temp.assert_read_v2('Missing anonymous claim has no record_assignments access', (select count(*) = 0 from public.record_assignments));
+  perform pg_temp.assert_read_v2('Missing anonymous claim has no record_assignments access', (select count(*) = 0 from public.record_assignments where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
   execute 'reset role';
 
@@ -356,11 +357,11 @@ $define_denial$;
 
   execute 'set local role authenticated';
 
-  perform pg_temp.assert_read_v2('Missing authenticated identity has no master_records access', (select count(*) = 0 from public.master_records));
+  perform pg_temp.assert_read_v2('Missing authenticated identity has no master_records access', (select count(*) = 0 from public.master_records where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
-  perform pg_temp.assert_read_v2('Missing authenticated identity has no record_versions access', (select count(*) = 0 from public.record_versions));
+  perform pg_temp.assert_read_v2('Missing authenticated identity has no record_versions access', (select count(*) = 0 from public.record_versions where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
-  perform pg_temp.assert_read_v2('Missing authenticated identity has no record_assignments access', (select count(*) = 0 from public.record_assignments));
+  perform pg_temp.assert_read_v2('Missing authenticated identity has no record_assignments access', (select count(*) = 0 from public.record_assignments where record_id in ('EACSC-2099-TEST-9401','EACSC-2099-TEST-9402','EACSC-2099-TEST-9403','EACSC-2099-TEST-9404','EACSC-2099-TEST-9405')));
 
   execute 'reset role';
 
