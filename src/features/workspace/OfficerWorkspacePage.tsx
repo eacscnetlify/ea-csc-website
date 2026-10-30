@@ -1,438 +1,507 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router'
-import type { TurnoverItem } from '../turnover/turnover.types'
-import { getMockWorkspaceOverview } from './workspace.api'
-import type {
-  MockWorkspaceOverview,
-  MockWorkspaceRecord,
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import type { FormEvent } from 'react'
+import { useAuth } from '../auth/useAuth'
+import {
+  getAssignedRecords,
+  getAssignedVersions,
+  WorkspaceError,
 } from './workspace.api'
+import type { AssignedVersion, DraftReceipt } from './workspace.api'
+import {
+  createDraftAttempt,
+  findDraftAttempt,
+  forgetDraftAttempt,
+  sendDraftAttempt,
+} from './workspace.commands'
+import type { DraftAttempt } from './workspace.commands'
 
-type WorkspaceState =
-  | { status: 'loading' }
-  | { status: 'error' }
-  | {
-      status: 'success'
-      overview: MockWorkspaceOverview
+const button =
+  'rounded-lg border border-emerald-800 px-4 py-2 font-semibold text-emerald-900 hover:bg-emerald-50 disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700'
+type RecordPage = Awaited<ReturnType<typeof getAssignedRecords>>
+type RecordDetails = Awaited<ReturnType<typeof getAssignedVersions>>
+function message(error: unknown) {
+  return error instanceof WorkspaceError
+    ? error.message
+    : 'The workspace could not be loaded. Check your connection and try again.'
+}
+
+function DraftNotesEditor({
+  userId,
+  version,
+  canEdit,
+  onSaved,
+  onReload,
+}: {
+  userId: string
+  version: AssignedVersion
+  canEdit: boolean
+  onSaved: (receipt: DraftReceipt) => void
+  onReload: () => void
+}) {
+  const initial = findDraftAttempt(userId, version.versionId)
+  const [notes, setNotes] = useState(initial?.request.notes ?? version.notes)
+  const [attempt, setAttempt] = useState<DraftAttempt | undefined>(initial)
+  const [busy, setBusy] = useState(initial?.status === 'sending')
+  const [error, setError] = useState(initial?.error?.message ?? '')
+  const mounted = useRef(false)
+  const submitting = useRef(false)
+  const fieldId = useId()
+  const locked =
+    attempt?.status === 'sending' ||
+    attempt?.status === 'uncertain' ||
+    attempt?.status === 'confirmed'
+  const unresolved =
+    attempt?.status === 'sending' || attempt?.status === 'uncertain'
+  const denied =
+    attempt?.error?.kind === 'denied' || attempt?.error?.kind === 'conflict'
+  const dirty = notes !== version.notes
+
+  useEffect(() => {
+    mounted.current = true
+    return () => {
+      mounted.current = false
     }
+  }, [])
+  useEffect(() => {
+    if (!dirty && !unresolved) return
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [dirty, unresolved])
 
-const accessLabels = {
-  public: 'Public',
-  internal: 'Internal',
-  restricted: 'Restricted',
-}
+  // If profile revalidation temporarily remounted this editor, observe the same
+  // in-flight command. Never start a new write from an Effect.
+  useEffect(() => {
+    if (!initial?.promise) return
+    let disposed = false
+    void initial.promise
+      .then(() => {
+        if (!disposed) setBusy(false)
+      })
+      .catch((failure: unknown) => {
+        if (!disposed) {
+          setBusy(false)
+          setError(message(failure))
+        }
+      })
+    return () => {
+      disposed = true
+    }
+  }, [initial])
 
-interface TextListProps {
-  items: string[]
-  emptyMessage: string
-}
-
-function TextList({ items, emptyMessage }: TextListProps) {
-  if (items.length === 0) {
-    return <p className="text-sm text-slate-600">{emptyMessage}</p>
+  async function save(existing?: DraftAttempt) {
+    if (submitting.current || busy) return
+    submitting.current = true
+    setBusy(true)
+    setError('')
+    const current =
+      existing ??
+      createDraftAttempt({
+        actorId: userId,
+        recordId: version.recordId,
+        versionId: version.versionId,
+        expectedRevision: version.revision,
+        notes: notes.trim(),
+        requestId: crypto.randomUUID(),
+      })
+    setAttempt(current)
+    try {
+      const receipt = await sendDraftAttempt(current)
+      if (mounted.current) {
+        forgetDraftAttempt(current)
+        onSaved(receipt)
+      }
+    } catch (failure) {
+      if (mounted.current) setError(message(failure))
+    } finally {
+      submitting.current = false
+      if (mounted.current) setBusy(false)
+    }
   }
-
-  return (
-    <ul className="list-disc space-y-2 pl-5 text-sm leading-6 text-slate-600">
-      {items.map((item, index) => (
-        <li key={`${index}-${item}`} className="wrap-break-word">
-          {item}
-        </li>
-      ))}
-    </ul>
-  )
-}
-
-function WorkspaceRecordCard({ item }: { item: MockWorkspaceRecord }) {
-  const { record, latestVersion, versionCount, currentPublicRecord } = item
-
-  const hasApprovedReplacement =
-    record.accessClass === 'public' &&
-    latestVersion?.state === 'Approved' &&
-    currentPublicRecord !== null &&
-    latestVersion.versionId !== currentPublicRecord.versionId
-
-  return (
-    <li className="min-w-0 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-xs font-semibold leading-5 text-green-800">
-        {record.category}
-      </p>
-
-      <h3 className="mt-3 text-lg font-bold leading-7 text-slate-900">
-        {record.title}
-      </h3>
-
-      <p className="mt-2 break-all font-mono text-xs leading-5 text-slate-500">
-        {record.recordId}
-      </p>
-
-      <dl className="mt-5 space-y-4 text-sm">
-        <div>
-          <dt className="font-semibold text-slate-900">
-            Access classification
-          </dt>
-          <dd className="mt-1 text-slate-600">
-            {accessLabels[record.accessClass]}
-          </dd>
-        </div>
-
-        <div>
-          <dt className="font-semibold text-slate-900">
-            Latest working version
-          </dt>
-          <dd className="mt-1 text-slate-600">
-            {latestVersion
-              ? `Version ${latestVersion.versionNumber} — ${latestVersion.state}`
-              : 'No version available'}
-          </dd>
-        </div>
-
-        <div>
-          <dt className="font-semibold text-slate-900">
-            Versions in this prototype
-          </dt>
-          <dd className="mt-1 text-slate-600">{versionCount}</dd>
-        </div>
-
-        <div>
-          <dt className="font-semibold text-slate-900">
-            Current public release
-          </dt>
-          <dd className="mt-1 text-slate-600">
-            {currentPublicRecord ? (
-              <Link
-                to={`/records/${encodeURIComponent(currentPublicRecord.recordId)}`}
-                className="rounded font-semibold text-green-800 underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700"
-              >
-                Version {currentPublicRecord.versionNumber} — open public page
-              </Link>
-            ) : (
-              'None'
-            )}
-          </dd>
-        </div>
-
-        <div>
-          <dt className="font-semibold text-slate-900">Custodian position</dt>
-          <dd className="mt-1 text-slate-600">{record.custodianPosition}</dd>
-        </div>
-      </dl>
-
-      {latestVersion && (
-        <p className="mt-5 border-t border-slate-200 pt-4 text-sm leading-6 text-slate-600">
-          {latestVersion.changeSummary}
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!canEdit || version.state !== 'Draft' || locked || denied) return
+    void save()
+  }
+  if (attempt?.status === 'confirmed' && attempt.receipt)
+    return (
+      <div
+        className="mt-4 space-y-3 rounded-lg bg-emerald-50 p-4"
+        role="status"
+      >
+        <p>
+          The earlier save was confirmed. Reload to see the latest stored
+          version.
         </p>
-      )}
-
-      {hasApprovedReplacement && (
-        <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm leading-6 text-amber-950">
-          The latest working version is approved but has not replaced the
-          current public release.
-        </p>
-      )}
-    </li>
-  )
-}
-
-function TurnoverPackage({ item }: { item: TurnoverItem }) {
-  return (
-    <details className="min-w-0 rounded-xl border border-slate-200 bg-white shadow-sm">
-      <summary className="cursor-pointer rounded-xl p-5 text-base font-bold leading-7 text-slate-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700">
-        {item.positionTitle} — {item.termCovered}
-      </summary>
-
-      <div className="space-y-6 border-t border-slate-200 p-5">
-        <p className="break-all font-mono text-xs text-slate-500">
-          {item.turnoverId}
-        </p>
-
-        <div>
-          <h3 className="mb-3 font-semibold text-slate-900">
-            Related record IDs
-          </h3>
-          <TextList
-            items={item.recordIds}
-            emptyMessage="No related records are listed."
-          />
-        </div>
-
-        <div>
-          <h3 className="mb-3 font-semibold text-slate-900">Pending matters</h3>
-
-          {item.pendingMatters.length === 0 ? (
-            <p className="text-sm text-slate-600">
-              No pending matters are listed.
-            </p>
-          ) : (
-            <ul className="list-none space-y-4 p-0">
-              {item.pendingMatters.map((matter) => (
-                <li
-                  key={matter.matterId}
-                  className="rounded-lg bg-slate-50 p-4 text-sm leading-6 text-slate-600"
-                >
-                  <p className="font-semibold text-slate-900">
-                    {matter.summary}
-                  </p>
-
-                  <p className="mt-2">
-                    <strong>Next action:</strong> {matter.nextAction}
-                  </p>
-
-                  <p className="mt-2">
-                    <strong>Responsible position:</strong>{' '}
-                    {matter.responsiblePosition}
-                  </p>
-
-                  <p className="mt-2">
-                    <strong>Due date:</strong>{' '}
-                    {matter.dueAt
-                      ? new Intl.DateTimeFormat('en-PH', {
-                          dateStyle: 'medium',
-                          timeZone: 'Asia/Manila',
-                        }).format(new Date(matter.dueAt))
-                      : 'Not set'}
-                  </p>
-
-                  <p className="mt-2 wrap-break-word">
-                    <strong>Related records:</strong>{' '}
-                    {matter.relatedRecordIds.length > 0
-                      ? matter.relatedRecordIds.join(', ')
-                      : 'None listed'}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div>
-          <h3 className="mb-3 font-semibold text-slate-900">
-            Recurring duties
-          </h3>
-          <TextList
-            items={item.recurringDuties}
-            emptyMessage="No recurring duties are listed."
-          />
-        </div>
-
-        <div>
-          <h3 className="mb-3 font-semibold text-slate-900">
-            Official contacts
-          </h3>
-
-          {item.officialContacts.length === 0 ? (
-            <p className="text-sm text-slate-600">
-              No official contacts are listed.
-            </p>
-          ) : (
-            <ul className="list-none space-y-3 p-0">
-              {item.officialContacts.map((contact, index) => (
-                <li
-                  key={`${index}-${contact.office}`}
-                  className="text-sm leading-6 text-slate-600"
-                >
-                  <p className="font-semibold text-slate-900">
-                    {contact.office}
-                  </p>
-                  <p>{contact.purpose}</p>
-                  <p className="break-all">{contact.publicContactDetails}</p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div>
-          <h3 className="mb-3 font-semibold text-slate-900">
-            Known exceptions
-          </h3>
-          <TextList
-            items={item.knownExceptions}
-            emptyMessage="No exceptions are listed."
-          />
-        </div>
+        <button
+          type="button"
+          className={button}
+          onClick={() => {
+            forgetDraftAttempt(attempt)
+            onSaved(attempt.receipt!)
+          }}
+        >
+          Reload confirmed save
+        </button>
       </div>
-    </details>
+    )
+  if ((!canEdit || version.state !== 'Draft') && !unresolved) return null
+  return (
+    <form
+      onSubmit={submit}
+      className="mt-5 space-y-3 border-t border-slate-200 pt-5"
+    >
+      <label htmlFor={fieldId} className="block font-semibold">
+        Draft version notes
+      </label>
+      <p id={`${fieldId}-help`} className="text-sm text-slate-600">
+        Describe this version or its changes. Saving notes does not approve or
+        publish the record.
+      </p>
+      <textarea
+        id={fieldId}
+        aria-describedby={`${fieldId}-help ${fieldId}-count`}
+        value={notes}
+        onChange={(event) => setNotes(event.target.value)}
+        maxLength={2000}
+        rows={4}
+        disabled={
+          busy || locked || denied || !canEdit || version.state !== 'Draft'
+        }
+        className="w-full rounded-lg border border-slate-400 bg-white p-3 disabled:bg-slate-100"
+      />
+      <p id={`${fieldId}-count`} className="text-sm text-slate-600">
+        {notes.length}/2,000 · Loaded edit revision {version.revision}
+      </p>
+      {error && (
+        <p role="alert" className="rounded-lg bg-amber-50 p-3 text-amber-950">
+          {error}
+        </p>
+      )}
+      <div className="flex flex-wrap gap-3">
+        {attempt?.status === 'uncertain' ? (
+          <button
+            type="button"
+            className={button}
+            disabled={busy}
+            onClick={() => void save(attempt)}
+          >
+            Retry same save
+          </button>
+        ) : (
+          <button
+            type="submit"
+            className={button}
+            disabled={
+              busy ||
+              locked ||
+              denied ||
+              !canEdit ||
+              !notes.trim() ||
+              notes.trim() === version.notes ||
+              notes.length > 2000
+            }
+          >
+            {busy ? 'Saving…' : 'Save Draft notes'}
+          </button>
+        )}
+        {!unresolved && !busy && (
+          <button type="button" className={button} onClick={onReload}>
+            Reload latest version
+          </button>
+        )}
+      </div>
+      {unresolved && (
+        <p role="status" className="text-sm text-slate-700">
+          {busy
+            ? 'Waiting for save confirmation…'
+            : 'Keep this page open. Retrying uses the original notes and request so the same edit is not applied twice.'}
+        </p>
+      )}
+    </form>
   )
 }
 
-function WorkspaceOverview({ overview }: { overview: MockWorkspaceOverview }) {
-  const totalVersions = overview.records.reduce(
-    (total, item) => total + item.versionCount,
-    0,
+function SelectedRecord({
+  userId,
+  recordId,
+}: {
+  userId: string
+  recordId: string
+}) {
+  const [details, setDetails] = useState<RecordDetails | null>(null)
+  const [error, setError] = useState('')
+  const [attempt, setAttempt] = useState(0)
+  const [notice, setNotice] = useState('')
+  const refresh = useCallback(() => {
+    setDetails(null)
+    setError('')
+    setAttempt((n) => n + 1)
+  }, [])
+  const saved = useCallback(
+    (receipt: DraftReceipt) => {
+      setNotice(`Save confirmed at edit revision ${receipt.revision}.`)
+      refresh()
+    },
+    [refresh],
   )
-
-  const publicReleaseCount = overview.records.filter(
-    (item) => item.currentPublicRecord !== null,
-  ).length
-
-  const statistics = [
-    { label: 'Fictional records', value: overview.records.length },
-    { label: 'Stored mock versions', value: totalVersions },
-    { label: 'Current public releases', value: publicReleaseCount },
-    { label: 'Turnover packages', value: overview.turnoverItems.length },
-  ]
-
+  useEffect(() => {
+    let disposed = false
+    const controller = new AbortController()
+    const timer = window.setTimeout(() => controller.abort(), 10_000)
+    void getAssignedVersions(userId, recordId, controller.signal)
+      .then((data) => {
+        if (!disposed) setDetails(data)
+      })
+      .catch((failure) => {
+        if (!disposed) setError(message(failure))
+      })
+      .finally(() => window.clearTimeout(timer))
+    return () => {
+      disposed = true
+      window.clearTimeout(timer)
+      controller.abort()
+    }
+  }, [userId, recordId, attempt])
   return (
-    <div className="space-y-10">
-      <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {statistics.map((statistic) => (
-          <div
-            key={statistic.label}
-            className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
-          >
-            <dt className="text-sm font-semibold text-slate-600">
-              {statistic.label}
-            </dt>
-            <dd className="mt-3 text-3xl font-bold text-slate-900">
-              {statistic.value}
-            </dd>
+    <section aria-label="Selected record" className="space-y-5">
+      {notice && (
+        <p
+          role="status"
+          className="rounded-lg bg-emerald-50 p-4 text-emerald-950"
+        >
+          {notice}
+        </p>
+      )}
+      {error ? (
+        <div
+          role="alert"
+          className="space-y-3 rounded-xl border border-amber-300 bg-amber-50 p-5"
+        >
+          <p>{error}</p>
+          <button type="button" className={button} onClick={refresh}>
+            Reload selected record
+          </button>
+        </div>
+      ) : !details ? (
+        <p role="status">Loading authorized versions…</p>
+      ) : (
+        <>
+          <div className="rounded-xl border border-slate-200 bg-white p-5">
+            <h2 className="text-2xl font-bold">{details.record.title}</h2>
+            <p className="mt-2 break-all font-mono text-sm">
+              {details.record.recordId}
+            </p>
+            <p className="mt-3 text-sm">
+              Classification: <strong>{details.record.accessClass}</strong> ·
+              Custodian: {details.record.custodianPosition}
+            </p>
+            <p className="mt-2 text-sm text-slate-600">
+              {details.record.category}
+            </p>
           </div>
-        ))}
-      </dl>
-
-      <section aria-labelledby="workspace-records-heading">
-        <h2
-          id="workspace-records-heading"
-          className="text-2xl font-bold text-slate-900"
-        >
-          Records and versions
-        </h2>
-
-        <p className="mt-3 text-sm leading-6 text-slate-600">
-          The latest working version and the current public release are shown
-          separately. Approval alone does not publish a version.
-        </p>
-
-        {overview.records.length === 0 ? (
-          <p className="mt-5 rounded-xl border border-slate-200 bg-white p-5 text-slate-600">
-            No fictional records are available.
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 className="text-xl font-bold">Versions you can access</h3>
+            <button type="button" className={button} onClick={refresh}>
+              Reload versions
+            </button>
+          </div>
+          <p className="text-sm text-slate-600">
+            These are the versions your current assignment permits. A newer
+            version may exist outside your access. Public classification and
+            approval do not establish publication.
           </p>
-        ) : (
-          <ul className="mt-5 grid list-none gap-5 p-0 md:grid-cols-2 lg:grid-cols-3">
-            {overview.records.map((item) => (
-              <WorkspaceRecordCard key={item.record.recordId} item={item} />
-            ))}
-          </ul>
-        )}
-      </section>
-
-      <section aria-labelledby="workspace-turnover-heading">
-        <h2
-          id="workspace-turnover-heading"
-          className="text-2xl font-bold text-slate-900"
-        >
-          Turnover and continuity
-        </h2>
-
-        <p className="mt-3 text-sm leading-6 text-slate-600">
-          Expand a sample package to inspect its record inventory, pending
-          matters, recurring duties, contacts, and exceptions.
-        </p>
-
-        <div className="mt-5 space-y-4">
-          {overview.turnoverItems.length === 0 ? (
-            <p className="rounded-xl border border-slate-200 bg-white p-5 text-slate-600">
-              No sample turnover packages are available.
+          {details.truncated && (
+            <p role="status">
+              Showing the first 100 accessible versions, newest first.
+              Additional versions are not shown in this view.
+            </p>
+          )}
+          {details.versions.length === 0 ? (
+            <p className="rounded-xl bg-white p-5">
+              No versions are currently accessible for this record.
             </p>
           ) : (
-            overview.turnoverItems.map((item) => (
-              <TurnoverPackage key={item.turnoverId} item={item} />
-            ))
+            <ul className="list-none space-y-5 p-0">
+              {details.versions.map((version) => (
+                <li
+                  key={version.versionId}
+                  className="min-w-0 rounded-xl border border-slate-200 bg-white p-5"
+                >
+                  <h4 className="text-lg font-bold">
+                    Version {version.versionNumber} — {version.state}
+                  </h4>
+                  <p className="mt-2 text-sm text-slate-600">
+                    Edit revision {version.revision} · Updated{' '}
+                    {new Intl.DateTimeFormat('en-PH', {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                      timeZone: 'Asia/Manila',
+                    }).format(new Date(version.updatedAt))}
+                  </p>
+                  <p className="mt-4 whitespace-pre-wrap wrap-break-word">
+                    {version.notes}
+                  </p>
+                  <DraftNotesEditor
+                    key={`${version.versionId}:${version.revision}`}
+                    userId={userId}
+                    version={version}
+                    canEdit={details.canEditDraft}
+                    onSaved={saved}
+                    onReload={refresh}
+                  />
+                </li>
+              ))}
+            </ul>
           )}
-        </div>
-      </section>
-    </div>
+        </>
+      )}
+    </section>
   )
 }
 
 export default function OfficerWorkspacePage() {
-  const [state, setState] = useState<WorkspaceState>({
-    status: 'loading',
-  })
+  const { session } = useAuth()
+  const userId = session?.user.id ?? ''
+  const [page, setPage] = useState(0)
+  const [result, setResult] = useState<{
+    page: number
+    data: RecordPage
+  } | null>(null)
+  const [error, setError] = useState('')
   const [attempt, setAttempt] = useState(0)
-
+  const [selected, setSelected] = useState<string | null>(null)
   useEffect(() => {
-    let ignore = false
-
-    getMockWorkspaceOverview()
-      .then((overview) => {
-        if (!ignore) {
-          setState({ status: 'success', overview })
-        }
+    if (!userId) return
+    let disposed = false
+    const controller = new AbortController()
+    const timer = window.setTimeout(() => controller.abort(), 10_000)
+    void getAssignedRecords(userId, page, controller.signal)
+      .then((data) => {
+        if (!disposed) setResult({ page, data })
       })
-      .catch(() => {
-        if (!ignore) {
-          setState({ status: 'error' })
-        }
+      .catch((failure) => {
+        if (!disposed) setError(message(failure))
       })
-
+      .finally(() => window.clearTimeout(timer))
     return () => {
-      ignore = true
+      disposed = true
+      window.clearTimeout(timer)
+      controller.abort()
     }
-  }, [attempt])
-
-  function retryLoading() {
-    setState({ status: 'loading' })
-    setAttempt((previous) => previous + 1)
+  }, [userId, page, attempt])
+  function reload(nextPage = page) {
+    setResult(null)
+    setSelected(null)
+    setError('')
+    setPage(nextPage)
+    setAttempt((n) => n + 1)
   }
-
+  const data = result?.page === page ? result.data : null
+  const recordId =
+    data?.records.find((r) => r.recordId === selected)?.recordId ??
+    data?.records[0]?.recordId
   return (
-    <section aria-labelledby="workspace-heading">
-      <p className="text-sm font-semibold tracking-wide text-green-800">
-        Fictional workspace preview
+    <section aria-labelledby="workspace-heading" className="space-y-6">
+      <div>
+        <p className="text-sm font-semibold text-emerald-800">
+          Assigned records
+        </p>
+        <h1 id="workspace-heading" className="mt-2 text-3xl font-bold">
+          Officer workspace
+        </h1>
+        <p className="mt-3 text-slate-700">
+          View records available to your current account and record assignments.
+          Authorized Authors and Custodians can update Draft version notes.
+        </p>
+      </div>
+      <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+        Development database: the retained test records are fictional. Public
+        library pages still use prototype data. File access, approvals,
+        publication and turnover acknowledgment are coming in later steps.
       </p>
-
-      <h1
-        id="workspace-heading"
-        className="mt-2 text-3xl font-bold tracking-tight text-slate-900"
-      >
-        Officer workspace
-      </h1>
-
-      <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-        Explore fictional records and a sample turnover package. This preview
-        does not provide operational officer access.
-      </p>
-
-      <p className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-950">
-        Officer sign-in and profile checks are connected. This screen still
-        displays fictional mock records. Record-level permissions, editing,
-        approval, release, and turnover acknowledgment are not connected here.
-      </p>
-
-      <div className="mt-8" aria-busy={state.status === 'loading'}>
-        {state.status === 'loading' && (
-          <p
-            role="status"
-            className="rounded-xl border border-slate-200 bg-white p-6 text-slate-600"
-          >
-            Loading workspace preview…
-          </p>
-        )}
-
-        {state.status === 'error' && (
-          <div
-            role="alert"
-            className="rounded-xl border border-red-200 bg-red-50 p-6"
-          >
-            <h2 className="text-lg font-semibold text-red-900">
-              Workspace preview could not be loaded
-            </h2>
-
+      <div className="flex flex-wrap items-center gap-3">
+        <button type="button" className={button} onClick={() => reload()}>
+          Reload record list
+        </button>
+        <span className="text-sm text-slate-600">Page {page + 1}</span>
+      </div>
+      {error ? (
+        <p
+          role="alert"
+          className="rounded-xl border border-amber-300 bg-amber-50 p-5"
+        >
+          {error}
+        </p>
+      ) : !data ? (
+        <p role="status">Loading assigned records…</p>
+      ) : (
+        <>
+          {data.records.length === 0 ? (
+            <p className="rounded-xl border border-slate-200 bg-white p-5">
+              No accessible assigned records were returned. An active account
+              alone does not grant record access.
+            </p>
+          ) : (
+            <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+              <nav aria-label="Assigned record selection">
+                <ul className="list-none space-y-3 p-0">
+                  {data.records.map((record) => (
+                    <li key={record.recordId}>
+                      <button
+                        type="button"
+                        onClick={() => setSelected(record.recordId)}
+                        aria-current={
+                          recordId === record.recordId ? 'true' : undefined
+                        }
+                        className={`w-full rounded-xl border p-4 text-left ${recordId === record.recordId ? 'border-emerald-700 bg-emerald-50' : 'border-slate-200 bg-white'}`}
+                      >
+                        <span className="block font-semibold">
+                          {record.title}
+                        </span>
+                        <span className="mt-2 block break-all font-mono text-xs">
+                          {record.recordId}
+                        </span>
+                        <span className="mt-2 block text-sm text-slate-600">
+                          {record.accessClass}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+              {recordId && (
+                <SelectedRecord
+                  key={`${userId}:${recordId}`}
+                  userId={userId}
+                  recordId={recordId}
+                />
+              )}
+            </div>
+          )}
+          <div className="flex flex-wrap gap-3">
             <button
               type="button"
-              onClick={retryLoading}
-              className="mt-4 rounded-lg bg-red-800 px-4 py-2 text-sm font-semibold text-white hover:bg-red-900 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-800"
+              className={button}
+              disabled={page === 0}
+              onClick={() => reload(page - 1)}
             >
-              Try again
+              Previous page
+            </button>
+            <button
+              type="button"
+              className={button}
+              disabled={!data.hasNext}
+              onClick={() => reload(page + 1)}
+            >
+              Next page
             </button>
           </div>
-        )}
-
-        {state.status === 'success' && (
-          <WorkspaceOverview overview={state.overview} />
-        )}
-      </div>
+        </>
+      )}
     </section>
   )
 }

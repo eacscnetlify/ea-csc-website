@@ -334,3 +334,16 @@ continued Batch 4 testing.
 - Retained fictional HTTP fixtures and their audit/receipt history.
 - Workspace record data remains mocked; frontend integration is pending.
 - Batch 4 remains in progress.
+
+### Batch 4 — Connected officer workspace
+
+- Connected the workspace to assigned database records and accessible versions.
+- Connected authorized Draft-notes editing to the controlled backend command.
+- Verified Author and Custodian visibility and successful notes saves.
+- Verified two-tab revision conflicts without overwriting the winning edit.
+- Confirmed the expected manual workspace checks.
+- Passed formatting, typecheck, lint and production build.
+- Passed all 12 retained-history checks after UI edits.
+- Public library pages still use prototype data.
+- File access, approvals, publication and turnover remain pending.
+- Batch 4 remains in progress.

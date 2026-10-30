@@ -1,3 +1,4 @@
+-- Revision 2: accept legitimate notes saved through the workspace as well as HTTP tests.
 -- Read-only verification AFTER the real HTTP runner completes successfully.
 -- Retains all fictional records, audit events and retry receipts.
 with fixtures as (
@@ -35,7 +36,8 @@ with fixtures as (
       or a.new_state->>'state' is distinct from 'Draft'
       or a.new_state->>'version_id' is distinct from a.version_id::text
       or a.new_state->>'record_id' is distinct from a.record_id
-      or a.new_state->>'change_summary' not like 'HTTP/%'
+      or a.new_state->>'change_summary' is null
+      or a.new_state->>'change_summary' !~ '[^[:space:]]'
       or (a.previous_revision=1 and a.previous_state->>'change_summary' is distinct from 'Original fictional HTTP notes.')
       or (a.previous_revision>1 and a.previous_state is distinct from a.preceding_snapshot))),
   ('Latest audited notes and timestamps equal stored versions', not exists(

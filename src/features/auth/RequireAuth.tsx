@@ -87,9 +87,10 @@ function OfficerProfileGate({
 }) {
   const [state, setState] = useState<ProfileState>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
+  const [checking, setChecking] = useState(true)
 
   const refreshAccess = useCallback(() => {
-    setState({ status: 'loading' })
+    setChecking(true)
     setAttempt((current) => current + 1)
   }, [])
 
@@ -114,6 +115,7 @@ function OfficerProfileGate({
       })
       .finally(() => {
         window.clearTimeout(timeoutId)
+        if (!disposed) setChecking(false)
       })
 
     return () => {
@@ -158,7 +160,7 @@ function OfficerProfileGate({
         <div className="flex flex-wrap items-start gap-3">
           <button
             type="button"
-            disabled={state.status === 'loading'}
+            disabled={checking}
             onClick={refreshAccess}
             className="rounded-lg border border-slate-400 px-5 py-3 font-semibold disabled:opacity-60"
           >
@@ -175,9 +177,7 @@ function OfficerProfileGate({
         </Link>
       </section>
 
-      {state.status === 'loading' && (
-        <p role="status">Checking your application profile…</p>
-      )}
+      {checking && <p role="status">Checking your application profile…</p>}
 
       {state.status === 'error' && (
         <section className="space-y-2">
@@ -226,13 +226,9 @@ function OfficerProfileGate({
         )}
 
       {hasAccess && (
-        <>
-          <p className="rounded-lg bg-amber-50 p-4">
-            Fictional workspace preview. Operational record permissions are
-            still being connected.
-          </p>
+        <div hidden={checking} inert={checking}>
           {children}
-        </>
+        </div>
       )}
     </div>
   )
