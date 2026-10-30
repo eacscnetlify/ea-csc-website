@@ -308,3 +308,15 @@ continued Batch 4 testing.
 - The website still displays fictional mock records.
 - Controlled mutations, direct HTTP tests, and database integration remain
   pending. Batch 4 is not yet complete.
+
+### Batch 4 — Controlled Draft notes command
+
+- Applied migration `20261030000400_draft_notes_command.sql` to the development project.
+- Passed all 70 checks in `005_draft_notes_command.sql`.
+- Passed all 15 checks in `verify_batch4_draft_command.sql`.
+- Verified assignment-based authorization, revision conflicts, retry receipts,
+  and atomic version/audit/receipt changes through SQL tests.
+- Verified cleanup of temporary fixtures and fault-injection constraints.
+- Direct application-table writes remain denied.
+- Actual HTTP authorization, retry, and concurrency tests remain pending.
+- The workspace still uses mock record data. Batch 4 remains in progress.
