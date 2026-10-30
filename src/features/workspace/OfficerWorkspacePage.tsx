@@ -379,7 +379,7 @@ export default function OfficerWorkspacePage() {
   return (
     <section aria-labelledby="workspace-heading">
       <p className="text-sm font-semibold tracking-wide text-green-800">
-        PUBLICLY ACCESSIBLE MOCK PREVIEW
+        Fictional workspace preview
       </p>
 
       <h1

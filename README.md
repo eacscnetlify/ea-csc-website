@@ -233,3 +233,41 @@ publication workflows, or issued-bulletin immutability.
 
 To rerun tests 002 and 003, first recreate the confirmed fictional Auth
 identity required by those scripts, then remove it after testing.
+
+## Batch 4 progress
+
+Officer sign-in and profile-based workspace entry are implemented.
+
+Completed work:
+
+- Configured email authentication with public signup and anonymous
+  sign-ins disabled.
+- Configured the local Site URL and password-recovery redirect URL.
+- Added shared session tracking through AuthProvider and useAuth.
+- Added the officer email/password sign-in form and handled errors.
+- Added a profile SELECT policy restricted to the signed-in permanent
+  user's own row and seven explicitly permitted columns.
+- Kept profile inserts and updates unavailable to application users.
+- Added profile response validation, request cancellation, timeout,
+  retry, window-focus refresh, and current-session sign-out.
+- Protected the officer route with session and active-profile checks.
+
+Four confirmed fictional Auth identities were created. Three have
+application profiles: active author, active custodian, and inactive
+author. The fourth intentionally has no application profile.
+
+Manual checks passed for signed-out redirection, incorrect credentials,
+active account entry, session persistence after refresh, sign-out,
+inactive-account denial, missing-profile denial, public-library access,
+keyboard navigation, and narrow layouts.
+
+Formatting, TypeScript, ESLint, and the production build passed.
+The build still reports a JavaScript chunk-size warning.
+
+The workspace continues to display fictional mock records.
+Operational record scopes, controlled database mutations, immediate
+backend permission revocation, password recovery, and direct API
+security tests remain pending. Batch 4 is not yet complete.
+
+The fictional Auth accounts and profiles remain temporarily for
+continued Batch 4 testing.
