@@ -187,24 +187,49 @@ replay remain pending. Automatic audit integration, bulletin generation,
 source validation, and protection against editing issued bulletins
 will be implemented before their operational use.
 
-The following manual SQL integrity tests passed in the development project:
+## Batch 3 database verification — 2026-10-30
 
-- supabase/tests/001_records_versions_integrity.sql: 9 checks passed.
-- supabase/tests/002_profiles_audit_integrity.sql: 14 checks passed.
-- supabase/tests/003_bulletins_integrity.sql: 20 checks passed.
+The core database schema was verified in two Supabase projects:
 
-Total: 43 passed checks.
+- Development: ea-csc-website-dev
+- Isolated migration replay: ea-csc-schema-replay
 
-The tests verified selected valid inserts and relationships, rejection
-of invalid data, profile defaults, authoritative audit timestamps,
+The replay project was checked before migration execution. None of
+the five application tables or the connection-check function existed.
+
+All six saved migration files were then executed successfully in
+chronological order through the Supabase SQL Editor.
+
+The following manual SQL integrity tests passed in both projects:
+
+- supabase/tests/001_records_versions_integrity.sql: 9 checks.
+- supabase/tests/002_profiles_audit_integrity.sql: 14 checks.
+- supabase/tests/003_bulletins_integrity.sql: 20 checks.
+
+Total: 43 distinct checks passed in each project.
+
+Verification covered selected valid relationships, rejection of
+invalid data, profile defaults, authoritative audit timestamps,
 audit UPDATE/DELETE/TRUNCATE protection, and bulletin metadata rules.
 
-All fictional application fixture rows were rolled back. The confirmed
-Auth identity batch3-integrity@example.invalid remains temporarily
-for testing and will be removed during cleanup.
+Both projects have Row Level Security enabled on all five application
+tables. No application access policies have been added yet.
 
-These scripts run manually through the administrative SQL Editor.
-Application authorization, actual file verification, publication
-workflows, and issued-bulletin immutability require their later tests.
+The anon and authenticated roles have none of the table privileges
+checked by the final verification query.
 
-Migration replay in a separate empty database remains pending.
+All fictional application fixture rows were rolled back. Final checks
+confirmed that all five application tables were empty in both projects.
+
+The temporary Auth identity batch3-integrity@example.invalid was
+deleted from both projects, and its absence was verified.
+
+The connection-check function returned status "ok" in the replay project.
+The website configuration remains pointed at the development project.
+
+These tests were run manually through the administrative SQL Editor.
+They do not verify application authorization, actual stored files,
+publication workflows, or issued-bulletin immutability.
+
+To rerun tests 002 and 003, first recreate the confirmed fictional Auth
+identity required by those scripts, then remove it after testing.
