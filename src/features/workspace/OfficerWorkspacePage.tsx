@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import VersionFileDownload from '../records/VersionFileDownload'
 import { useAuth } from '../auth/useAuth'
 import {
   getAssignedRecords,
@@ -345,6 +346,12 @@ function SelectedRecord({
                   <p className="mt-4 whitespace-pre-wrap wrap-break-word">
                     {version.notes}
                   </p>
+                  <VersionFileDownload
+                    key={`file:${userId}:${version.versionId}`}
+                    userId={userId}
+                    versionId={version.versionId}
+                    versionNumber={version.versionNumber}
+                  />
                   <DraftNotesEditor
                     key={`${version.versionId}:${version.revision}`}
                     userId={userId}
@@ -420,7 +427,7 @@ export default function OfficerWorkspacePage() {
       </div>
       <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
         Development database: the retained test records are fictional. Public
-        library pages still use prototype data. File access, approvals,
+        library pages still use prototype data. File uploads, approvals,
         publication and turnover acknowledgment are coming in later steps.
       </p>
       <div className="flex flex-wrap items-center gap-3">
