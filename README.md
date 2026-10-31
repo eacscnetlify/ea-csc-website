@@ -347,3 +347,14 @@ continued Batch 4 testing.
 - Public library pages still use prototype data.
 - File access, approvals, publication and turnover remain pending.
 - Batch 4 remains in progress.
+
+### Batch 4 — public catalog access checks
+
+- Added a public metadata RPC with seven explicitly selected safe fields.
+- Public results require an explicitly selected, applicable public release.
+- Approved but unreleased versions do not replace the selected released version.
+- Restricted, internal, expired, future and withdrawn releases remain hidden.
+- Release facts and authorization evidence have no direct application access.
+- Development verification passed: six metadata checks, unauthenticated HTTP 200 with an empty catalog, and 44 SQL isolation checks.
+- Temporary catalog fixtures rolled back; existing records and audit/receipt history remained unchanged.
+- Publication commands and public-library integration remain for Batch 6.
