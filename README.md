@@ -403,4 +403,7 @@ continued Batch 4 testing.
 - Storage remains private; acceptance creates a Draft without approval
   or publication.
 - Preserved fictional fixtures and upload history for subsequent verification.
-- Authorized file retrieval and safe cleanup remain pending.
+- Authorized officer file retrieval passed all 16 hosted HTTP checks,
+  including byte integrity, access denials, attachment headers and unchanged
+  master revision.
+- Safe cleanup remains pending.

@@ -3,3 +3,7 @@ project_id = "ea-csc-website-new"
 [functions.ea-csc-stage-upload]
 verify_jwt = true
 entrypoint = "./functions/ea-csc-stage-upload/index.ts"
+
+[functions.ea-csc-download-file]
+verify_jwt = true
+entrypoint = "./functions/ea-csc-download-file/index.ts"
