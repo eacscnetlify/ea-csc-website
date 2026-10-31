@@ -369,3 +369,22 @@ continued Batch 4 testing.
 - Development HTTP fixtures and their audit/receipt history are retained.
 - The frontend remains configured for ea-csc-website-dev.
 - Private file handling follows in Batch 5. Publication commands and public-library integration remain for Batch 6.
+
+### Batch 5 progress — private upload staging
+
+- Created two private Storage buckets with a 10,000,000-byte file limit
+  and the four approved MIME types.
+- Added controlled upload preparation with current authorization,
+  record revision checks, immutable preparation facts, audit events,
+  and retry receipts.
+- Deployed `ea-csc-stage-upload` to the development project.
+- Configured function-scoped Deno dependency resolution; local Deno
+  type checking and linting passed.
+- Verified signed-out rejection and nine authenticated HTTP checks:
+  preparation, identical retries, size/checksum rejection, valid
+  private staging, and public URL denial.
+- Confirmed nine database checks: one request, matching audit and
+  receipt, one staged object, unchanged master revision, and no
+  official version or final-destination object.
+- Document-format verification, controlled acceptance, orphan cleanup,
+  authorized downloads, and upload UI integration remain pending.

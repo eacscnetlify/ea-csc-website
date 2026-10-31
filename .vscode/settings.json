@@ -5,5 +5,7 @@
   "editor.insertSpaces": true,
   "files.eol": "\n",
   "files.insertFinalNewline": true,
-  "files.trimTrailingWhitespace": true
+  "files.trimTrailingWhitespace": true,
+  "deno.enablePaths": ["./supabase/functions"],
+  "deno.config": "./supabase/functions/ea-csc-stage-upload/deno.json"
 }
