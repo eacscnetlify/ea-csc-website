@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { acceptUpload } from './accept-upload.ts'
 
 declare const Deno: {
   env: { get(name: string): string | undefined }
@@ -305,7 +306,35 @@ Deno.serve(async (request) => {
     }
 
     const actor = auth.user.id
+    const action = new URL(request.url).searchParams.get('action') ?? 'stage'
 
+    if (action === 'accept') {
+      const requestId = new URL(request.url).searchParams
+        .get('request_id')
+        ?.toLowerCase()
+
+      if (!requestId || !UUID.test(requestId)) {
+        throw new UploadError(
+          400,
+          'INVALID_REQUEST_ID',
+          'Provide a valid acceptance request ID.',
+        )
+      }
+
+      const result = await acceptUpload(
+        userClient,
+        createClient(url, serverKey, options),
+        actor,
+        id,
+        requestId,
+      )
+
+      return reply(origin, result.status, result.body)
+    }
+
+    if (action !== 'stage') {
+      throw new UploadError(400, 'INVALID_ACTION', 'Use stage or accept.')
+    }
     const getRequest = async () => {
       const { data, error } = await userClient.rpc('eacsc_get_upload_request', {
         p_upload_id: id,

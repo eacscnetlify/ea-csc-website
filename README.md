@@ -388,3 +388,19 @@ continued Batch 4 testing.
   official version or final-destination object.
 - Document-format verification, controlled acceptance, orphan cleanup,
   authorized downloads, and upload UI integration remain pending.
+
+### Batch 5 — verified upload acceptance checkpoint
+
+- Added PDF, JPEG/PNG, and DOCX verification helpers; all 85 local
+  verification tests passed.
+- Deployed the staging and acceptance handler with its helper modules.
+- Hosted PDF acceptance verification passed all 17 HTTP checks.
+- Database verification passed all 17 checks, confirming matching version,
+  file metadata, predecessor, master revision, audit, receipt, and acceptance
+  decision.
+- Plain text labeled as PDF was rejected without creating an official version.
+- Acceptance retries returned the same version and audit.
+- Storage remains private; acceptance creates a Draft without approval
+  or publication.
+- Preserved fictional fixtures and upload history for subsequent verification.
+- Authorized file retrieval and safe cleanup remain pending.
