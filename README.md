@@ -358,3 +358,14 @@ continued Batch 4 testing.
 - Development verification passed: six metadata checks, unauthenticated HTTP 200 with an empty catalog, and 44 SQL isolation checks.
 - Temporary catalog fixtures rolled back; existing records and audit/receipt history remained unchanged.
 - Publication commands and public-library integration remain for Batch 6.
+
+### Batch 4 — completion checkpoint
+
+- Authentication, assigned-record access, controlled Draft-note editing and the safe public metadata boundary are implemented and verified.
+- Development verification passed: 100 HTTP checks, workspace save/conflict checks and audit/receipt history verification.
+- The five Batch 4 migrations were applied in order to ea-csc-schema-replay after its verified Batch 3 baseline.
+- Replay verification passed: 61 read-access checks, 70 Draft-command checks, 44 public-catalog checks and both six-check metadata queries.
+- Final replay contents: three application profiles; no records, versions, assignments, releases, audit events, mutation receipts or bulletins.
+- Development HTTP fixtures and their audit/receipt history are retained.
+- The frontend remains configured for ea-csc-website-dev.
+- Private file handling follows in Batch 5. Publication commands and public-library integration remain for Batch 6.
