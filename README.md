@@ -406,4 +406,6 @@ continued Batch 4 testing.
 - Authorized officer file retrieval passed all 16 hosted HTTP checks,
   including byte integrity, access denials, attachment headers and unchanged
   master revision.
-- Safe cleanup remains pending.
+- Safe cleanup passed all 13 database checks. Three reviewed staging objects
+  were removed while preserving the accepted final file and immutable history.
+- All 16 authorized-download HTTP checks passed again after cleanup.
