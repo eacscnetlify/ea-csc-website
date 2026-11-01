@@ -409,3 +409,21 @@ continued Batch 4 testing.
 - Safe cleanup passed all 13 database checks. Three reviewed staging objects
   were removed while preserving the accepted final file and immutable history.
 - All 16 authorized-download HTTP checks passed again after cleanup.
+
+### Batch 5 — file ingestion and retrieval complete
+
+Verified in development on 1 November 2026:
+
+- PDF, DOCX, JPEG and PNG browser uploads and downloads passed.
+- Versions 2–6 retain accepted attachments, matching preparation facts,
+  acceptance decisions, audit events and immutable receipts.
+- All 13 final database verification checks passed.
+- Both managed buckets remain private, with no direct Storage policies.
+- Previously cleaned staging objects remain absent, and abandoned uploads
+  remain blocked from acceptance.
+- Accepted versions remain Drafts without approval or public release.
+- Workspace access rechecks preserve layout and entered form values.
+- Formatting, TypeScript, lint, production build and whitespace checks passed.
+
+Verification SQL files describe specific checkpoints. Later workflow changes
+may legitimately change the fixture state those historical checks expect.
