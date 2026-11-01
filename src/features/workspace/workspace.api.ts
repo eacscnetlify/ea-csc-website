@@ -201,19 +201,20 @@ export async function getAssignedVersions(
       'This record is no longer accessible. Reload the record list.',
     )
   const record = recordRow(master.data)
-  const canEditDraft = assignments.data.some((value: unknown) => {
-    const row = object(value)
-    return (
-      row.record_id === recordId &&
-      row.user_id === userId &&
-      row.is_active === true &&
-      ['author', 'custodian'].includes(String(row.assignment_function)) &&
-      currentProfile.functional_roles.includes(
-        String(row.assignment_function),
-      ) &&
-      (record.accessClass !== 'restricted' || row.allow_restricted === true)
-    )
-  })
+  const hasFunction = (name: string) =>
+    assignments.data.some((value: unknown) => {
+      const row = object(value)
+      return (
+        row.record_id === recordId &&
+        row.user_id === userId &&
+        row.is_active === true &&
+        row.assignment_function === name &&
+        currentProfile.functional_roles.includes(name) &&
+        (record.accessClass !== 'restricted' || row.allow_restricted === true)
+      )
+    })
+
+  const canEditDraft = hasFunction('author') || hasFunction('custodian')
   return {
     record,
     versions: versions.data
@@ -221,6 +222,8 @@ export async function getAssignedVersions(
       .map((v: unknown) => versionRow(v, recordId)),
     truncated: versions.data.length > 100,
     canEditDraft,
+    canSubmitForReview: hasFunction('author'),
+    canReturnForCorrection: hasFunction('reviewer'),
   }
 }
 

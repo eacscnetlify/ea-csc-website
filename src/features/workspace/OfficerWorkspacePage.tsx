@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { SubmitEvent } from 'react'
 import { useAuth } from '../auth/useAuth'
+import ReviewHistory from '../records/ReviewHistory'
 import VersionFileDownload from '../records/VersionFileDownload'
 import UploadVersionForm from '../records/UploadVersionForm'
+import ReviewActions from '../records/ReviewActions'
 import {
   getAssignedRecords,
   getAssignedVersions,
@@ -250,6 +252,17 @@ function SelectedRecord({
     },
     [refresh],
   )
+  const reviewed = useCallback(
+    (state: 'Draft' | 'For Review') => {
+      setNotice(
+        state === 'For Review'
+          ? 'Submission confirmed. Author-only access hides versions while they are For Review.'
+          : 'Return confirmed. The version is back in Draft and the review comments are retained.',
+      )
+      refresh()
+    },
+    [refresh],
+  )
   useEffect(() => {
     let disposed = false
     const controller = new AbortController()
@@ -312,6 +325,22 @@ function SelectedRecord({
             recordRevision={details.record.revision}
             canUpload={details.canEditDraft}
             onReload={refresh}
+          />
+          <ReviewActions
+            key={`actions:${userId}:${recordId}`}
+            userId={userId}
+            recordId={recordId}
+            versions={details.versions}
+            canSubmit={details.canSubmitForReview}
+            canReturn={details.canReturnForCorrection}
+            onConfirmed={reviewed}
+            onReload={refresh}
+          />
+          <ReviewHistory
+            key={`reviews:${userId}:${recordId}`}
+            userId={userId}
+            recordId={recordId}
+            versions={details.versions}
           />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h3 className="text-xl font-bold">Versions you can access</h3>
