@@ -8,6 +8,7 @@ export interface AssignedRecord {
   category: string
   accessClass: 'public' | 'internal' | 'restricted'
   custodianPosition: string
+  revision: number
 }
 export interface AssignedVersion {
   versionId: string
@@ -43,7 +44,8 @@ export class WorkspaceError extends Error {
     this.kind = kind
   }
 }
-const recordColumns = 'record_id,title,category,access_class,custodian_position'
+const recordColumns =
+  'record_id,title,category,access_class,custodian_position,revision_counter'
 const versionColumns =
   'version_id,record_id,version_number,revision_counter,state,change_summary,updated_at'
 const pageSize = 20
@@ -91,6 +93,7 @@ function recordRow(value: unknown): AssignedRecord {
     category: text(row.category),
     accessClass: row.access_class as AssignedRecord['accessClass'],
     custodianPosition: text(row.custodian_position),
+    revision: positive(row.revision_counter),
   }
 }
 function versionRow(value: unknown, recordId: string): AssignedVersion {

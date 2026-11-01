@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import type { FormEvent } from 'react'
-import VersionFileDownload from '../records/VersionFileDownload'
+import type { SubmitEvent } from 'react'
 import { useAuth } from '../auth/useAuth'
+import VersionFileDownload from '../records/VersionFileDownload'
+import UploadVersionForm from '../records/UploadVersionForm'
 import {
   getAssignedRecords,
   getAssignedVersions,
@@ -122,7 +123,7 @@ function DraftNotesEditor({
       if (mounted.current) setBusy(false)
     }
   }
-  function submit(event: FormEvent<HTMLFormElement>) {
+  function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!canEdit || version.state !== 'Draft' || locked || denied) return
     void save()
@@ -304,6 +305,14 @@ function SelectedRecord({
               {details.record.category}
             </p>
           </div>
+          <UploadVersionForm
+            key={`upload:${userId}:${recordId}`}
+            userId={userId}
+            recordId={recordId}
+            recordRevision={details.record.revision}
+            canUpload={details.canEditDraft}
+            onReload={refresh}
+          />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h3 className="text-xl font-bold">Versions you can access</h3>
             <button type="button" className={button} onClick={refresh}>
@@ -423,12 +432,13 @@ export default function OfficerWorkspacePage() {
         <p className="mt-3 text-slate-700">
           View records available to your current account and record assignments.
           Authorized Authors and Custodians can update Draft version notes.
+          Download attachments available to your current account.
         </p>
       </div>
       <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
         Development database: the retained test records are fictional. Public
-        library pages still use prototype data. File uploads, approvals,
-        publication and turnover acknowledgment are coming in later steps.
+        library pages still use prototype data. Approvals, publication and
+        turnover acknowledgment are coming in later steps.
       </p>
       <div className="flex flex-wrap items-center gap-3">
         <button type="button" className={button} onClick={() => reload()}>
