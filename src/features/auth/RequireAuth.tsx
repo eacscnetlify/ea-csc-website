@@ -88,8 +88,12 @@ function OfficerProfileGate({
   const [state, setState] = useState<ProfileState>({ status: 'loading' })
   const [attempt, setAttempt] = useState(0)
   const [checking, setChecking] = useState(true)
+  const checkInFlight = useRef(true)
 
   const refreshAccess = useCallback(() => {
+    // Coalesce focus events while the existing access check is running.
+    if (checkInFlight.current) return
+    checkInFlight.current = true
     setChecking(true)
     setAttempt((current) => current + 1)
   }, [])
@@ -115,7 +119,10 @@ function OfficerProfileGate({
       })
       .finally(() => {
         window.clearTimeout(timeoutId)
-        if (!disposed) setChecking(false)
+        if (!disposed) {
+          checkInFlight.current = false
+          setChecking(false)
+        }
       })
 
     return () => {
@@ -175,9 +182,10 @@ function OfficerProfileGate({
         >
           Public library
         </Link>
+        <p role="status" className="min-h-6 text-sm text-slate-600">
+          {checking ? 'Checking account access…' : ''}
+        </p>
       </section>
-
-      {checking && <p role="status">Checking your application profile…</p>}
 
       {state.status === 'error' && (
         <section className="space-y-2">
@@ -226,7 +234,9 @@ function OfficerProfileGate({
         )}
 
       {hasAccess && (
-        <div hidden={checking} inert={checking}>
+        // Keep the last authorized view in place during revalidation. Inert
+        // blocks interaction; a failed or denied check removes this view.
+        <div inert={checking} aria-busy={checking}>
           {children}
         </div>
       )}
