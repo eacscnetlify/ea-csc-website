@@ -1,3 +1,5 @@
+import ConflictModal from '../../components/ui/ConflictModal'
+import HistoryPanel from '../history/HistoryPanel'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { SubmitEvent } from 'react'
 import { useAuth } from '../auth/useAuth'
@@ -47,6 +49,7 @@ function DraftNotesEditor({
   const [attempt, setAttempt] = useState<DraftAttempt | undefined>(initial)
   const [busy, setBusy] = useState(initial?.status === 'sending')
   const [error, setError] = useState(initial?.error?.message ?? '')
+  const [conflictOpen, setConflictOpen] = useState(false)
   const mounted = useRef(false)
   const submitting = useRef(false)
   const fieldId = useId()
@@ -119,10 +122,12 @@ function DraftNotesEditor({
         onSaved(receipt)
       }
     } catch (failure) {
-      if (mounted.current) setError(message(failure))
-    } finally {
-      submitting.current = false
-      if (mounted.current) setBusy(false)
+      if (mounted.current) {
+        setError(message(failure))
+        if (failure instanceof WorkspaceError && failure.kind === 'conflict') {
+          setConflictOpen(true)
+        }
+      }
     }
   }
   function submit(event: SubmitEvent<HTMLFormElement>) {
@@ -225,6 +230,17 @@ function DraftNotesEditor({
             : 'Keep this page open. Retrying uses the original notes and request so the same edit is not applied twice.'}
         </p>
       )}
+      <ConflictModal
+        open={conflictOpen}
+        localText={notes}
+        storedText={version.notes}
+        storedRevision={version.revision}
+        onReload={() => {
+          setConflictOpen(false)
+          onReload()
+        }}
+        onClose={() => setConflictOpen(false)}
+      />
     </form>
   )
 }
@@ -341,6 +357,10 @@ function SelectedRecord({
             userId={userId}
             recordId={recordId}
             versions={details.versions}
+          />
+          <HistoryPanel
+            key={`audit:${userId}:${recordId}`}
+            recordId={recordId}
           />
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h3 className="text-xl font-bold">Versions you can access</h3>
