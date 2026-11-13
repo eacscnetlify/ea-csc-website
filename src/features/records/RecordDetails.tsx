@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { PublicRecordItem } from './records.types'
 
 interface RecordDetailsProps {
@@ -11,6 +12,56 @@ const dateFormatter = new Intl.DateTimeFormat('en-PH', {
 })
 
 export default function RecordDetails({ record, history }: RecordDetailsProps) {
+  const [downloading, setDownloading] = useState(false)
+  const [downloadError, setDownloadError] = useState('')
+
+  async function downloadPublicCopy() {
+    if (downloading) return
+    setDownloading(true)
+    setDownloadError('')
+    try {
+      const endpoint = new URL(
+        '/functions/v1/ea-csc-public-download',
+        import.meta.env.VITE_SUPABASE_URL.trim(),
+      )
+      endpoint.searchParams.set('record_id', record.recordId)
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        cache: 'no-store',
+        credentials: 'omit',
+        redirect: 'error',
+        signal: AbortSignal.timeout(30_000),
+      })
+      if (!response.ok) {
+        throw new Error('Official file is currently unavailable.')
+      }
+      const blob = await response.blob()
+      const disposition = response.headers.get('Content-Disposition') ?? ''
+      const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1]
+      const filename = encodedName
+        ? decodeURIComponent(encodedName)
+        : `${record.recordId}_v${record.versionNumber}`
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = filename
+      document.body.append(link)
+      try {
+        link.click()
+      } finally {
+        link.remove()
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000)
+      }
+    } catch (failure) {
+      setDownloadError(
+        failure instanceof Error
+          ? failure.message
+          : 'Download could not be completed.',
+      )
+    } finally {
+      setDownloading(false)
+    }
+  }
   return (
     <div className="space-y-6">
       <section
@@ -109,10 +160,21 @@ export default function RecordDetails({ record, history }: RecordDetailsProps) {
           </p>
         </div>
 
-        <p className="mt-6 rounded-lg bg-slate-100 p-4 text-sm leading-6 text-slate-600">
-          Fictional preview: no document file is attached, so a download is not
-          available.
-        </p>
+        <div className="mt-6 space-y-2 border-t border-slate-200 pt-5">
+          <button
+            type="button"
+            disabled={downloading}
+            onClick={() => void downloadPublicCopy()}
+            className="rounded-lg bg-green-800 px-4 py-2 text-sm font-semibold text-white hover:bg-green-900 disabled:opacity-50"
+          >
+            {downloading ? 'Downloading…' : 'Download official copy'}
+          </button>
+          {downloadError && (
+            <p role="alert" className="text-sm text-red-800">
+              {downloadError}
+            </p>
+          )}
+        </div>
       </section>
 
       <section

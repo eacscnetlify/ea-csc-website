@@ -7,3 +7,11 @@ entrypoint = "./functions/ea-csc-stage-upload/index.ts"
 [functions.ea-csc-download-file]
 verify_jwt = true
 entrypoint = "./functions/ea-csc-download-file/index.ts"
+
+[functions.ea-csc-publish-release]
+verify_jwt = true
+entrypoint = "./functions/ea-csc-publish-release/index.ts"
+
+[functions.ea-csc-public-download]
+verify_jwt = false
+entrypoint = "./functions/ea-csc-public-download/index.ts"

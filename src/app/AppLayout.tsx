@@ -3,7 +3,9 @@ import { Link, NavLink, Outlet } from 'react-router'
 const navigationItems = [
   { to: '/', label: 'Public library', end: true },
   { to: '/login', label: 'Officer sign-in', end: false },
-  { to: '/officer', label: 'Officer workspace', end: false },
+  { to: '/officer', label: 'Officer workspace', end: true },
+  { to: '/officer/reviews', label: 'Review queue', end: false },
+  { to: '/officer/releases', label: 'Release panel', end: false },
 ]
 
 export default function AppLayout() {

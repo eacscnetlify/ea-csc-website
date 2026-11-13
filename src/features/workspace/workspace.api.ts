@@ -5,9 +5,13 @@ import type { OfficerProfile } from '../auth/auth.api'
 export interface AssignedRecord {
   recordId: string
   title: string
+  summary: string
   category: string
+  documentType: string
+  originatingOffice: string
   accessClass: 'public' | 'internal' | 'restricted'
   custodianPosition: string
+  recordDate: string | null
   revision: number
 }
 export interface AssignedVersion {
@@ -16,8 +20,25 @@ export interface AssignedVersion {
   versionNumber: number
   revision: number
   state: 'Draft' | 'For Review' | 'Approved' | 'Superseded'
+  previousVersionId: string | null
   notes: string
+  correctionClassification: string | null
+  approvedAt: string | null
+  createdAt: string
   updatedAt: string
+}
+export interface VersionFileInfo {
+  versionId: string
+  originalFilename: string
+  mimeType: string
+  fileSizeBytes: number
+  sha256: string
+}
+export interface ReviewQueueItem {
+  record: AssignedRecord
+  version: AssignedVersion
+  predecessor: AssignedVersion | null
+  assignedFunctions: string[]
 }
 export interface DraftRequest {
   actorId: string
@@ -45,9 +66,9 @@ export class WorkspaceError extends Error {
   }
 }
 const recordColumns =
-  'record_id,title,category,access_class,custodian_position,revision_counter'
+  'record_id,title,summary,category,document_type,originating_office,access_class,custodian_position,record_date,revision_counter'
 const versionColumns =
-  'version_id,record_id,version_number,revision_counter,state,change_summary,updated_at'
+  'version_id,record_id,version_number,revision_counter,state,previous_version_id,change_summary,correction_classification,approved_at,created_at,updated_at'
 const pageSize = 20
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 function object(value: unknown): Record<string, unknown> {
@@ -64,6 +85,12 @@ function text(value: unknown): string {
       'load',
       'The workspace response was incomplete. Reload the records.',
     )
+  return value
+}
+function optionalText(value: unknown): string | null {
+  if (value === null || value === undefined) return null
+  if (typeof value !== 'string')
+    throw new WorkspaceError('load', 'An invalid text field was returned.')
   return value
 }
 function positive(value: unknown): number {
@@ -90,9 +117,13 @@ function recordRow(value: unknown): AssignedRecord {
   return {
     recordId: text(row.record_id),
     title: text(row.title),
+    summary: typeof row.summary === 'string' ? row.summary : '',
     category: text(row.category),
+    documentType: text(row.document_type),
+    originatingOffice: text(row.originating_office),
     accessClass: row.access_class as AssignedRecord['accessClass'],
     custodianPosition: text(row.custodian_position),
+    recordDate: optionalText(row.record_date),
     revision: positive(row.revision_counter),
   }
 }
@@ -104,7 +135,10 @@ function versionRow(value: unknown, recordId: string): AssignedVersion {
       String(row.state),
     ) ||
     typeof row.version_id !== 'string' ||
-    !uuid.test(row.version_id)
+    !uuid.test(row.version_id) ||
+    (row.previous_version_id !== null &&
+      (typeof row.previous_version_id !== 'string' ||
+        !uuid.test(row.previous_version_id)))
   )
     throw new WorkspaceError('load', 'An invalid record version was returned.')
   return {
@@ -113,7 +147,14 @@ function versionRow(value: unknown, recordId: string): AssignedVersion {
     versionNumber: positive(row.version_number),
     revision: positive(row.revision_counter),
     state: row.state as AssignedVersion['state'],
+    previousVersionId: row.previous_version_id as string | null,
     notes: text(row.change_summary),
+    correctionClassification: optionalText(row.correction_classification),
+    approvedAt:
+      row.approved_at === null || row.approved_at === undefined
+        ? null
+        : timestamp(row.approved_at),
+    createdAt: timestamp(row.created_at),
     updatedAt: timestamp(row.updated_at),
   }
 }
@@ -225,6 +266,176 @@ export async function getAssignedVersions(
     canSubmitForReview: hasFunction('author'),
     canReturnForCorrection: hasFunction('reviewer'),
   }
+}
+
+export async function getVersionFileMetadata(
+  versionId: string,
+  signal: AbortSignal,
+): Promise<VersionFileInfo | null> {
+  if (!uuid.test(versionId)) {
+    throw new WorkspaceError('validation', 'Invalid version ID.')
+  }
+  const { data, error } = await getSupabaseClient()
+    .rpc('eacsc_get_version_file', { p_version_id: versionId })
+    .abortSignal(signal)
+
+  if (error) {
+    if (error.code === '55000') return null
+    if (error.code === '42501') {
+      throw new WorkspaceError(
+        'denied',
+        'Current file access could not be confirmed.',
+      )
+    }
+    throw new WorkspaceError('load', 'Attachment details could not be loaded.')
+  }
+
+  const row = object(data)
+  if (
+    row.version_id !== versionId ||
+    typeof row.file_size_bytes !== 'number' ||
+    !Number.isSafeInteger(row.file_size_bytes) ||
+    row.file_size_bytes < 1
+  ) {
+    throw new WorkspaceError('load', 'Invalid attachment details returned.')
+  }
+
+  return {
+    versionId,
+    originalFilename: text(row.original_filename),
+    mimeType: text(row.mime_type),
+    fileSizeBytes: row.file_size_bytes,
+    sha256: text(row.sha256),
+  }
+}
+
+export async function getForReviewQueue(
+  userId: string,
+  signal: AbortSignal,
+): Promise<ReviewQueueItem[]> {
+  const client = getSupabaseClient()
+  const [profile, versionsResult, assignmentsResult] = await Promise.all([
+    getOfficerProfile(userId, signal),
+    client
+      .from('record_versions')
+      .select(versionColumns)
+      .eq('state', 'For Review')
+      .order('updated_at', { ascending: false })
+      .limit(100)
+      .abortSignal(signal),
+    client
+      .from('record_assignments')
+      .select(
+        'record_id,user_id,assignment_function,is_active,allow_restricted',
+      )
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .abortSignal(signal),
+  ])
+
+  const currentProfile = active(profile)
+  if (
+    versionsResult.error ||
+    assignmentsResult.error ||
+    !Array.isArray(versionsResult.data) ||
+    !Array.isArray(assignmentsResult.data)
+  ) {
+    throw new WorkspaceError(
+      'load',
+      'The review queue could not be loaded. Check your connection and try again.',
+    )
+  }
+
+  if (versionsResult.data.length === 0) return []
+
+  const recordIds = Array.from(
+    new Set(
+      versionsResult.data.map((row: unknown) => text(object(row).record_id)),
+    ),
+  )
+  const predecessorIds = Array.from(
+    new Set(
+      versionsResult.data
+        .map((row: unknown) => optionalText(object(row).previous_version_id))
+        .filter((id): id is string => id !== null && uuid.test(id)),
+    ),
+  )
+
+  const [mastersResult, predecessorsResult] = await Promise.all([
+    client
+      .from('master_records')
+      .select(recordColumns)
+      .in('record_id', recordIds)
+      .abortSignal(signal),
+    predecessorIds.length > 0
+      ? client
+          .from('record_versions')
+          .select(versionColumns)
+          .in('version_id', predecessorIds)
+          .abortSignal(signal)
+      : Promise.resolve({ data: [], error: null }),
+  ])
+
+  if (
+    mastersResult.error ||
+    predecessorsResult.error ||
+    !Array.isArray(mastersResult.data) ||
+    !Array.isArray(predecessorsResult.data)
+  ) {
+    throw new WorkspaceError(
+      'load',
+      'Record metadata for the review queue could not be loaded.',
+    )
+  }
+
+  const masters = new Map(
+    mastersResult.data.map((row: unknown) => {
+      const parsed = recordRow(row)
+      return [parsed.recordId, parsed] as const
+    }),
+  )
+
+  const predecessors = new Map(
+    predecessorsResult.data.map((row: unknown) => {
+      const raw = object(row)
+      const parsed = versionRow(raw, text(raw.record_id))
+      return [parsed.versionId, parsed] as const
+    }),
+  )
+
+  const items: ReviewQueueItem[] = []
+  for (const raw of versionsResult.data) {
+    const recId = text(object(raw).record_id)
+    const master = masters.get(recId)
+    if (!master) continue
+
+    const version = versionRow(raw, recId)
+    const assignedFunctions = assignmentsResult.data
+      .map((a: unknown) => object(a))
+      .filter(
+        (a) =>
+          a.record_id === recId &&
+          a.user_id === userId &&
+          a.is_active === true &&
+          typeof a.assignment_function === 'string' &&
+          currentProfile.functional_roles.includes(a.assignment_function) &&
+          (master.accessClass !== 'restricted' || a.allow_restricted === true),
+      )
+      .map((a) => String(a.assignment_function))
+
+    if (assignedFunctions.length === 0) continue
+
+    items.push({
+      record: master,
+      version,
+      predecessor: version.previousVersionId
+        ? (predecessors.get(version.previousVersionId) ?? null)
+        : null,
+      assignedFunctions,
+    })
+  }
+
+  return items
 }
 
 export async function updateDraftNotes(

@@ -1,3 +1,5 @@
+import ReleasePanel from '../features/publication/ReleasePanel'
+import ReviewQueuePage from '../features/reviews/ReviewQueuePage'
 import { BrowserRouter, Route, Routes } from 'react-router'
 import LoginPage from '../features/auth/LoginPage'
 import RequireAuth from '../features/auth/RequireAuth'
@@ -30,7 +32,22 @@ export default function AppRouter() {
               </RequireAuth>
             }
           />
-
+          <Route
+            path="officer/reviews"
+            element={
+              <RequireAuth>
+                <ReviewQueuePage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="officer/releases"
+            element={
+              <RequireAuth>
+                <ReleasePanel />
+              </RequireAuth>
+            }
+          />
           {import.meta.env.DEV && (
             <Route path="dev/connection" element={<ConnectionCheckPage />} />
           )}

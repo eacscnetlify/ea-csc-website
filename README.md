@@ -427,3 +427,13 @@ Verified in development on 1 November 2026:
 
 Verification SQL files describe specific checkpoints. Later workflow changes
 may legitimately change the fixture state those historical checks expect.
+
+### Batch 6 progress — review transitions and retained comments
+
+Applied `supabase/migrations/20261101000100_review_transitions.sql` in `ea-csc-website-dev`:
+
+- Added `eacsc_submit_version_for_review` (`Draft` → `For Review` by assigned Author) and `eacsc_return_version_for_correction` (`For Review` → `Draft` with required nonblank comments up to 2,000 characters by assigned Reviewer).
+- Added immutable `public.review_comments` bound to the reviewed and returned revisions, audit events, and retry receipts.
+- Added fictional Reviewer account `batch6-reviewer@example.invalid` assigned to `EACSC-2099-HTTP-9601` (`allow_restricted = false`).
+- Passed all 5 setup checks (`verify_batch6_review_setup.sql`), all 23 hosted HTTP checks (`batch6-review-http.mjs`), and browser submit/return verification.
+- Review queue/inspection, six-point verification checklist, substantive approval, and controlled publication remain in progress.

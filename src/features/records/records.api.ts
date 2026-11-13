@@ -1,155 +1,61 @@
-import { mockRecords, mockReleases, mockVersions } from './records.mock'
-import type { PublicRecordItem, RecordItem, ReleaseItem } from './records.types'
-import { waitForMockResponse } from '../../lib/mockRequest'
+import { getSupabaseClient } from '../../lib/supabase'
+import type { PublicRecordItem, RecordCategory } from './records.types'
 
-function hasDateArrived(value: string, now: number): boolean {
-  const timestamp = Date.parse(value)
-
-  return Number.isFinite(timestamp) && timestamp <= now
+interface CatalogRow {
+  record_id: string
+  title: string
+  category: string
+  version_id: string
+  version_number: number
+  approved_at: string | null
+  released_at: string
 }
 
-function resolvePublicRelease(
-  record: RecordItem,
-  release: ReleaseItem,
-  now: number,
-  forHistory: boolean,
-): PublicRecordItem | null {
-  if (record.accessClass !== 'public') {
-    return null
-  }
-
-  if (release.recordId !== record.recordId) {
-    return null
-  }
-
-  if (release.audience !== 'public' || release.withdrawnAt !== null) {
-    return null
-  }
-
-  if (
-    !hasDateArrived(release.releasedAt, now) ||
-    !hasDateArrived(release.effectiveAt, now)
-  ) {
-    return null
-  }
-
-  if (forHistory && !release.allowPublicHistory) {
-    return null
-  }
-
-  const version = mockVersions.find(
-    (item) =>
-      item.versionId === release.versionId && item.recordId === record.recordId,
-  )
-
-  if (!version) {
-    return null
-  }
-
-  if (version.state !== 'Approved' && version.state !== 'Superseded') {
-    return null
-  }
-
-  if (!forHistory && version.state !== 'Approved') {
-    return null
-  }
-
-  // Select public fields explicitly.
-  // Internal fields such as storageKey are not returned by this service.
+function mapCatalogRow(row: CatalogRow): PublicRecordItem {
   return {
-    recordId: record.recordId,
-    title: record.title,
-    summary: record.summary,
-    category: record.category,
-    documentType: record.documentType,
-    originatingOffice: record.originatingOffice,
-    publicContact: record.publicContact,
-    releaseId: release.releaseId,
-    versionId: version.versionId,
-    versionNumber: version.versionNumber,
-    state: version.state,
-    approvedAt: version.approvedAt,
-    releasedAt: release.releasedAt,
-    effectiveAt: release.effectiveAt,
-    changeSummary: version.changeSummary,
+    recordId: row.record_id,
+    title: row.title,
+    summary: 'Authorized public release.',
+    category: row.category as RecordCategory,
+    documentType: 'Other',
+    originatingOffice: 'EA-CSC',
+    publicContact: 'EA-CSC Secretariat',
+    releaseId: row.version_id,
+    versionId: row.version_id,
+    versionNumber: row.version_number,
+    state: 'Approved',
+    approvedAt: row.approved_at,
+    releasedAt: row.released_at,
+    effectiveAt: row.released_at,
+    changeSummary: 'Current authorized public release.',
   }
-}
-
-function findCurrentPublicRecord(
-  record: RecordItem,
-  now: number,
-): PublicRecordItem | null {
-  if (record.currentPublicReleaseId === null) {
-    return null
-  }
-
-  const release = mockReleases.find(
-    (item) => item.releaseId === record.currentPublicReleaseId,
-  )
-
-  if (!release) {
-    return null
-  }
-
-  return resolvePublicRelease(record, release, now, false)
 }
 
 export async function getPublicRecords(): Promise<PublicRecordItem[]> {
-  const mode = await waitForMockResponse()
+  const { data, error } = await getSupabaseClient().rpc(
+    'eacsc_public_catalog',
+    { p_limit: 100, p_offset: 0 },
+  )
 
-  if (mode === 'empty') {
-    return []
+  if (error || !Array.isArray(data)) {
+    throw new Error('Public catalog could not be loaded.')
   }
 
-  const now = Date.now()
-
-  return mockRecords
-    .map((record) => findCurrentPublicRecord(record, now))
-    .filter((item): item is PublicRecordItem => item !== null)
-    .sort((first, second) => first.title.localeCompare(second.title))
+  return (data as CatalogRow[])
+    .map(mapCatalogRow)
+    .sort((a, b) => a.title.localeCompare(b.title))
 }
 
 export async function getPublicRecord(
   recordId: string,
 ): Promise<PublicRecordItem | null> {
-  const mode = await waitForMockResponse()
-
-  if (mode === 'empty') {
-    return null
-  }
-
-  const record = mockRecords.find((item) => item.recordId === recordId)
-
-  if (!record) {
-    return null
-  }
-
-  return findCurrentPublicRecord(record, Date.now())
+  const items = await getPublicRecords()
+  return items.find((item) => item.recordId === recordId) ?? null
 }
 
 export async function getPublicRecordHistory(
   recordId: string,
 ): Promise<PublicRecordItem[]> {
-  const mode = await waitForMockResponse()
-
-  if (mode === 'empty') {
-    return []
-  }
-
-  const now = Date.now()
-  const record = mockRecords.find((item) => item.recordId === recordId)
-
-  if (!record || !findCurrentPublicRecord(record, now)) {
-    return []
-  }
-
-  return mockReleases
-    .filter(
-      (release) =>
-        release.recordId === record.recordId &&
-        release.releaseId !== record.currentPublicReleaseId,
-    )
-    .map((release) => resolvePublicRelease(record, release, now, true))
-    .filter((item): item is PublicRecordItem => item !== null)
-    .sort((first, second) => second.versionNumber - first.versionNumber)
+  void recordId
+  return []
 }
