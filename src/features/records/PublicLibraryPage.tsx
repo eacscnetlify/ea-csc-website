@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
+import HelpLink from '../../components/ui/HelpLink'
 import RecordDetailsModal from './RecordDetailsModal'
 import { getPublicRecords } from './records.api'
 import { RECORD_CATEGORIES } from './records.types'
@@ -91,12 +92,18 @@ export default function PublicLibraryPage() {
         PUBLIC RECORDS PORTAL
       </p>
 
-      <h1
-        id="library-heading"
-        className="mt-2 text-3xl font-bold tracking-tight text-slate-900"
-      >
-        Public records library
-      </h1>
+      <div className="mt-2 flex items-center gap-3">
+        <h1
+          id="library-heading"
+          className="text-3xl font-bold tracking-tight text-slate-900"
+        >
+          Public records library
+        </h1>
+        <HelpLink
+          section="public-library"
+          label="Open Public Library guide in Help"
+        />
+      </div>
 
       <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
         Browse verified current public releases and open their official record

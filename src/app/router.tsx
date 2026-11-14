@@ -31,6 +31,7 @@ const PublicLibraryPage = lazy(
 const RecordDetailPage = lazy(
   () => import('../features/records/RecordDetailPage'),
 )
+const HelpPage = lazy(() => import('../features/help/HelpPage'))
 const OfficerWorkspacePage = lazy(
   () => import('../features/workspace/OfficerWorkspacePage'),
 )
@@ -57,6 +58,7 @@ export default function AppRouter() {
             <Route index element={<PublicLibraryPage />} />
             <Route path="records/:recordId" element={<RecordDetailPage />} />
             <Route path="bulletins" element={<PublicBulletinsPage />} />
+            <Route path="help" element={<HelpPage />} />
             <Route path="login" element={<LoginPage />} />
 
             <Route path="auth/reset-password" element={<ResetPasswordPage />} />

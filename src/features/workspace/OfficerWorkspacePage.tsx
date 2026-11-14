@@ -1,4 +1,5 @@
 import ConflictModal from '../../components/ui/ConflictModal'
+import HelpLink from '../../components/ui/HelpLink'
 import HistoryPanel from '../history/HistoryPanel'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { SubmitEvent } from 'react'
@@ -475,9 +476,15 @@ export default function OfficerWorkspacePage() {
         <p className="text-sm font-semibold text-emerald-800">
           Assigned records
         </p>
-        <h1 id="workspace-heading" className="mt-2 text-3xl font-bold">
-          Officer workspace
-        </h1>
+        <div className="mt-2 flex items-center gap-3">
+          <h1 id="workspace-heading" className="text-3xl font-bold">
+            Officer workspace
+          </h1>
+          <HelpLink
+            section="workspace"
+            label="Open Officer Workspace guide in Help"
+          />
+        </div>
         <p className="mt-3 text-slate-700">
           View records available to your current account and record assignments.
           Authorized Authors and Custodians can update Draft version notes.
