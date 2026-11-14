@@ -444,3 +444,11 @@ Applied `supabase/migrations/20261101000100_review_transitions.sql` in `ea-csc-w
 - Added the six-point Appendix B verification checklist, provisional-notice rules, substantive approval, and custodian acceptance (`20261113000100_verification_and_approval.sql`).
 - Added the PIO publication/withdrawal panel (`/officer/releases`), `ea-csc-publish-release` and `ea-csc-public-download` Edge Functions (`20261113000200_publication_and_withdrawal.sql`), and connected the public library (`/`).
 - Added the HTTP 409 conflict reconciliation modal (`ConflictModal.tsx`), `Asia/Manila` date formatting (`dates.ts`), and the scoped immutable audit timeline (`HistoryPanel.tsx` + `20261113000300_audit_history_read.sql`).
+
+### Batch 8 completion — update bulletin compiler and PDF generation
+
+- Added audience-isolated release candidate querying (`20261114000100_bulletin_candidates.sql`).
+- Added atomic bulletin issuance and archive registration (`20261114000200_bulletin_issuance.sql`).
+- Added trusted streaming download Edge Function `ea-csc-bulletin-file`.
+- Integrated `jspdf` template compiler with live in-browser preview, frozen JSON source snapshot, and publication checks (`/officer/bulletins`).
+- Added public portal Update Bulletins tab (`/bulletins`) with direct immutable PDF retrieval.

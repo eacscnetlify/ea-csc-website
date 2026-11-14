@@ -1,3 +1,5 @@
+import PublicBulletinsPage from '../features/bulletins/PublicBulletinsPage'
+import BulletinBuilderPage from '../features/bulletins/BulletinBuilderPage'
 import ReleasePanel from '../features/publication/ReleasePanel'
 import ReviewQueuePage from '../features/reviews/ReviewQueuePage'
 import { BrowserRouter, Route, Routes } from 'react-router'
@@ -19,6 +21,7 @@ export default function AppRouter() {
         <Route element={<AppLayout />}>
           <Route index element={<PublicLibraryPage />} />
           <Route path="records/:recordId" element={<RecordDetailPage />} />
+          <Route path="bulletins" element={<PublicBulletinsPage />} />
           <Route path="login" element={<LoginPage />} />
 
           <Route path="auth/reset-password" element={<ResetPasswordPage />} />
@@ -45,6 +48,14 @@ export default function AppRouter() {
             element={
               <RequireAuth>
                 <ReleasePanel />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="officer/bulletins"
+            element={
+              <RequireAuth>
+                <BulletinBuilderPage />
               </RequireAuth>
             }
           />
