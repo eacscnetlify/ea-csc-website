@@ -1,101 +1,225 @@
-# EA-CSC Records System
+# EA-CSC Records Governance System
 
-A responsive records-governance portal for the Engineering and Architecture
-College Student Council.
+The Engineering and Architecture College Student Council's Institutional
+Information and Document Governance System (IIDGS), aligned with Needs Analysis 1,
+Project Proposal Revised V2, and Batch Plan V4.
 
-## Current implementation
+## Current status — 14 November 2026
 
-The development prototype currently includes:
+Batch 9 turnover and offline backup implementation has passed development
+verification. Git Checkpoint 9 remains pending final source review and commit.
 
-- A public mock catalog with search, six-category filtering, record details,
-  permitted history, and a keyboard-accessible quick-view modal.
-- Officer email/password sign-in and shared session tracking.
-- Workspace route entry requiring an active application profile and an
-  assigned functional role.
-- Current-session sign-out and password recovery/update pages.
-- Fictional workspace records, document versions, and a sample turnover package.
-- A Supabase schema with RLS, limited own-profile reads, and append-only audit
-  protections.
+Batch 10 deployment, consolidated acceptance, isolated recovery testing,
+pilot measurement, and formal handover remain pending.
 
-The public catalog and workspace still use fictional mock records. Record-level
-reads will be connected after the new assignment migration is verified.
-Document storage, editing, approval, publication, and turnover acknowledgment
-remain pending. Batch 4 is not yet complete.
+Earlier batch notes are retained below as historical evidence. Their statements
+about mock data or unfinished features describe their original checkpoints.
 
-Colors and layout are provisional. The progress sections below document earlier
-checkpoints; this section describes the current implementation.
+## Implemented capabilities
 
-## Setup environment
+- Officer authentication, active-profile checks, functional roles, and per-record
+  assignments, including explicit restricted-record permission.
+- Controlled private-file ingestion and authorized downloads.
+- Draft, review, approval, replacement, publication, and withdrawal workflows.
+- Six-point verification checks, retained review comments, and scoped audit history.
+- Optimistic concurrency checks using revision counters and PT409 / HTTP 409.
+- Public release catalog and update bulletin preparation, issue, and retrieval.
+- Position inventories, continuity memoranda, frozen outgoing confirmation,
+  administrative access transfer, and incoming acknowledgment.
+- Saved turnover-package JSON export and browser Print / Save PDF.
+- Offline database archives, actual Storage files, structured metadata JSON,
+  SHA-256 manifests, and independent backup verification.
 
-Initial setup used:
+Implementation is not equivalent to final production acceptance. Batch 10 must
+exercise the complete workflows with recorded evidence.
 
-- Windows with PowerShell inside Visual Studio Code
-- Node.js 24.22.1
-- npm 11.19.1
-- Git 2.56.0.windows.4
-- Vite 8.3.5
-- TypeScript 6.0.3
-- Tailwind CSS and its Vite plugin 4.3.3
+## Architecture and development baseline
 
-The package lockfile records the resolved dependency versions.
+- Frontend: React 19, TypeScript 6, Vite 8.3.5, Tailwind CSS 4, React Router.
+- Backend: Supabase PostgreSQL, Auth, private Storage, and trusted Edge Functions.
+- Development project: `ea-csc-website-dev`.
+- Development project reference: `gkhhwrrvqlzpayphvsqp`.
+- Local frontend: `http://localhost:5173`.
+- Development tools: Node.js 24 and Windows PowerShell.
+- Verified PostgreSQL clients: 17.12; hosted PostgreSQL: 17.11.
+- Displayed operational timestamps: `Asia/Manila` (UTC+8).
+- Resolved dependency versions are recorded in the package lockfile.
 
-## Commands
+## Local setup and commands
 
-Run commands from the project folder.
+Install locked dependencies using `npm.cmd ci`. Create the ignored `.env.local`
+from `.env.example`, supplying the environment's public Supabase URL and
+publishable key. The backend must be provisioned for operational pages to work.
 
-- `npm.cmd ci` — install the locked dependencies after obtaining a project copy
-- `npm.cmd run dev -- --host localhost --port 5173 --strictPort` — start the
-  development server at the configured local authentication URL
-- `npm.cmd run lint` — run ESLint
-- `npm.cmd run typecheck` — run TypeScript checks
-- `npm.cmd run format` — format project files
-- `npm.cmd run format:check` — check formatting
-- `npm.cmd run build` — generate production files in dist
-- `npm.cmd run preview` — serve the built files locally
+```powershell
+npm.cmd run dev -- --host localhost --port 5173 --strictPort
+```
 
-For local authentication, use http://localhost:5173. Press Ctrl+C to stop it.
+Development checks:
 
-## Source layout
+```powershell
+npm.cmd run format:check
+npm.cmd run typecheck
+npm.cmd run lint
+npm.cmd run build
+```
 
-- src/App.tsx — application router entry
-- src/main.tsx — application entry point
-- src/app — shared application layout and routing
-- src/components/ui — reusable interface components
-- src/features — feature-specific screens and logic
-- src/lib — shared utilities and service clients
-- src/styles/global.css — shared styles and Tailwind import
-- src/types — shared TypeScript definitions
+`npm.cmd run preview` serves the built files locally.
 
-## Toolchain compatibility
+For static hosting, the build command is `npm run build` and the publish
+directory is `dist`.
 
-The generated starter requested TypeScript 7, while its typescript-eslint
-dependency required TypeScript below 6.1. The project uses ~6.0.0 to resolve
-that conflict. Check compatibility before changing these versions.
+## Configuration boundaries
 
-## Configuration and records
+Frontend configuration uses only:
 
-Local environment files are excluded from Git. Any future .env.example must
-contain placeholders only.
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
 
-Do not store real restricted records, backup exports, or credentials in the
-source repository.
+Privileged backup configuration belongs in the ignored `.env.backup.local`:
 
-Git checkpoints preserve source code. They do not back up operational records.
+- `SUPABASE_URL`
+- `SUPABASE_BACKUP_KEY`
+- `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`
+- `PG_BIN_DIR`, `PGSSLROOTCERT`, `BACKUP_ROOT`
 
-## Development mock testing
+The downloaded root certificate supports verified TLS database connections.
 
-While running the development server, the browser Session Storage setting
-`ea-csc:mock-mode` supports:
+Keep credentials, local environment files, protected records, and backup exports
+outside Git. Privileged keys must never be exposed through frontend variables.
 
-- `normal`: usual fictional data.
-- `slow`: delayed responses for checking loading messages.
-- `empty`: empty service results.
-- `error`: simulated request failures.
+Migrations are versioned in `supabase/migrations/`. Changing migration or Edge
+Function source files does not automatically deploy those changes to Supabase.
 
-Change the setting under the origin matching the current development URL.
-Changes affect subsequent requests. Restore `normal` after testing.
+## Batch 9 verified results
 
-The normal production build ignores this setting.
+- Saved and reopened the continuity memorandum.
+- Confirmed an inventory containing fictional records 9701 and 9702.
+- Froze the outgoing inventory and transferred existing position assignments.
+- Verified outgoing profile deactivation and zero active outgoing assignments.
+- Retrieved both version 2 attachments as the incoming officer.
+- Recorded one acknowledgment; final package status `acknowledged`, revision 4.
+- Confirmed four audited operations and four matching retry receipts.
+- Exported the saved turnover package as JSON and PDF.
+- Passed TypeScript, lint, and build checks during turnover implementation.
+- Passed repository formatting and lint after backup implementation.
+- Finalized a backup containing 72 metadata tables and 18 Storage files.
+- Verified manifests, metadata row counts, file sizes, and SHA-256 checksums.
+- Recorded one expected fixture exception, zero unexpected source issues,
+  and zero archive warnings.
+
+The 72-table count includes captured Auth, Storage, and private-schema tables.
+It is not a count of application record types.
+
+## Backup operation
+
+Run complete backups at least weekly and before major changes or handover.
+The verified Windows backup root was `D:/EA_CSC_Backups`.
+
+Create a new complete capture:
+
+```powershell
+node --env-file=.env.backup.local scripts/backup.mjs
+```
+
+Verify an existing capture, replacing the folder placeholder:
+
+```powershell
+node --env-file=.env.backup.local scripts/verify-backup.mjs "D:\EA_CSC_Backups\<backup-folder>"
+```
+
+`backup.mjs --finalize <backup-folder>` completes an existing capture. It does
+not create a fresh snapshot of changes made after that capture.
+
+Backup contents include database archives, Storage catalog and original file
+bytes, structured metadata JSON, review evidence, and consolidated manifests.
+
+Metadata JSON represents SQL NULL as JSON null and other values as strings.
+The native archives remain the recovery source for PostgreSQL types, schema,
+functions, policies, and sequence state.
+
+The manifest provides SHA-256 integrity checks. It is not digitally signed.
+
+### Documented development fixture exception
+
+`EACSC-2099-HTTP-9604` version 1 intentionally references
+`batch4-http-fixtures/no-object-review.pdf` without an uploaded file.
+
+Its seed is `supabase/tests/setup_batch4_http_fixtures.sql`. The verifier
+recognizes only the exact documented fixture metadata and retains the exception.
+Other missing references still require review.
+
+The verified snapshot contains 16 record versions, zero release rows, and zero
+bulletin rows. It does not establish recovery of issued release or bulletin
+artifacts. The Batch 10 drill must include representative issued artifacts.
+
+### Recovery preparation
+
+A verified capture is not a successful restoration.
+
+The Batch 10 recovery procedure must:
+
+1. Verify the selected backup and record the recovery start time.
+2. Provision an empty, isolated target with the required Supabase baseline,
+   roles, extensions, Auth, and private Storage services.
+3. Review archive dependencies and restore lists. Managed-schema archives are
+   recovery references, not instructions to overwrite provider-owned schemas.
+4. Restore application data and controls, including reviewed Auth identity/profile
+   bindings and application permissions.
+5. Restore bucket configuration and actual file bytes to their original paths
+   through Storage APIs. Storage metadata alone restores no files.
+6. Deploy matching trusted functions and configure isolated Auth URLs and origins.
+7. Compare restored records, relationships, histories, files, and permissions
+   against the manifest; test authorized retrieval and prohibited access.
+8. Include an issued bulletin and its source relationships, record recovery time,
+   and retain defects and retest results.
+
+Keep the operational project untouched throughout the drill.
+
+Pilot objectives are recovery within one working day and no more than seven
+days of lost updates when the weekly backup schedule is followed. These are
+project objectives, not provider guarantees.
+
+## Batch 10 deployment and handover
+
+Batch Plan V4 currently specifies Cloudflare Pages for frontend hosting.
+Netlify is a compatible alternative under consideration. A host change must be
+recorded as a plan amendment. Supabase remains the backend in either arrangement.
+
+Before live use:
+
+- Designate the production backend and separate preview/development configuration.
+- Inspect the applied migration and deployed function state.
+- Configure SPA routing, build-time public variables, Auth/recovery URLs,
+  permitted function origins, HTTPS, and rollback.
+- Verify complete publication and bulletin workflows using controlled test records.
+
+Source-review findings to verify against the current working tree and backend:
+
+- Five file/publication Edge Functions currently hardcode
+  `http://localhost:5173` as their permitted origin.
+- The bulletin master-record INSERT in
+  `20261114000200_bulletin_issuance.sql` lists nine target columns but eight
+  values. If still present, resolve it through a new corrective migration.
+
+Completion requires:
+
+- Documented D01–D18 and supplementary P01–P04 results.
+- A successful isolated recovery drill.
+- The planned pilot group of 12 participants.
+- Approximately 30 agreed records and at least 30 realistic retrieval tasks.
+- Independent retrieval success of at least 90%, with failures and assistance
+  reported separately and median successful-task time assessed against 30 seconds.
+- The adopted SOP, populated index, verification tools, User Guide, Technical
+  Guide, ownership/recovery/support register, evaluation report, turnover
+  demonstrations, and signed handover receipt.
+
+Git Checkpoint 10 follows completion of the required evidence and handover.
+
+## Historical development log
+
+The following sections preserve earlier implementation and verification results.
+Their unfinished-work statements apply to their original checkpoints.
 
 ## Batch 2 verification
 

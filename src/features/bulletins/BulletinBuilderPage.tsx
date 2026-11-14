@@ -563,7 +563,7 @@ export default function BulletinBuilderPage() {
           <iframe
             title="Update Bulletin PDF Preview"
             src={previewUrl}
-            className="h-[600px] w-full rounded-lg border border-slate-300"
+            className="h-150 w-full rounded-lg border border-slate-300"
           />
         </div>
       )}

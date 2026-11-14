@@ -1,3 +1,5 @@
+import TurnoverPage from '../features/turnover/TurnoverPage'
+import AccessPage from '../features/admin/AccessPage'
 import PublicBulletinsPage from '../features/bulletins/PublicBulletinsPage'
 import BulletinBuilderPage from '../features/bulletins/BulletinBuilderPage'
 import ReleasePanel from '../features/publication/ReleasePanel'
@@ -56,6 +58,22 @@ export default function AppRouter() {
             element={
               <RequireAuth>
                 <BulletinBuilderPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="officer/turnover"
+            element={
+              <RequireAuth>
+                <TurnoverPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="officer/admin/access"
+            element={
+              <RequireAuth>
+                <AccessPage />
               </RequireAuth>
             }
           />

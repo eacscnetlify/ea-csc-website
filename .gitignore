@@ -22,3 +22,8 @@ Thumbs.db
 .idea/
 
 /supabase/.temp/
+
+# Local backup configuration and output
+.env.backup.local
+supabase-root.crt
+/backups/

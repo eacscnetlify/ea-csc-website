@@ -8,6 +8,8 @@ const navigationItems = [
   { to: '/officer/reviews', label: 'Review queue', end: false },
   { to: '/officer/releases', label: 'Release panel', end: false },
   { to: '/officer/bulletins', label: 'Compile Bulletin', end: false },
+  { to: '/officer/turnover', label: 'Turnover', end: false },
+  { to: '/officer/admin/access', label: 'Access transfer', end: false },
 ]
 
 export default function AppLayout() {
