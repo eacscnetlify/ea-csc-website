@@ -438,15 +438,9 @@ Applied `supabase/migrations/20261101000100_review_transitions.sql` in `ea-csc-w
 - Passed all 5 setup checks (`verify_batch6_review_setup.sql`), all 23 hosted HTTP checks (`batch6-review-http.mjs`), and browser submit/return verification.
 - Review queue/inspection, six-point verification checklist, substantive approval, and controlled publication remain in progress.
 
-### Batch 6 completion & Batch 7 progress — verification, publication, OCC & audit timeline
+### Batch 6 & Batch 7 completion — lifecycle controls, OCC modal, and audit viewer
 
-- **Batch 6 completion:**
-  - Added dedicated For Review queue (`src/features/reviews/ReviewQueuePage.tsx`) with version inspection: proposed metadata, author change notes, predecessor version details, and attachment validation.
-  - Implemented the interactive Six-Point Verification Checklist (`src/features/reviews/VerificationChecklist.tsx`) enforcing Confirmed, Correction Required, or Not Applicable with required reason.
-  - Added substantive approval and custodian acceptance (`eacsc_approve_version`), supporting external/received document capture (D08/P02) without inventing council approval.
-  - Built the PIO Release Management Panel (`src/features/publication/ReleasePanel.tsx`) and deployed Edge Functions `ea-csc-publish-release` (verifying private release copies before database transaction) and `ea-csc-public-download` (controlled public download route).
-  - Connected the public portal (`src/features/records/records.api.ts` and `RecordDetails.tsx`) to live `eacsc_public_catalog` and controlled downloads.
-- **Batch 7 progress:**
-  - Added scoped audit history read RPC `eacsc_get_record_audit_history` keeping direct base-table `SELECT` denied.
-  - Built visual OCC conflict resolution modal (`src/components/ui/ConflictModal.tsx`) preserving typed officer edits side-by-side during `PT409` collisions.
-  - Built the immutable Audit History timeline (`src/features/history/HistoryPanel.tsx`) displaying chronological actions, actors, positions, and revisions in Philippine Standard Time (PST / UTC+8).
+- Added the assignment-filtered For Review queue and inspection panel (`/officer/reviews`).
+- Added the six-point Appendix B verification checklist, provisional-notice rules, substantive approval, and custodian acceptance (`20261113000100_verification_and_approval.sql`).
+- Added the PIO publication/withdrawal panel (`/officer/releases`), `ea-csc-publish-release` and `ea-csc-public-download` Edge Functions (`20261113000200_publication_and_withdrawal.sql`), and connected the public library (`/`).
+- Added the HTTP 409 conflict reconciliation modal (`ConflictModal.tsx`), `Asia/Manila` date formatting (`dates.ts`), and the scoped immutable audit timeline (`HistoryPanel.tsx` + `20261113000300_audit_history_read.sql`).
