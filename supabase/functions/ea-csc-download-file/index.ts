@@ -6,8 +6,18 @@ declare const Deno: {
 }
 
 const DEV_URL = 'https://gkhhwrrvqlzpayphvsqp.supabase.co'
-const ORIGIN = 'http://localhost:5173'
+const DEFAULT_ORIGIN = 'http://localhost:5173'
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function resolveAllowedOrigin(origin: string | null): string | null {
+  if (!origin) return null
+  const configured = (Deno.env.get('ALLOWED_ORIGINS') ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0 && entry !== '*')
+  const allowed = new Set([DEFAULT_ORIGIN, ...configured])
+  return allowed.has(origin) ? origin : null
+}
 
 const EXTENSIONS: Record<string, readonly string[]> = {
   'application/pdf': ['pdf'],
@@ -116,8 +126,9 @@ function headers(origin: string | null) {
     Vary: 'Origin, Authorization',
   }
 
-  if (origin === ORIGIN) {
-    result['Access-Control-Allow-Origin'] = ORIGIN
+  const allowedOrigin = resolveAllowedOrigin(origin)
+  if (allowedOrigin) {
+    result['Access-Control-Allow-Origin'] = allowedOrigin
     result['Access-Control-Allow-Headers'] =
       'authorization, apikey, content-type, x-client-info'
     result['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
@@ -138,7 +149,7 @@ function reply(origin: string | null, status: number, body: unknown) {
 Deno.serve(async (request) => {
   const origin = request.headers.get('origin')
 
-  if (origin !== null && origin !== ORIGIN) {
+  if (origin !== null && !resolveAllowedOrigin(origin)) {
     return reply(origin, 403, { code: 'ORIGIN_DENIED' })
   }
   if (request.method === 'OPTIONS') return reply(origin, 204, null)

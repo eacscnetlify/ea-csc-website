@@ -331,8 +331,8 @@ export default function ReviewQueuePage() {
           </h1>
           <p className="mt-3 text-slate-700">
             Inspect submitted versions across your active non-author
-            assignments. Six-point verification and substantive approval follow
-            in the next step.
+            assignments, complete the six-point verification checklist, and
+            record substantive approval or return for correction.
           </p>
         </div>
         <Link to="/officer" className={button}>

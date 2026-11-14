@@ -4,13 +4,28 @@ import { formatManilaDateTime } from '../../lib/dates'
 import { getSupabaseClient } from '../../lib/supabase'
 import { useAuth } from '../auth/useAuth'
 import { getOfficerProfile } from '../auth/auth.api'
-import { buildBulletinPdfBlob } from './bulletinPdf'
 import type { BulletinCandidate } from './bulletinPdf'
 
 function todayManilaDate(): string {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Manila',
   }).format(new Date())
+}
+
+function nowManilaDateTimeLocal(): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Manila',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date())
+  const get = (type: string) =>
+    parts.find((part) => part.type === type)?.value ?? '00'
+  const hour = get('hour') === '24' ? '00' : get('hour')
+  return `${get('year')}-${get('month')}-${get('day')}T${hour}:${get('minute')}`
 }
 
 export default function BulletinBuilderPage() {
@@ -24,7 +39,7 @@ export default function BulletinBuilderPage() {
   const [audience, setAudience] = useState<'public' | 'internal'>('public')
   const [coverageStart, setCoverageStart] = useState(today)
   const [coverageEnd, setCoverageEnd] = useState(today)
-  const [cutoffLocal, setCutoffLocal] = useState(`${today}T23:59`)
+  const [cutoffLocal, setCutoffLocal] = useState(() => nowManilaDateTimeLocal())
   const [executiveContext, setExecutiveContext] = useState('')
   const [instructions, setInstructions] = useState('')
   const [officialContact, setOfficialContact] = useState('EA-CSC Secretariat')
@@ -137,9 +152,10 @@ export default function BulletinBuilderPage() {
     )
   }
 
-  function generatePreview() {
+  async function generatePreview() {
     setError('')
     const cutoffIso = new Date(`${cutoffLocal}:00+08:00`).toISOString()
+    const { buildBulletinPdfBlob } = await import('./bulletinPdf')
     const blob = buildBulletinPdfBlob({
       bulletinId,
       issueVersion: 1,
@@ -165,6 +181,7 @@ export default function BulletinBuilderPage() {
     setIssueNotice('')
     try {
       const cutoffIso = new Date(`${cutoffLocal}:00+08:00`).toISOString()
+      const { buildBulletinPdfBlob } = await import('./bulletinPdf')
       const blob = buildBulletinPdfBlob({
         bulletinId,
         issueVersion: 1,
@@ -261,8 +278,7 @@ export default function BulletinBuilderPage() {
           </h1>
           <p className="mt-3 text-slate-700">
             Select a reporting window and audience to compile eligible releases
-            into a frozen snapshot and preview PDF. Issuance and private
-            archival follow in Slice 8B.
+            into a frozen snapshot, preview PDF, and official council archive.
           </p>
         </div>
         <Link

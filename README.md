@@ -4,13 +4,21 @@ The Engineering and Architecture College Student Council's Institutional
 Information and Document Governance System (IIDGS), aligned with Needs Analysis 1,
 Project Proposal Revised V2, and Batch Plan V4.
 
-## Current status — 14 November 2026
+## Current status — 15 November 2026
 
-Batch 9 turnover and offline backup implementation has passed development
-verification. Git Checkpoint 9 remains pending final source review and commit.
+Batch 10 technical revalidation (Slices 10A–10D), UI/bundle splitting,
+deployment preparation, and operational documentation are complete:
 
-Batch 10 deployment, consolidated acceptance, isolated recovery testing,
-pilot measurement, and formal handover remain pending.
+- **Live Production URL:** `https://eacsc.netlify.app` (Netlify SPA with
+  `public/_redirects`, `ALLOWED_ORIGINS` CORS configured across all 5 Edge
+  Functions on `gkhhwrrvqlzpayphvsqp`).
+- **Pre-GUI & Live Production Verification:** 10/10 Slice 9A SQL checks, 18/18
+  live R1–R3 API/RLS/lifecycle checks, fresh offline backup + restore dry-run
+  (`D:\EA_CSC_Backups\EA_CSC_2026-11-14T13-19-12-284Z_l4p7CE`), and full live
+  production E2E browser checks across public and `/officer/*` routes passed.
+- **Remaining Human Actions (`PENDING HUMAN`):** Live student council officer
+  pilot evaluation (`docs/operations/06_PILOT_EVALUATION_PACK_AND_RECEIPT.md`)
+  and formal turnover sign-off (`docs/operations/04_TURNOVER_PACKAGE_TEMPLATE.md`).
 
 Earlier batch notes are retained below as historical evidence. Their statements
 about mock data or unfinished features describe their original checkpoints.

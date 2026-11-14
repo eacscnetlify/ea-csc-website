@@ -99,8 +99,8 @@ export default function PublicLibraryPage() {
       </h1>
 
       <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-        Browse current public releases and open their record details. Everything
-        displayed in this prototype is fictional.
+        Browse verified current public releases and open their official record
+        details, version history, and downloadable documents.
       </p>
 
       <div

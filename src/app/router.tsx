@@ -1,89 +1,126 @@
-import TurnoverPage from '../features/turnover/TurnoverPage'
-import AccessPage from '../features/admin/AccessPage'
-import PublicBulletinsPage from '../features/bulletins/PublicBulletinsPage'
-import BulletinBuilderPage from '../features/bulletins/BulletinBuilderPage'
-import ReleasePanel from '../features/publication/ReleasePanel'
-import ReviewQueuePage from '../features/reviews/ReviewQueuePage'
+import { Suspense, lazy } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router'
-import LoginPage from '../features/auth/LoginPage'
 import RequireAuth from '../features/auth/RequireAuth'
-import ResetPasswordPage from '../features/auth/ResetPasswordPage'
-import UpdatePasswordPage from '../features/auth/UpdatePasswordPage'
-import ConnectionCheckPage from '../features/development/ConnectionCheckPage'
-import PublicLibraryPage from '../features/records/PublicLibraryPage'
-import RecordDetailPage from '../features/records/RecordDetailPage'
-import OfficerWorkspacePage from '../features/workspace/OfficerWorkspacePage'
 import AppLayout from './AppLayout'
-import NotFoundPage from './NotFoundPage'
+
+const TurnoverPage = lazy(() => import('../features/turnover/TurnoverPage'))
+const AccessPage = lazy(() => import('../features/admin/AccessPage'))
+const PublicBulletinsPage = lazy(
+  () => import('../features/bulletins/PublicBulletinsPage'),
+)
+const BulletinBuilderPage = lazy(
+  () => import('../features/bulletins/BulletinBuilderPage'),
+)
+const ReleasePanel = lazy(() => import('../features/publication/ReleasePanel'))
+const ReviewQueuePage = lazy(
+  () => import('../features/reviews/ReviewQueuePage'),
+)
+const LoginPage = lazy(() => import('../features/auth/LoginPage'))
+const ResetPasswordPage = lazy(
+  () => import('../features/auth/ResetPasswordPage'),
+)
+const UpdatePasswordPage = lazy(
+  () => import('../features/auth/UpdatePasswordPage'),
+)
+const ConnectionCheckPage = lazy(
+  () => import('../features/development/ConnectionCheckPage'),
+)
+const PublicLibraryPage = lazy(
+  () => import('../features/records/PublicLibraryPage'),
+)
+const RecordDetailPage = lazy(
+  () => import('../features/records/RecordDetailPage'),
+)
+const OfficerWorkspacePage = lazy(
+  () => import('../features/workspace/OfficerWorkspacePage'),
+)
+const NotFoundPage = lazy(() => import('./NotFoundPage'))
+
+function RouteFallback() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-700 shadow-sm"
+    >
+      Loading page…
+    </div>
+  )
+}
 
 export default function AppRouter() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route element={<AppLayout />}>
-          <Route index element={<PublicLibraryPage />} />
-          <Route path="records/:recordId" element={<RecordDetailPage />} />
-          <Route path="bulletins" element={<PublicBulletinsPage />} />
-          <Route path="login" element={<LoginPage />} />
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route element={<AppLayout />}>
+            <Route index element={<PublicLibraryPage />} />
+            <Route path="records/:recordId" element={<RecordDetailPage />} />
+            <Route path="bulletins" element={<PublicBulletinsPage />} />
+            <Route path="login" element={<LoginPage />} />
 
-          <Route path="auth/reset-password" element={<ResetPasswordPage />} />
-          <Route path="auth/update-password" element={<UpdatePasswordPage />} />
+            <Route path="auth/reset-password" element={<ResetPasswordPage />} />
+            <Route
+              path="auth/update-password"
+              element={<UpdatePasswordPage />}
+            />
 
-          <Route
-            path="officer"
-            element={
-              <RequireAuth>
-                <OfficerWorkspacePage />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="officer/reviews"
-            element={
-              <RequireAuth>
-                <ReviewQueuePage />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="officer/releases"
-            element={
-              <RequireAuth>
-                <ReleasePanel />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="officer/bulletins"
-            element={
-              <RequireAuth>
-                <BulletinBuilderPage />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="officer/turnover"
-            element={
-              <RequireAuth>
-                <TurnoverPage />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="officer/admin/access"
-            element={
-              <RequireAuth>
-                <AccessPage />
-              </RequireAuth>
-            }
-          />
-          {import.meta.env.DEV && (
-            <Route path="dev/connection" element={<ConnectionCheckPage />} />
-          )}
+            <Route
+              path="officer"
+              element={
+                <RequireAuth>
+                  <OfficerWorkspacePage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="officer/reviews"
+              element={
+                <RequireAuth>
+                  <ReviewQueuePage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="officer/releases"
+              element={
+                <RequireAuth>
+                  <ReleasePanel />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="officer/bulletins"
+              element={
+                <RequireAuth>
+                  <BulletinBuilderPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="officer/turnover"
+              element={
+                <RequireAuth>
+                  <TurnoverPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="officer/admin/access"
+              element={
+                <RequireAuth>
+                  <AccessPage />
+                </RequireAuth>
+              }
+            />
+            {import.meta.env.DEV && (
+              <Route path="dev/connection" element={<ConnectionCheckPage />} />
+            )}
 
-          <Route path="*" element={<NotFoundPage />} />
-        </Route>
-      </Routes>
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   )
 }

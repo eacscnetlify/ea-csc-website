@@ -46,16 +46,78 @@ export async function getPublicRecords(): Promise<PublicRecordItem[]> {
     .sort((a, b) => a.title.localeCompare(b.title))
 }
 
+interface PublicDetailRow {
+  record_id: string
+  title: string
+  summary: string
+  category: string
+  document_type: string
+  originating_office: string
+  public_contact: string
+  release_id: string
+  version_id: string
+  version_number: number
+  state: 'Approved' | 'Superseded'
+  approved_at: string | null
+  released_at: string
+  effective_at: string
+  change_summary: string
+}
+
+interface PublicRecordDetailResponse {
+  current: PublicDetailRow | null
+  history: PublicDetailRow[]
+}
+
+function mapDetailRow(row: PublicDetailRow): PublicRecordItem {
+  return {
+    recordId: row.record_id,
+    title: row.title,
+    summary: row.summary || 'Authorized public release.',
+    category: row.category as RecordCategory,
+    documentType: (row.document_type ||
+      'Other') as PublicRecordItem['documentType'],
+    originatingOffice: row.originating_office || 'EA-CSC',
+    publicContact: row.public_contact || 'EA-CSC Secretariat',
+    releaseId: row.release_id,
+    versionId: row.version_id,
+    versionNumber: row.version_number,
+    state: row.state,
+    approvedAt: row.approved_at,
+    releasedAt: row.released_at,
+    effectiveAt: row.effective_at,
+    changeSummary: row.change_summary || 'Current authorized public release.',
+  }
+}
+
 export async function getPublicRecord(
   recordId: string,
 ): Promise<PublicRecordItem | null> {
-  const items = await getPublicRecords()
-  return items.find((item) => item.recordId === recordId) ?? null
+  const { data, error } = await getSupabaseClient().rpc(
+    'eacsc_public_record_detail',
+    { p_record_id: recordId },
+  )
+
+  if (error) {
+    throw new Error('Could not load public record metadata.')
+  }
+
+  const detail = data as PublicRecordDetailResponse | null
+  return detail?.current ? mapDetailRow(detail.current) : null
 }
 
 export async function getPublicRecordHistory(
   recordId: string,
 ): Promise<PublicRecordItem[]> {
-  void recordId
-  return []
+  const { data, error } = await getSupabaseClient().rpc(
+    'eacsc_public_record_detail',
+    { p_record_id: recordId },
+  )
+
+  if (error) {
+    throw new Error('Could not load public record version history.')
+  }
+
+  const detail = data as PublicRecordDetailResponse | null
+  return Array.isArray(detail?.history) ? detail.history.map(mapDetailRow) : []
 }

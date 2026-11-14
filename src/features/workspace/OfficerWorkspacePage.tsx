@@ -484,11 +484,6 @@ export default function OfficerWorkspacePage() {
           Download attachments available to your current account.
         </p>
       </div>
-      <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
-        Development database: the retained test records are fictional. Public
-        library pages still use prototype data. Approvals, publication and
-        turnover acknowledgment are coming in later steps.
-      </p>
       <div className="flex flex-wrap items-center gap-3">
         <button type="button" className={button} onClick={() => reload()}>
           Reload record list

@@ -1,0 +1,145 @@
+{
+  "executed_at": "2026-11-14T13:18:09.251Z",
+  "project_ref": "gkhhwrrvqlzpayphvsqp",
+  "total_checks": 18,
+  "passed": 18,
+  "failed": 0,
+  "fixtures": {
+    "recPub1": "EACSC-2099-BT-9228",
+    "recPub2": "EACSC-2099-BW-1229",
+    "recRest": "EACSC-2099-BR-1230",
+    "recSched": "EACSC-2099-BS-1231",
+    "bulPubId": "EACSC-2099-BUL-9228",
+    "bulIntId": "EACSC-2099-BUL-1229",
+    "retained_batch9_package": "42ad127b-7159-431b-bbc6-8613fa40bcf0",
+    "retained_missing_object_fixture": "EACSC-2099-HTTP-9604"
+  },
+  "checks": [
+    {
+      "phase": "R1",
+      "id": "D01/P03",
+      "title": "Connection check RPC",
+      "status": "PASS",
+      "detail": "{\"status\":\"ok\",\"service\":\"ea-csc-records\",\"server_time\":\"2026-11-14T13:17:12.789129+00:00\"}"
+    },
+    {
+      "phase": "R1",
+      "id": "D02",
+      "title": "Anonymous direct table read denied",
+      "status": "PASS",
+      "detail": "permission denied for table master_records"
+    },
+    {
+      "phase": "R1",
+      "id": "D02",
+      "title": "Inactive user denied protected RPC",
+      "status": "PASS",
+      "detail": "Draft update is not permitted."
+    },
+    {
+      "phase": "R1",
+      "id": "D02",
+      "title": "Profileless user denied protected RPC",
+      "status": "PASS",
+      "detail": "Draft update is not permitted."
+    },
+    {
+      "phase": "R1",
+      "id": "D03",
+      "title": "Unassigned user denied restricted record upload",
+      "status": "PASS",
+      "detail": "Upload preparation is not permitted."
+    },
+    {
+      "phase": "R1",
+      "id": "D04/P04",
+      "title": "PDF upload stage & accept pipeline",
+      "status": "PASS",
+      "detail": "version_id=812c463f-d2b3-4fc9-8e40-b98b2c9588ef"
+    },
+    {
+      "phase": "R1",
+      "id": "P04",
+      "title": "DOCX, PNG, and JPEG upload verifications",
+      "status": "PASS",
+      "detail": "docx=1dc3f08f-4fc5-43e5-89f0-c2a30b039957, png=4fd951a1-d544-4593-9fcd-8a7648c3df65, jpg=2be78a3f-89a2-4a19-869b-34bc6cbceacb"
+    },
+    {
+      "phase": "R1",
+      "id": "P04",
+      "title": "Spoofed executable-as-PDF rejected",
+      "status": "PASS",
+      "detail": "rejected=true"
+    },
+    {
+      "phase": "R1",
+      "id": "D08/D14",
+      "title": "Retry idempotency and PT409 optimistic concurrency",
+      "status": "PASS",
+      "detail": "audit_uuid=19ee2bd2-5400-4258-8c19-3928e361e0e1, conflict=PT409"
+    },
+    {
+      "phase": "R2",
+      "id": "D05",
+      "title": "Submit -> Return with comment -> Resubmit cycle",
+      "status": "PASS",
+      "detail": "rev=5"
+    },
+    {
+      "phase": "R2",
+      "id": "D06/D15",
+      "title": "Six-point verification failure rejected & substantive approval succeeded",
+      "status": "PASS",
+      "detail": "incomplete_rejected=true, state=Approved"
+    },
+    {
+      "phase": "R2",
+      "id": "D07/P01",
+      "title": "Public release catalog, detail metadata (D-04), and public download (D-03)",
+      "status": "PASS",
+      "detail": "in_catalog=true, dl_status=200, sha_match=true"
+    },
+    {
+      "phase": "R2",
+      "id": "D07/D16",
+      "title": "Supersession v1 -> v2 updates state, successor IDs, effective_until, and public history",
+      "status": "PASS",
+      "detail": "v1_state=Superseded, history_count=1"
+    },
+    {
+      "phase": "R2",
+      "id": "P01",
+      "title": "Scheduled future release blocked before effective_from, then activated cleanly",
+      "status": "PASS",
+      "detail": "premature_blocked=true, activated=true"
+    },
+    {
+      "phase": "R2",
+      "id": "P01",
+      "title": "Emergency withdrawal removes public file access & posts public withdrawal notice",
+      "status": "PASS",
+      "detail": "dl_status=404, notice=Withdrawn from public release: Superseded emergenc"
+    },
+    {
+      "phase": "R2",
+      "id": "D09/D17",
+      "title": "Immutability triggers block DELETE on audit_events, review_comments, checklists, and mutation_receipts",
+      "status": "PASS",
+      "detail": "blocked=true,true,true,true"
+    },
+    {
+      "phase": "R2",
+      "id": "D18",
+      "title": "Bulletin staging RLS, public v1->v2 issuance, internal isolation, and PDF download",
+      "status": "PASS",
+      "detail": "public_v2_dl=200, internal_anon=401, internal_auth=200"
+    },
+    {
+      "phase": "R3",
+      "id": "D11/D12/D13",
+      "title": "Retained Batch 9 turnover continuity, outgoing deactivation, and transfer guard",
+      "status": "PASS",
+      "detail": "pkg_status=acknowledged, outgoing_active=false, neg_transfer_err=Package changed. Reload before transfer."
+    }
+  ]
+}

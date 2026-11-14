@@ -6,7 +6,17 @@ declare const Deno: {
 }
 
 const DEV_URL = 'https://gkhhwrrvqlzpayphvsqp.supabase.co'
-const ORIGIN = 'http://localhost:5173'
+const DEFAULT_ORIGIN = 'http://localhost:5173'
+
+function resolveAllowedOrigin(origin: string | null): string | null {
+  if (!origin) return null
+  const configured = (Deno.env.get('ALLOWED_ORIGINS') ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0 && entry !== '*')
+  const allowed = new Set([DEFAULT_ORIGIN, ...configured])
+  return allowed.has(origin) ? origin : null
+}
 
 function headers(origin: string | null): Record<string, string> {
   const h: Record<string, string> = {
@@ -14,8 +24,9 @@ function headers(origin: string | null): Record<string, string> {
     'X-Content-Type-Options': 'nosniff',
     Vary: 'Origin',
   }
-  if (origin === ORIGIN) {
-    h['Access-Control-Allow-Origin'] = ORIGIN
+  const allowedOrigin = resolveAllowedOrigin(origin)
+  if (allowedOrigin) {
+    h['Access-Control-Allow-Origin'] = allowedOrigin
     h['Access-Control-Allow-Headers'] =
       'authorization, apikey, content-type, x-client-info'
     h['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
@@ -34,7 +45,7 @@ function reply(origin: string | null, status: number, body: unknown) {
 
 Deno.serve(async (request) => {
   const origin = request.headers.get('origin')
-  if (origin !== null && origin !== ORIGIN) {
+  if (origin !== null && !resolveAllowedOrigin(origin)) {
     return reply(origin, 403, { code: 'ORIGIN_DENIED' })
   }
   if (request.method === 'OPTIONS') return reply(origin, 204, null)
