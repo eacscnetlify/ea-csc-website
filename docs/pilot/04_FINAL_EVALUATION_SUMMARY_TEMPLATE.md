@@ -7,7 +7,17 @@
 
 ---
 
-## 1. Quantitative Pilot Results Summary
+## 1. Participant & Respondent Breakdown (Google Forms + Live Pilot)
+
+| Respondent Group | Target Sample | Actual Count | Notes |
+| :--- | :--- | :--- | :--- |
+| **CEA Students / Observers** (across year levels & programs) | `>= 30` | | Public Portal, Downloads, Sign-Up, Help & AI Assistant |
+| **EA-CSC / CEA Officers** (Acting, President, Secretary, Incoming) | `>= 5` | | Part 1 CEAFest Simulation & Part 2 Turnover Handover |
+| **Total Survey Respondents** | `>= 35` | | Collected via Google Forms |
+
+---
+
+## 2. Quantitative Pilot Results Summary
 
 | Evaluation Metric | Proposal Target | Observed Result | Status (`PASS`/`FAIL`) |
 | :--- | :--- | :--- | :--- |
@@ -18,18 +28,17 @@
 
 ---
 
-## 2. Survey Mean Scores Summary (5-Point Likert Scale)
+## 3. Google Forms Survey Mean Scores Summary (5-Point Likert Scale)
 
-| Dimension (Survey Items) | Mean Score (`1.00–5.00`) | Interpretation |
-| :--- | :--- | :--- |
-| **System Usability & Interface Clarity** (Items 1–4) | | |
-| **Governance Controls & Error Prevention** (Items 5–9) | | |
-| **Help Center & AI Assistant Effectiveness** (Items 10–11) | | |
-| **Overall Weighted Mean** (Items 1–11) | | |
+| Dimension (Survey Items) | Respondent Group | Mean Score (`1.00–5.00`) | Interpretation |
+| :--- | :--- | :--- | :--- |
+| **Public Portal, Usability & AI Assistant** (Items 1–7) | All Respondents (`30+` Students & Officers) | | |
+| **Officer Governance, 6-Point & Turnover** (Items 8–14) | CEA / EA-CSC Officers Only | | |
+| **Overall Weighted Mean** | Combined | | |
 
 ---
 
-## 3. Audit Telemetry Evidence (Exported from `/officer/history` / `audit_events`)
+## 4. Audit Telemetry Evidence (Exported from `/officer/history` / `audit_events`)
 
 - **Total Audit Events Recorded During Pilot:** `_____`
 - **Review Returns Caught via 6-Point / Auditor Check:** `_____`

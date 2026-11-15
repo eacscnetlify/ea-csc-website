@@ -12,8 +12,16 @@ This human pilot uses a **two-part realistic simulation** centered on **CEAFest*
 
 - **Part 1 — CEAFest Operational Simulation (Acting Officers + Real President & Secretary):**  
   Your project team acts as the working committee officers (`Author`, `Custodian`, `Auditor/Reviewer`, `PRO/Publisher`), collaborating live with the **real EA-CSC President** (`Approver`) and **real EA-CSC Secretary** (`Custodian / Bulletin Compiler`) to plan, verify, publish, correct, and compile official CEAFest documents.
+- **Part 1B — Public Student/Observer Cohort (30+ CEA Students Across Year Levels & Programs):**  
+  Once CEAFest documents and bulletins are published in Part 1, share `https://eacsc.netlify.app` and the **Google Forms Online Survey** with **30+ CEA students** across different year levels and engineering/architecture programs so they can visit as **Observers** (browsing, downloading, signing up, and testing Help & AI Assistant).
 - **Part 2 — Real Governance Turnover & Handover (Outgoing Team → Incoming Real EA-CSC Officers):**  
   Your project team acts as the **Outgoing Officers** and the **real EA-CSC Officers** act as the **Incoming Officers**. Using `/officer/turnover` and `/officer/access`, the team executes an actual end-of-term turnover—transferring custody and active portal access into the hands of the real EA-CSC officers.
+
+> [!IMPORTANT]
+> **CRITICAL REMINDERS & PREREQUISITES FOR PART 2 (TURNOVER):**
+> 1. **Incoming Officer Must Have an Active Base Role First:** Before an Outgoing Officer can select an Incoming EA-CSC Officer in `/officer/turnover`, the Incoming Officer **must** have already signed up at `/signup` AND been approved for at least one base functional role (e.g., `author` via the President on `/account`).
+> 2. **Position & Record Ownership Match:** The Outgoing Officer's `council_position` must match the `custodian_position` of at least one assigned record in the database; otherwise, **Confirm & Freeze Outgoing Inventory** will block the freeze with *"No assigned position records found."*
+> 3. **Strict 3-Step Sequence:** (1) Outgoing Officer saves & freezes package on `/officer/turnover` → (2) Technical Admin executes **Transfer Position Role** on `/officer/access` → (3) Incoming Officer refreshes access and signs **Incoming Acknowledgment** on `/officer/turnover`.
 
 ---
 
@@ -77,11 +85,14 @@ This human pilot uses a **two-part realistic simulation** centered on **CEAFest*
   3. Verify the bulletin appears on **Update Bulletins** (`/bulletins`) and test downloading the PDF.
   4. *(Optional if time permits)* Issue a **v2 correction** of the bulletin to verify versioned bulletin supersession.
 
-### Scene 5: Public Portal & Mobile Check (10 mins)
-- **All Participants (on Mobile `375px` & Desktop `1440px`):**
+### Scene 5: Public Portal, Mobile Check & 30+ Student Observer Rollout (10 mins + Async Window)
+- **Acting Team + President/Secretary (on Mobile `375px` & Desktop `1440px`):**
   1. Open `/` (Public Library), search for `"CEAFest"`, open a record detail page (`/records/:recordId`), and test the download.
   2. Open **Help & Guide** (`/help`) and test the **AI Assistant** by asking a question about CEAFest document classifications or the 6-point checklist.
   3. Check **Activity & History** (`/officer/history`) to inspect the immutable audit trail of all CEAFest actions.
+- **30+ CEA Student Observers (Online Cohort):**
+  1. Share `https://eacsc.netlify.app` + the **Google Forms Online Survey** link to at least **30 CEA students** across different year levels (1st–5th year) and programs (CE, CpE, EE, ECE, ME, Architecture, etc.).
+  2. Instruct student observers to: (a) search and download a published CEAFest PDF on `/`, (b) open `/bulletins` and view the CEAFest Update Bulletin, (c) optionally create an Observer account via `/signup`, and (d) test `/help` or the **AI Assistant**, then submit the Google Form.
 
 ---
 
@@ -114,6 +125,6 @@ This human pilot uses a **two-part realistic simulation** centered on **CEAFest*
   3. Open **Turnover & Continuity** (`/officer/turnover`) and sign the **Incoming Officer Acknowledgment** (noting any exceptions if applicable).
   4. **Outgoing Acting Officer:** Verify they can no longer access `/officer/*` operations after deactivation.
 
-### Step 4: Post-Pilot Survey & Debrief (5 mins)
-- Distribute `03_PILOT_SURVEY_QUESTIONNAIRE.md` (or Google Form equivalent) to all participants immediately while impressions are fresh.
+### Step 4: Post-Pilot Google Forms Survey & Debrief (5 mins)
+- Share the **Google Forms Online Survey** (`03_PILOT_SURVEY_QUESTIONNAIRE.md`) with all participating **CEA/EA-CSC Officers** (both Part 1 & Part 2) and confirm the **30+ Student Observer** responses are being collected.
 - Collect signatures on the **Pilot Completion & Handover Receipt** (`04_FINAL_EVALUATION_SUMMARY_TEMPLATE.md`).
