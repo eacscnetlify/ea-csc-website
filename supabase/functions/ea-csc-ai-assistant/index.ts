@@ -5,10 +5,9 @@ declare const Deno: {
 
 const DEFAULT_ORIGIN = 'http://localhost:5173'
 const MODEL_CANDIDATES = [
+  'gemini-3.8-flash',
   'gemini-2.5-flash',
   'gemini-2.5-flash-lite',
-  'gemini-3.8-flash',
-  'gemini-3.0-flash',
 ]
 
 function resolveAllowedOrigin(origin: string | null): string | null {
@@ -119,7 +118,7 @@ async function callGemini(
   return await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    signal: AbortSignal.timeout(9000),
+    signal: AbortSignal.timeout(15000),
     body: JSON.stringify({
       system_instruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
       contents,
@@ -210,6 +209,50 @@ Deno.serve(async (request) => {
       // Retry next model on 404 (retired), 429 (rate limit), or 5xx (temporary high demand)
       if (res.status !== 404 && res.status !== 429 && res.status < 500) {
         break
+      }
+    }
+
+    if (!res || !res.ok) {
+      // Auto-discover any live generateContent flash model for this API key
+      try {
+        const listRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models?key=${encodeURIComponent(apiKey)}`,
+          { signal: AbortSignal.timeout(8000) },
+        )
+        if (listRes.ok) {
+          const listJson = (await listRes.json()) as {
+            models?: Array<{
+              name?: string
+              supportedGenerationMethods?: string[]
+            }>
+          }
+          const discovered = (listJson.models ?? [])
+            .filter(
+              (m) =>
+                m.name &&
+                m.supportedGenerationMethods?.includes('generateContent') &&
+                /flash/i.test(m.name) &&
+                !/tts|image|audio|lite-preview/i.test(m.name),
+            )
+            .map((m) => m.name!.replace(/^models\//, ''))
+            .filter((m) => !candidates.includes(m))
+            .slice(0, 3)
+
+          for (const modelName of discovered) {
+            usedModel = modelName
+            try {
+              const attempt = await callGemini(apiKey, modelName, contents)
+              if (attempt.ok) {
+                res = attempt
+                break
+              }
+            } catch {
+              // try next discovered model
+            }
+          }
+        }
+      } catch {
+        // ignore discovery error and return fallback below
       }
     }
 
