@@ -309,8 +309,42 @@ export default function AppLayout() {
         </div>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur-xs">
+      <div className="relative flex min-w-0 flex-1 flex-col overflow-x-clip">
+        {(() => {
+          const isAuth =
+            pathname === '/login' ||
+            pathname === '/signup' ||
+            pathname.startsWith('/auth/')
+          const isContinuity =
+            pathname.startsWith('/officer/turnover') ||
+            pathname.startsWith('/officer/admin/') ||
+            pathname === '/account'
+          const isOfficer = pathname.startsWith('/officer')
+
+          const bg = isAuth
+            ? { src: '/bg-auth.jpg', opacity: 'opacity-[0.16]', wash: 'bg-slate-100/80' }
+            : isContinuity
+              ? { src: '/bg-continuity.jpg', opacity: 'opacity-[0.30]', wash: 'bg-slate-50/75' }
+              : isOfficer
+                ? { src: '/bg-officer.jpg', opacity: 'opacity-[0.32]', wash: 'bg-slate-50/75' }
+                : { src: '/bg-public.jpg', opacity: 'opacity-[0.14]', wash: 'bg-slate-100/82' }
+
+          return (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none lg:left-64"
+            >
+              <img
+                src={bg.src}
+                alt=""
+                className={`h-full w-full object-cover object-center transition-opacity duration-500 ${bg.opacity}`}
+              />
+              <div className={`absolute inset-0 backdrop-blur-[1px] ${bg.wash}`} />
+            </div>
+          )
+        })()}
+
+        <header className="sticky top-0 z-30 border-b border-slate-200/90 bg-white/90 backdrop-blur-md">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
             <div className="flex min-w-0 items-center gap-3">
               <button
@@ -358,12 +392,14 @@ export default function AppLayout() {
         <main
           id="main-content"
           tabIndex={-1}
-          className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8"
+          className="relative z-10 mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8"
         >
-          <Outlet />
+          <div key={pathname} className="animate-page-enter">
+            <Outlet />
+          </div>
         </main>
 
-        <footer className="border-t border-slate-200 bg-white">
+        <footer className="relative z-10 border-t border-slate-200/90 bg-white/90 backdrop-blur-sm">
           <div className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-5 text-xs leading-5 text-slate-600 sm:flex-row sm:items-center sm:justify-between sm:px-6">
             <p className="font-semibold text-slate-800">
               Engineering and Architecture College Student Council (EA-CSC)

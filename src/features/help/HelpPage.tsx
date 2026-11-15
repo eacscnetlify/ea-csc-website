@@ -1,316 +1,386 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router'
 
-interface HelpTopic {
+interface AccordionSection {
   id: string
   title: string
+  subtitle: string
   badge: string
+  icon: 'book' | 'shield' | 'users' | 'workflow' | 'scenarios' | 'wrench'
   route?: string
   routeLabel?: string
-  summary: string
-  steps: string[]
+  definitions?: Array<{ term: string; detail: string }>
+  steps?: string[]
+  scenarios?: Array<{ title: string; steps: string[] }>
+  includeRoleMatrix?: boolean
+  includeRosterSample?: boolean
 }
-
-const TOPICS: HelpTopic[] = [
-  {
-    id: 'overview',
-    title: 'How the EA-CSC Governance System Works',
-    badge: 'Start Here',
-    summary:
-      'This system organizes council files into Folders and Documents, ensuring every announcement, resolution, financial report, and activity guideline goes through verified version control before reaching students—while preserving full council history across academic terms.',
-    steps: [
-      '1. Folders & Documents: Officers organize related Documents inside Folders (e.g., Governance & Charter, Secretariat & Minutes, Financial & Audit, Activities). Each Document tracks multiple Versions over time (v1, v2, v3…).',
-      '2. Draft (Author / Custodian): Upload source files (.pdf, .docx, .png, .jpg) and write version notes.',
-      '3. For Review (Author -> Reviewer): Submit the draft so another officer can inspect it. (The President and Executive Secretary also have Executive Fast-Track Self-Approval for urgent bulletins.)',
-      '4. Approved (Reviewer / Approver): All 6 verification checks pass and substantive approval is recorded.',
-      '5. Published (Publisher / PRO): The approved document version becomes visible and downloadable on the Home — Public Library.',
-      '6. Superseded or Withdrawn: Publishing a newer version (e.g. v2) automatically supersedes v1 while keeping version history, or urgent errors can be withdrawn with a public notice.',
-    ],
-  },
-  {
-    id: 'public-library',
-    title: 'Home — Public Library, Student Accounts & Role Requests',
-    badge: 'Public Portal',
-    route: '/',
-    routeLabel: 'Open Home — Public Library',
-    summary:
-      'Anyone (students, faculty, guests) can browse the Home — Public Library without signing in. Only Published, non-restricted Documents whose effective date has arrived appear here. Students can also create an Observer account and apply for an officer role.',
-    steps: [
-      'Search by document title, canonical ID (e.g. EACSC-2026-GOV-0001), or keyword, and filter by category (GOV, SEC, ACT, FIN, FRM, TRN).',
-      'Click "View document" to inspect metadata, download the official verified file, view Superseded prior versions, or read any Withdrawal notice.',
-      'Click "Create Account" (/signup) to register as a Student Observer (read-only), then open "My Account & Role" (/account) to apply for one of the 28 official EA-CSC positions (Executive Officers, Board Members, or Advisory).',
-      'Once the Council President approves your application in /account, refresh access to unlock your Officer Operations tabs.',
-    ],
-  },
-  {
-    id: 'workspace',
-    title: 'Document Workspace (Folders, Documents, Drafts & Submissions)',
-    badge: 'Author / Custodian',
-    route: '/officer',
-    routeLabel: 'Open Document Workspace',
-    summary:
-      'Assigned Authors and Custodians create Folders, create Documents, and work on Draft versions here. Documents marked Restricted stay hidden from the Public Library and are visible only to explicitly assigned officers.',
-    steps: [
-      'Use "Create Folder" to organize documents cleanly, and "Create Document" to register a new Public or Restricted document.',
-      'Select a Document and open its current Draft version (or upload a new Draft version when updating an existing document).',
-      'Upload a valid attachment (.pdf, .docx, .png, or .jpg/.jpeg, maximum 10 MB). The server verifies real file contents (magic bytes) and computes a SHA-256 checksum.',
-      'Update version notes, click "Save Draft Notes", and click "Submit for Review" when ready—or use "Executive Fast-Track Self-Approve" if you are the President or Executive Secretary handling an urgent release.',
-    ],
-  },
-  {
-    id: 'review-queue',
-    title: 'Review Queue & Six-Point Verification Checklist',
-    badge: 'Reviewer / Approver',
-    route: '/officer/reviews',
-    routeLabel: 'Open Review Queue',
-    summary:
-      'Segregation of duties prevents regular officers from approving their own drafts (except the President and Executive Secretary who have Executive Fast-Track privileges for urgent council releases).',
-    steps: [
-      'Open a submitted "For Review" version from the queue.',
-      'Inspect the uploaded file and complete all 6 verification points: (1) Identity & version alignment, (2) Dates, deadlines & Manila UTC+8 time, (3) Location, venue or link, (4) Audience eligibility, (5) Issuing authority & privacy disclosure, and (6) Contact channel & reference IDs.',
-      'If something is missing or wrong, mark it "Correction Required", write a clear review comment, and click "Return for Correction" (returns to Draft for the author).',
-      'When all 6 points are "Confirmed" or "Not Applicable", an Approver clicks "Approve Version".',
-    ],
-  },
-  {
-    id: 'release-panel',
-    title: 'Release Panel (Publication, Scheduling & Withdrawal)',
-    badge: 'Publisher / PIO',
-    route: '/officer/releases',
-    routeLabel: 'Open Release Panel',
-    summary:
-      'Once a version is Approved, an authorized Publisher (PIO) controls when it goes live to students, replaces older versions, or is urgently withdrawn.',
-    steps: [
-      'Publish Immediately: Makes the Approved version live in the Public Library right away.',
-      'Schedule Future Release: Set a future "effective_from" Manila timestamp. It stays hidden from the public until that time arrives and you click "Activate Scheduled Release".',
-      'Supersede: Publishing a new version (v2) automatically marks v1 as "Superseded" and links them in public version history.',
-      'Emergency Withdrawal: Immediately removes public file download (HTTP 404) and displays a public withdrawal notice with your stated reason.',
-    ],
-  },
-  {
-    id: 'bulletins',
-    title: 'Update Bulletins & Bulletin Compiler',
-    badge: 'Public & Internal',
-    route: '/officer/bulletins',
-    routeLabel: 'Open Bulletin Compiler',
-    summary:
-      'Update Bulletins bundle verified releases within a reporting window into a single official PDF digest. Public bulletins appear on /bulletins; Internal bulletins require officer sign-in.',
-    steps: [
-      'Choose Audience (Public or Internal) and set the reporting window and Manila (UTC+8) cutoff timestamp.',
-      'Click "Compile Bulletin & Preview PDF" to freeze the snapshot of eligible releases.',
-      'Review the generated PDF and click "Issue Bulletin" to archive v1 (or issue v2 to correct/supersede v1).',
-    ],
-  },
-  {
-    id: 'history',
-    title: 'Council Activity & History',
-    badge: 'Audit Trail',
-    route: '/officer/history',
-    routeLabel: 'Open Activity & History',
-    summary:
-      'Every major action across the council—document creation, new draft uploads, submissions, returns, approvals, fast-track releases, and role changes—is logged in a tamper-evident audit timeline.',
-    steps: [
-      'Filter by action type (Uploads, Reviews, Approvals, Releases, Role Changes) or search by document ID or actor.',
-      'Use this tab to quickly verify what changed across all council folders without opening individual documents.',
-    ],
-  },
-  {
-    id: 'turnover',
-    title: 'Turnover & Continuity',
-    badge: 'End-of-Term',
-    route: '/officer/turnover',
-    routeLabel: 'Open Turnover',
-    summary:
-      'Ensures incoming student council officers inherit a complete, frozen inventory of records and continuity notes without losing institutional memory.',
-    steps: [
-      'Outgoing Custodian writes the continuity memorandum and freezes the outgoing inventory.',
-      'Export the saved turnover package JSON or use Print / Save PDF for physical council records.',
-      'Incoming Officer signs in and records "Incoming Acknowledgment" after verifying access.',
-    ],
-  },
-  {
-    id: 'access-transfer',
-    title: 'Access Transfer & User Administration',
-    badge: 'Technical Admin',
-    route: '/officer/admin/access',
-    routeLabel: 'Open Access Transfer',
-    summary:
-      'Technical Administrators manage which accounts are active, what functional roles they hold, and transfer record custody from outgoing officers to incoming officers.',
-    steps: [
-      'Verify incoming officer accounts are active and assigned the right roles.',
-      'Execute record assignment transfer to move custody cleanly.',
-      'Deactivate outgoing officer accounts once handover is acknowledged.',
-    ],
-  },
-  {
-    id: 'troubleshooting',
-    title: 'Common Questions & Troubleshooting',
-    badge: 'FAQ',
-    summary:
-      'Quick answers for the most common messages you may encounter while working in the portal.',
-    steps: [
-      '"Conflict / PT409 / Package changed": Another officer updated the same record while your tab was open. Click Reload to fetch the latest revision, then reapply your edit.',
-      '"Why can I not approve this version?": Either you are the author of that version (segregation of duties), or you hold Reviewer-only role without Approver privileges, or one of the 6 checklist items is still unchecked/Correction Required.',
-      '"Why can I not see a Restricted record?": Restricted (internal) records require both an active officer account AND an explicit active assignment with allow_restricted permission.',
-      '"Upload rejected": Only .pdf, .docx, .png, and .jpg/.jpeg up to 10 MB are accepted, and file contents must match their extension.',
-    ],
-  },
-]
 
 const ROLE_MATRIX = [
   {
     role: 'Public Visitor (No Sign-In)',
-    who: 'Students, faculty, general public',
+    who: 'Students, faculty, guests',
     canDo:
-      'Browse Public Library, read Record Details & Version History, download Public releases, and download Public Update Bulletins.',
+      'Browse Home — Public Library, inspect Document Details & Version History, download Published public files, and download Public Update Bulletins.',
     cannotDo:
-      'Cannot view Drafts, For Review items, Restricted records, Internal bulletins, or any /officer/* page.',
+      'Cannot view Drafts, For Review items, Restricted documents, Internal bulletins, or any /officer/* page.',
   },
   {
-    role: 'Unassigned / Observer (roles: [])',
+    role: 'Student Observer (roles: [])',
     who: 'Signed-in student account without officer roles',
-    canDo: 'Same as Public Visitor, plus can manage their own account and submit an Officer Role Application on /account.',
+    canDo:
+      'Same as Public Visitor, plus can manage their account and apply for one of the 28 EA-CSC officer positions on /account.',
     cannotDo:
-      'Blocked from Officer Workspace, Review Queue, Release Panel, Bulletin Compiler, Activity & History, and Turnover.',
+      'Blocked from Document Workspace, Review Queue, Release Panel, Bulletin Compiler, Activity & History, and Turnover.',
   },
   {
     role: 'Author (author)',
-    who: 'Committee Heads / Representatives / Board Members',
+    who: 'Committee Heads, Representatives, Board Members',
     canDo:
-      'Create Folders/Documents, edit Draft notes, upload attachments, and Submit for Review on assigned Documents.',
+      'Create Folders and Documents, upload Draft attachments, save version notes, and Submit for Review on assigned Documents.',
     cannotDo:
-      'Cannot approve their own submissions (segregation of duties), publish releases, or access Restricted documents unless explicitly permitted.',
+      'Cannot approve their own submissions (segregation of duties), publish releases, or access Restricted documents without explicit assignment.',
   },
   {
     role: 'Custodian (custodian)',
-    who: 'Executive Secretary / Assistant Secretary / File Inventory Manager / Treasurer',
+    who: 'Executive Secretary, Assistant Secretary, File Inventory Manager, Executive Treasurer',
     canDo:
-      'Manage Folders and Documents, compile Update Bulletins, and prepare Turnover packages. Executive Secretary also holds Executive Fast-Track Self-Approval for urgent council releases.',
+      'Manage Folders and Documents, compile Update Bulletins, and prepare/freeze Turnover packages. Executive Secretary also holds Executive Fast-Track Self-Approval.',
     cannotDo:
       'Non-executive custodians cannot approve versions they authored or publish without Publisher role.',
   },
   {
     role: 'Reviewer (reviewer)',
-    who: 'VP Internal / VP External / Auditors / Board of Directors',
+    who: 'Internal VP, External VP, Auditors, Board of Directors',
     canDo:
-      'Inspect For Review submissions (non-author), fill out the 6-point verification checklist, add review comments, and Return for Correction.',
+      'Inspect For Review submissions (non-author), complete the 6-point verification checklist, add review comments, and Return for Correction.',
     cannotDo:
       'Cannot grant final Substantive Approval without the Approver role.',
   },
   {
     role: 'Approver (approver)',
-    who: 'EA-CSC President / Executive Secretary / Adviser',
+    who: 'Council President, Executive Secretary, Adviser',
     canDo:
-      'Complete 6-point verification and grant final Substantive Approval (Approved). President & Executive Secretary also hold Executive Fast-Track Self-Approval for urgent releases.',
+      'Complete 6-point verification and grant final Substantive Approval (Approved). President & Executive Secretary also hold Executive Fast-Track Self-Approval.',
     cannotDo:
-      'Cannot publish releases without the Publisher role.',
+      'Cannot publish releases to the public without the Publisher role.',
   },
   {
     role: 'Publisher (publisher)',
-    who: 'Public Information Officer (PIO)',
+    who: 'Public Relations Officer (PRO), Editorial',
     canDo:
-      'Publish Approved versions (immediate or scheduled), activate scheduled releases, supersede old versions, and execute emergency Withdrawals.',
+      'Publish Approved versions immediately, schedule future effective dates, supersede older versions, or perform Emergency Withdrawal.',
     cannotDo:
-      'Cannot bypass the 6-point review/approval gate before publishing.',
+      'Cannot approve Drafts/For Review versions without Reviewer/Approver roles.',
   },
   {
     role: 'Technical Admin (technical_admin)',
-    who: 'System / Access Administrator',
+    who: 'Technical Administrator',
     canDo:
-      'Manage officer role eligibility, transfer record assignments during turnover, and deactivate outgoing accounts.',
+      'Activate/deactivate officer accounts, update functional roles, and execute record custody Access Transfers.',
     cannotDo:
-      'Cannot delete immutable audit logs, review comments, or checklist records.',
+      'Cannot bypass 6-point verification or approve without Approver role.',
   },
 ]
 
-const DEMO_ACCOUNTS = [
+const OFFICIAL_TEST_SAMPLE = [
+  { email: 'president@eacsc.example', position: 'President', roles: 'approver, reviewer, author, custodian (Fast-Track)' },
+  { email: 'executive.secretary@eacsc.example', position: 'Executive Secretary', roles: 'custodian, author, approver, reviewer (Fast-Track)' },
+  { email: 'internal.vp@eacsc.example', position: 'Internal Vice President', roles: 'reviewer, author' },
+  { email: 'external.vp@eacsc.example', position: 'External Vice President', roles: 'reviewer, author' },
+  { email: 'executive.treasurer@eacsc.example', position: 'Executive Treasurer', roles: 'custodian, author' },
+  { email: 'executive.auditor@eacsc.example', position: 'Executive Auditor', roles: 'reviewer' },
+  { email: 'pro@eacsc.example', position: 'Public Relations Officer', roles: 'publisher, author' },
+  { email: 'event.chairperson@eacsc.example', position: 'Event Chairperson', roles: 'author' },
+  { email: 'adviser@eacsc.example', position: 'Adviser', roles: 'reviewer, approver' },
+  { email: 'admin@eacsc.example', position: 'Technical Administrator', roles: 'technical_admin, custodian' },
+]
+
+const SECTIONS: AccordionSection[] = [
   {
-    email: 'author@eacsc.example',
-    name: 'Marco Reyes',
-    position: 'Committee Head (Author)',
-    roles: 'author',
+    id: 'overview',
+    title: 'Core Concepts: Folders, Documents, Versions & Security',
+    subtitle: 'Definitions of Folders, Documents, Version states, Public vs. Restricted access, and SHA-256 integrity',
+    badge: 'Definitions',
+    icon: 'book',
+    definitions: [
+      {
+        term: 'Folder',
+        detail:
+          'An organizational container created by officers in the Document Workspace (e.g., "Engineering Week & Council Operations 2026") so related documents stay grouped instead of appearing in one long list.',
+      },
+      {
+        term: 'Document (Master Record)',
+        detail:
+          'A permanent institutional file with an immutable canonical ID (e.g., EACSC-2026-ACT-0001). A Document is not a folder—it is the living official record that evolves through numbered Versions over time.',
+      },
+      {
+        term: 'Version (v1, v2, v3…)',
+        detail:
+          'Each revision of a Document moves through strict states: Draft → For Review → Approved → Published (or Superseded when replaced by a newer version, or Withdrawn in an emergency).',
+      },
+      {
+        term: 'Public vs. Internal vs. Restricted',
+        detail:
+          'Public documents appear on the Home — Public Library once Published. Internal documents are for council operations. Restricted documents (e.g., financial ledgers) are hidden from the public and visible ONLY to officers explicitly assigned with allow_restricted permission.',
+      },
+      {
+        term: 'SHA-256 & Magic-Byte Verification',
+        detail:
+          'Every uploaded file (.pdf, .docx, .png, .jpg/.jpeg up to 10 MB) has its real file bytes inspected and a cryptographic SHA-256 checksum recorded so tampering can always be detected.',
+      },
+    ],
   },
   {
-    email: 'secretary@eacsc.example',
-    name: 'Roxan Mariz Icaro',
-    position: 'Executive Secretary (Custodian)',
-    roles: 'custodian, author',
+    id: 'roles',
+    title: 'Council Positions, Functional Roles & Fast-Track Rule',
+    subtitle: 'The 28 EA-CSC positions, Segregation of Duties, President & Executive Secretary Fast-Track, and Role Matrix',
+    badge: 'Access Control',
+    icon: 'shield',
+    definitions: [
+      {
+        term: '28 Official EA-CSC Positions',
+        detail:
+          'Organized into Executive Officers (President, Internal VP, External VP, Executive Secretary, Executive Treasurer, Executive Auditor, Business Manager, Public Relations Officer, Board of Director), Board Members (Assistant/Auxiliary Secretaries, File Inventory Manager, Assistant Treasurer/Auditor, Graphic Designer, Editorial, Documentary Team, Logistics, Procurement, Event Chairperson/Organizers, Ways & Means, 1st–4th Year Representatives), and Advisory (Adviser).',
+      },
+      {
+        term: 'Segregation of Duties (Standard Rule)',
+        detail:
+          'Regular officers cannot approve their own Drafts. An Author submits a Draft ("For Review"), and a separate Reviewer/Approver inspects it via the 6-point checklist before a Publisher (PRO) releases it.',
+      },
+      {
+        term: 'President & Executive Secretary Fast-Track Exception',
+        detail:
+          'For urgent council memos or time-sensitive bulletins, the Council President and Executive Secretary hold Executive Fast-Track Self-Approval privileges directly inside the Document Workspace, logged in the permanent audit trail with their stated rationale.',
+      },
+    ],
+    includeRoleMatrix: true,
   },
   {
-    email: 'reviewer@eacsc.example',
-    name: 'Alyssa Tan',
-    position: 'VP for Internal Affairs',
-    roles: 'reviewer',
+    id: 'public-library',
+    title: 'Public Portal, Student Sign-Up & Officer Role Requests',
+    subtitle: 'How visitors browse Home & Bulletins, create Student Observer accounts, and apply for council roles',
+    badge: 'Public & Accounts',
+    icon: 'users',
+    route: '/',
+    routeLabel: 'Open Home — Public Library',
+    steps: [
+      'Home — Public Library (/): Anyone can search published documents by title or canonical ID, filter by category (GOV, SEC, ACT, FIN, FRM, TRN), and download verified files or inspect superseded version history.',
+      'Update Bulletins (/bulletins): View and download official periodic PDF digests compiling verified releases within a reporting window.',
+      'Create Observer Account (/signup): Students register with their Full Name, Student ID, Degree Program (BS Civil, Electronics, Computer Engineering, or BS Architecture), Email, and Password. Duplicate names, Student IDs, and emails are automatically blocked with clear warnings.',
+      'Apply for Officer Role (/account): Signed-in Student Observers select their appointed EA-CSC position from the 28-position dropdown and submit a justification. Once the Council President approves the request in /account, Officer Operations tabs unlock immediately.',
+    ],
   },
   {
-    email: 'president@eacsc.example',
-    name: 'Rafael Santos',
-    position: 'EA-CSC President',
-    roles: 'approver, reviewer',
+    id: 'workspace',
+    title: 'Officer Operations: Workspace, Reviews, Releases, Bulletins & History',
+    subtitle: 'Step-by-step guide for Document Workspace, Review Queue, Release Panel, Bulletin Compiler, and Activity & History',
+    badge: 'Officer Workflow',
+    icon: 'workflow',
+    route: '/officer',
+    routeLabel: 'Open Document Workspace',
+    steps: [
+      '1. Document Workspace (/officer): Create Folders, create Public or Restricted Documents, upload valid attachments (.pdf, .docx, .png, .jpg), save Draft notes, and click "Submit for Review" (or use Executive Fast-Track if President/Executive Secretary).',
+      '2. Review Queue (/officer/reviews): Reviewers and Approvers inspect "For Review" submissions against the 6-point verification checklist (Identity, Dates/Manila UTC+8 time, Venue/Link, Eligibility, Authority/Privacy, Contact/IDs). Return for Correction with comments, or record Substantive Approval.',
+      '3. Release Panel (/officer/releases): The Public Relations Officer (Publisher) publishes Approved versions immediately, schedules a future Manila effective date, supersedes prior versions, or executes an Emergency Withdrawal.',
+      '4. Bulletin Compiler (/officer/bulletins): Compiles Public or Internal PDF digests over a chosen Manila (UTC+8) reporting window and issues v1/v2 bulletins.',
+      '5. Council Activity & History (/officer/history): View the chronological, tamper-evident audit timeline of all document creations, uploads, reviews, approvals, releases, and role changes across the entire council.',
+    ],
   },
   {
-    email: 'pio@eacsc.example',
-    name: 'Camille Cruz',
-    position: 'Public Information Officer',
-    roles: 'publisher',
+    id: 'scenarios',
+    title: 'Real-World Scenarios & Step-by-Step Walkthroughs',
+    subtitle: 'Practical examples: regular submission, returned draft correction, urgent fast-track, observer onboarding, and turnover',
+    badge: 'Scenarios',
+    icon: 'scenarios',
+    scenarios: [
+      {
+        title: 'Scenario A: Event Chairperson Publishes Engineering Week Guidelines',
+        steps: [
+          'Event Chairperson signs in, opens Document Workspace (/officer), selects "Engineering Week & Council Operations 2026", and creates or opens EACSC-2026-ACT-0001.',
+          'Uploads the PDF, writes Draft notes, and clicks "Submit for Review". The draft locks.',
+          'Internal Vice President (Reviewer) opens Review Queue (/officer/reviews), checks the 6 points, and President (Approver) records Substantive Approval.',
+          'Public Relations Officer (Publisher) opens Release Panel (/officer/releases) and clicks "Publish Immediately"—students can now download it on Home (/).',
+        ],
+      },
+      {
+        title: 'Scenario B: Reviewer Returns a Draft for Correction',
+        steps: [
+          'Executive Treasurer uploads a budget draft and submits it for review.',
+          'Executive Auditor spots a missing Manila deadline, marks that checklist item "Correction Required", writes a review comment, and clicks "Return for Correction".',
+          'The version returns to Draft. Executive Treasurer sees the review comment in "Review return history", uploads the corrected file, saves notes, and re-submits.',
+        ],
+      },
+      {
+        title: 'Scenario C: Urgent Bulletin by President or Executive Secretary',
+        steps: [
+          'During an urgent class suspension or venue change, the President or Executive Secretary creates/uploads the Draft in Document Workspace (/officer).',
+          'Using the "Executive Fast-Track Self-Approval" panel, they enter a brief urgency rationale and approve the version immediately—bypassing the separate-reviewer wait while logging the action in Activity & History.',
+          'Public Relations Officer (or Editorial) publishes it on Release Panel.',
+        ],
+      },
+      {
+        title: 'Scenario D: New Student Becomes an Officer',
+        steps: [
+          'A student creates an account at /signup (starts as Student Observer with read-only access).',
+          'They open My Account & Role (/account), choose their appointed position (e.g., Graphic Designer), and submit an application.',
+          'President opens /account, sees the pending application in the President’s Role Approval Console, and clicks Approve.',
+          'The student clicks "Refresh access" (or signs back in) and immediately gains Document Workspace access.',
+        ],
+      },
+    ],
   },
   {
-    email: 'admin@eacsc.example',
-    name: 'Daniel Lim',
-    position: 'Technical & Access Admin',
-    roles: 'technical_admin, custodian',
-  },
-  {
-    email: 'observer@eacsc.example',
-    name: 'Student Observer',
-    position: 'Non-Officer Observer',
-    roles: 'none (read-only)',
+    id: 'continuity',
+    title: 'Turnover, Access Transfer & Troubleshooting',
+    subtitle: 'End-of-term continuity packages, officer handover, common error codes (PT409), and 2026 test accounts',
+    badge: 'Continuity & FAQ',
+    icon: 'wrench',
+    route: '/officer/turnover',
+    routeLabel: 'Open Turnover & Continuity',
+    steps: [
+      'Turnover & Continuity (/officer/turnover): Outgoing Custodians write the continuity memorandum, freeze the outgoing inventory, and export JSON/PDF. Incoming officers record "Incoming Acknowledgment" after verifying access.',
+      'Access Transfer (/officer/admin/access): Technical Administrators transfer document custody from outgoing officers to incoming officers and deactivate outgoing accounts.',
+      'PT409 / Conflict Error: Means another officer updated the same document or version while your tab was open. Click Reload to fetch the latest revision and reapply your change.',
+      'Restricted Document Not Visible: Restricted documents require BOTH an active officer account AND an explicit assignment with allow_restricted enabled.',
+    ],
+    includeRosterSample: true,
   },
 ]
+
+function SectionIcon({ icon }: { icon: AccordionSection['icon'] }) {
+  const cls = 'h-5 w-5 text-slate-600'
+  switch (icon) {
+    case 'book':
+      return (
+        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        </svg>
+      )
+    case 'shield':
+      return (
+        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+        </svg>
+      )
+    case 'users':
+      return (
+        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+        </svg>
+      )
+    case 'workflow':
+      return (
+        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+        </svg>
+      )
+    case 'scenarios':
+      return (
+        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+        </svg>
+      )
+    case 'wrench':
+      return (
+        <svg className={cls} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
+        </svg>
+      )
+  }
+}
 
 export default function HelpPage() {
   const { hash } = useLocation()
   const [query, setQuery] = useState('')
+  const [openIds, setOpenIds] = useState<string[]>([])
 
   useEffect(() => {
     if (!hash) return
-    const target = document.getElementById(hash.replace('#', ''))
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    const targetId = hash.replace('#', '')
+    const mapHashToSection: Record<string, string> = {
+      overview: 'overview',
+      roles: 'roles',
+      'public-library': 'public-library',
+      workspace: 'workspace',
+      'review-queue': 'workspace',
+      'release-panel': 'workspace',
+      bulletins: 'workspace',
+      turnover: 'continuity',
+      'access-transfer': 'continuity',
     }
+    const sectionId = mapHashToSection[targetId] ?? targetId
+    setOpenIds((prev) => (prev.includes(sectionId) ? prev : [...prev, sectionId]))
+    setTimeout(() => {
+      const el = document.getElementById(sectionId)
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }, 80)
   }, [hash])
 
   const normalized = query.trim().toLowerCase()
-  const filteredTopics = TOPICS.filter(
-    (t) =>
-      !normalized ||
-      t.title.toLowerCase().includes(normalized) ||
-      t.summary.toLowerCase().includes(normalized) ||
-      t.steps.some((s) => s.toLowerCase().includes(normalized)),
-  )
+  const filteredSections = SECTIONS.filter((s) => {
+    if (!normalized) return true
+    const haystack = [
+      s.title,
+      s.subtitle,
+      s.badge,
+      ...(s.steps ?? []),
+      ...(s.definitions ?? []).flatMap((d) => [d.term, d.detail]),
+      ...(s.scenarios ?? []).flatMap((sc) => [sc.title, ...sc.steps]),
+    ]
+      .join(' ')
+      .toLowerCase()
+    return haystack.includes(normalized)
+  })
+
+  function toggleSection(id: string) {
+    setOpenIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+    )
+  }
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs">
-        <p className="text-xs font-bold tracking-wider text-emerald-800 uppercase">
-          Help Center &amp; Operations Forum
-        </p>
-        <h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
-          How to Use the EA-CSC Governance Portal
-        </h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-          Plain-language instructions for every role, button, and workflow. Use
-          the search bar below or click any topic to jump directly to its guide.
-        </p>
+    <div className="space-y-6">
+      <section className="rounded-2xl border border-slate-200/90 bg-white/95 p-6 shadow-xs backdrop-blur-xs">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold tracking-wider text-rose-800 uppercase">
+              Help Center &amp; Operations Guide
+            </p>
+            <h1 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
+              How to Use the EA-CSC Governance Portal
+            </h1>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+              Click any category below to expand its definitions, step-by-step
+              workflows, and real-world council scenarios.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setOpenIds(SECTIONS.map((s) => s.id))}
+              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+            >
+              Expand All
+            </button>
+            <button
+              type="button"
+              onClick={() => setOpenIds([])}
+              className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+            >
+              Collapse All
+            </button>
+          </div>
+        </div>
 
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center">
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search help topics (e.g. checklist, upload, roles, PT409, turnover)…"
+            placeholder="Search guides, terms, or scenarios (e.g., folder, fast-track, restricted, PT409, scenario)…"
             aria-label="Search help topics"
-            className="w-full max-w-md rounded-lg border border-slate-300 px-3.5 py-2 text-sm focus:border-emerald-700 focus:outline-none"
+            className="w-full max-w-lg rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-rose-700 focus:outline-none"
           />
           {query && (
             <button
@@ -322,150 +392,182 @@ export default function HelpPage() {
             </button>
           )}
         </div>
-
-        <div className="mt-5 flex flex-wrap gap-2">
-          <a
-            href="#roles"
-            className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-900 hover:bg-emerald-100"
-          >
-            Roles &amp; Privileges
-          </a>
-          {TOPICS.map((topic) => (
-            <a
-              key={topic.id}
-              href={`#${topic.id}`}
-              className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 hover:border-emerald-700 hover:text-emerald-900"
-            >
-              {topic.title}
-            </a>
-          ))}
-        </div>
       </section>
 
-      <section
-        id="roles"
-        className="scroll-mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-xs"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <span className="inline-block rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-900">
-              Access Control
-            </span>
-            <h2 className="mt-1 text-xl font-bold text-slate-900">
-              User Roles &amp; Privileges Matrix
-            </h2>
-          </div>
-          <Link
-            to="/login"
-            className="rounded-lg bg-emerald-900 px-3.5 py-2 text-xs font-semibold text-white hover:bg-emerald-800"
-          >
-            Switch / Sign In
-          </Link>
-        </div>
-
-        <p className="mt-2 text-sm text-slate-600">
-          Every person viewing this website falls into one of the roles below.
-          An officer can hold more than one role, but{' '}
-          <strong>no officer can approve a version they authored</strong>.
-        </p>
-
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full border-collapse text-left text-sm">
-            <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 uppercase">
-                <th className="px-3 py-2.5">Role</th>
-                <th className="px-3 py-2.5">Typical Officer</th>
-                <th className="px-3 py-2.5">What They Can Do</th>
-                <th className="px-3 py-2.5">Restrictions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {ROLE_MATRIX.map((row) => (
-                <tr key={row.role} className="align-top">
-                  <td className="px-3 py-3 font-semibold text-slate-900">
-                    {row.role}
-                  </td>
-                  <td className="px-3 py-3 text-slate-600">{row.who}</td>
-                  <td className="px-3 py-3 text-slate-700">{row.canDo}</td>
-                  <td className="px-3 py-3 text-slate-600">{row.cannotDo}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 p-4">
-          <h3 className="text-sm font-bold text-slate-900">
-            Training &amp; Evaluation Accounts (Password:{' '}
-            <code className="rounded bg-white px-1.5 py-0.5 text-emerald-900">
-              eacsc_1999_CEA
-            </code>
-            )
-          </h3>
-          <p className="mt-1 text-xs text-slate-600">
-            Use these representative accounts on{' '}
-            <Link
-              to="/login"
-              className="font-semibold text-emerald-800 underline"
+      <div className="space-y-3">
+        {filteredSections.map((section) => {
+          const isOpen = normalized.length > 0 || openIds.includes(section.id)
+          return (
+            <section
+              key={section.id}
+              id={section.id}
+              className="scroll-mt-20 overflow-hidden rounded-2xl border border-slate-200/90 bg-white/95 shadow-xs backdrop-blur-xs transition hover:border-slate-300"
             >
-              Officer Sign-In
-            </Link>{' '}
-            to demonstrate or test each privilege level:
-          </p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {DEMO_ACCOUNTS.map((acct) => (
-              <div
-                key={acct.email}
-                className="rounded-lg border border-slate-200 bg-white p-3 text-xs"
+              <button
+                type="button"
+                onClick={() => toggleSection(section.id)}
+                aria-expanded={isOpen}
+                className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left transition hover:bg-slate-50/80"
               >
-                <p className="font-bold text-slate-900">{acct.name}</p>
-                <p className="text-slate-600">{acct.position}</p>
-                <p className="mt-1 font-mono text-emerald-900">{acct.email}</p>
-                <p className="mt-0.5 text-slate-500">Roles: {acct.roles}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+                <div className="flex min-w-0 items-center gap-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200/80 bg-slate-50">
+                    <SectionIcon icon={section.icon} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-base font-bold text-slate-900">
+                        {section.title}
+                      </h2>
+                      <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600">
+                        {section.badge}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 truncate text-xs text-slate-500 sm:text-sm">
+                      {section.subtitle}
+                    </p>
+                  </div>
+                </div>
 
-      <div className="space-y-4">
-        {filteredTopics.map((topic) => (
-          <section
-            key={topic.id}
-            id={topic.id}
-            className="scroll-mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-xs"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <span className="inline-block rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
-                  {topic.badge}
-                </span>
-                <h2 className="mt-1 text-lg font-bold text-slate-900">
-                  {topic.title}
-                </h2>
-              </div>
-              {topic.route && (
-                <Link
-                  to={topic.route}
-                  className="rounded-lg border border-emerald-800 px-3 py-1.5 text-xs font-semibold text-emerald-900 hover:bg-emerald-50"
+                <svg
+                  className={`h-5 w-5 shrink-0 text-slate-400 transition-transform duration-200 ${
+                    isOpen ? 'rotate-180 text-rose-800' : ''
+                  }`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
                 >
-                  {topic.routeLabel ?? 'Open page'} →
-                </Link>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {isOpen && (
+                <div className="animate-accordion-reveal border-t border-slate-100 bg-slate-50/40 px-5 py-5 space-y-5">
+                  {section.definitions && (
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {section.definitions.map((def) => (
+                        <div
+                          key={def.term}
+                          className="rounded-xl border border-slate-200 bg-white p-4"
+                        >
+                          <p className="text-sm font-bold text-slate-900">{def.term}</p>
+                          <p className="mt-1 text-xs leading-5 text-slate-600">
+                            {def.detail}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {section.steps && (
+                    <ol className="space-y-2.5 rounded-xl border border-slate-200 bg-white p-4">
+                      {section.steps.map((step) => (
+                        <li
+                          key={step}
+                          className="flex gap-2.5 text-sm leading-6 text-slate-700"
+                        >
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-rose-700" />
+                          <span>{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+
+                  {section.scenarios && (
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {section.scenarios.map((sc) => (
+                        <div
+                          key={sc.title}
+                          className="rounded-xl border border-slate-200 bg-white p-4 space-y-2.5"
+                        >
+                          <h3 className="text-sm font-bold text-slate-900">
+                            {sc.title}
+                          </h3>
+                          <ol className="space-y-1.5 text-xs leading-5 text-slate-600">
+                            {sc.steps.map((s, idx) => (
+                              <li key={s}>
+                                <strong className="text-slate-800">{idx + 1}.</strong>{' '}
+                                {s}
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {section.includeRoleMatrix && (
+                    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                      <table className="min-w-full divide-y divide-slate-200 text-left text-xs">
+                        <thead className="bg-slate-50 font-semibold text-slate-700">
+                          <tr>
+                            <th className="px-4 py-2.5">Role</th>
+                            <th className="px-4 py-2.5">Typical Positions</th>
+                            <th className="px-4 py-2.5">Allowed Actions</th>
+                            <th className="px-4 py-2.5">Restrictions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {ROLE_MATRIX.map((row) => (
+                            <tr key={row.role}>
+                              <td className="px-4 py-2.5 font-semibold text-slate-900">
+                                {row.role}
+                              </td>
+                              <td className="px-4 py-2.5 text-slate-600">{row.who}</td>
+                              <td className="px-4 py-2.5 text-slate-700">{row.canDo}</td>
+                              <td className="px-4 py-2.5 text-slate-600">{row.cannotDo}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {section.includeRosterSample && (
+                    <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-2">
+                      <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                        Key 2026 Test Roster Accounts (Password: eacsc_1999_CEA)
+                      </p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {OFFICIAL_TEST_SAMPLE.map((acc) => (
+                          <div
+                            key={acc.email}
+                            className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-xs"
+                          >
+                            <p className="font-bold text-slate-900">
+                              {acc.position}{' '}
+                              <span className="font-normal text-slate-500">
+                                ({acc.email})
+                              </span>
+                            </p>
+                            <p className="text-slate-600">{acc.roles}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {section.route && section.routeLabel && (
+                    <div>
+                      <Link
+                        to={section.route}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-800"
+                      >
+                        {section.routeLabel} →
+                      </Link>
+                    </div>
+                  )}
+                </div>
               )}
-            </div>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              {topic.summary}
-            </p>
-            <ul className="mt-3 space-y-1.5 text-sm text-slate-800">
-              {topic.steps.map((step, i) => (
-                <li key={i} className="flex gap-2">
-                  <span className="font-bold text-emerald-800">•</span>
-                  <span>{step}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
-        ))}
+            </section>
+          )
+        })}
+
+        {filteredSections.length === 0 && (
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-600">
+            No help topics matched "{query}". Try clearing your search.
+          </div>
+        )}
       </div>
     </div>
   )
