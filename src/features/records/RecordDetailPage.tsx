@@ -64,9 +64,18 @@ function RecordDetailLoader({ recordId }: RecordDetailLoaderProps) {
     <section aria-labelledby="record-detail-heading">
       <Link
         to="/"
-        className="inline-flex rounded text-sm font-semibold text-green-800 underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700"
+        className="group inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-950 hover:shadow-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-green-700"
       >
-        Back to public library
+        <svg
+          className="h-4 w-4 text-emerald-700 transition-transform duration-200 group-hover:-translate-x-0.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+        </svg>
+        Back to Public Library
       </Link>
 
       <h1

@@ -251,17 +251,42 @@ const SECTIONS: AccordionSection[] = [
   },
   {
     id: 'continuity',
-    title: 'Turnover, Access Transfer & Troubleshooting',
-    subtitle: 'End-of-term continuity packages, officer handover, common error codes (PT409), and 2026 test accounts',
+    title: 'Turnover, Saved Packages, Continuity Memo & Troubleshooting',
+    subtitle: 'Saved packages, Institutional Continuity Memorandum, Access Transfer, PT409 errors, and 2026 test accounts',
     badge: 'Continuity & FAQ',
     icon: 'wrench',
     route: '/officer/turnover',
     routeLabel: 'Open Turnover & Continuity',
+    definitions: [
+      {
+        term: 'Saved packages (Refresh & New Package)',
+        detail:
+          'Displays turnover packages created by you or assigned to you as the incoming officer. Click "Refresh package list" to check for newly assigned packages, or "New package for my position" to start a new handover package. Seeing "No packages are available to this account" simply means no package has been saved or transferred to your account yet.',
+      },
+      {
+        term: 'Institutional Continuity Memorandum',
+        detail:
+          'Your position’s official end-of-term handover form. Position is auto-filled from your account; enter "Term covered" (e.g., Academic Year 2026–2027), choose the "Designated incoming officer", complete the accomplishment/pending-matters fields, and click "Save memorandum".',
+      },
+      {
+        term: 'Freezing Outgoing Memo & Inventory',
+        detail:
+          'After saving the memorandum and confirming your document inventory, freezing locks the package for official handover. Any further corrections after freezing require creating a new package.',
+      },
+      {
+        term: 'Access Transfer & Incoming Acknowledgment',
+        detail:
+          'Technical Administrators transfer custody on /officer/admin/access. Incoming officers then open the package from Saved packages, verify access to transferred documents, click "Acknowledge receipt", and optionally export JSON/PDF archives.',
+      },
+    ],
     steps: [
-      'Turnover & Continuity (/officer/turnover): Outgoing Custodians write the continuity memorandum, freeze the outgoing inventory, and export JSON/PDF. Incoming officers record "Incoming Acknowledgment" after verifying access.',
-      'Access Transfer (/officer/admin/access): Technical Administrators transfer document custody from outgoing officers to incoming officers and deactivate outgoing accounts.',
-      'PT409 / Conflict Error: Means another officer updated the same document or version while your tab was open. Click Reload to fetch the latest revision and reapply your change.',
-      'Restricted Document Not Visible: Restricted documents require BOTH an active officer account AND an explicit assignment with allow_restricted enabled.',
+      '1. Start or Open a Package (/officer/turnover): Under "Saved packages", click "New package for my position" to begin a new handover, or select an existing package (use "Refresh package list" if an outgoing officer just assigned one to you).',
+      '2. Complete the Institutional Continuity Memorandum: Enter "Term covered" (required before Save memorandum enables), pick the "Designated incoming officer" from the dropdown, fill in the narrative fields, and click "Save memorandum".',
+      '3. Confirm Inventory & Freeze: Verify the listed council records, then freeze the saved memo and inventory for handover. Export JSON/PDF copies for your archive.',
+      '4. Administrative Access Transfer (/officer/admin/access): Technical Administrators transfer document custody from the outgoing officer to the incoming officer and deactivate outgoing access.',
+      '5. Incoming Receipt: The incoming officer signs in, opens the package under "Saved packages", verifies access, and clicks "Acknowledge receipt".',
+      'Troubleshooting — PT409 Conflict Error: Another officer updated the same document or package while your tab was open. Click Reload to fetch the latest revision and reapply your change.',
+      'Troubleshooting — Restricted Document Not Visible: Restricted documents require BOTH an active officer account AND an explicit assignment with allow_restricted enabled.',
     ],
     includeRosterSample: true,
   },

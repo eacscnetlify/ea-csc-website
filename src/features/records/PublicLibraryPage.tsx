@@ -296,8 +296,11 @@ export default function PublicLibraryPage() {
             <button
               type="button"
               onClick={clearFilters}
-              className="ml-auto text-xs font-semibold text-rose-800 hover:underline"
+              className="ml-auto inline-flex items-center gap-1.5 rounded-full border border-rose-200 bg-rose-50 px-3.5 py-1.5 text-xs font-semibold text-rose-800 shadow-xs transition-all duration-150 hover:border-rose-300 hover:bg-rose-100 active:scale-[0.98]"
             >
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
               Clear filters
             </button>
           )}
@@ -378,8 +381,9 @@ export default function PublicLibraryPage() {
 
       {status === 'success' && (
         <div className="space-y-4">
-          <div className="flex items-center justify-between text-xs font-semibold text-slate-500 uppercase tracking-wider">
-            <span>
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center gap-2 rounded-full border border-slate-200/90 bg-white/95 px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-slate-800 shadow-xs backdrop-blur-sm">
+              <span className="h-2 w-2 rounded-full bg-emerald-600" />
               {isSearchPending
                 ? 'Searching…'
                 : `Showing ${filteredRecords.length} verified public document${filteredRecords.length === 1 ? '' : 's'}`}

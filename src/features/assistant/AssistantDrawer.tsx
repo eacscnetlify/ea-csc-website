@@ -327,7 +327,7 @@ export default function AssistantDrawer({
                 e.preventDefault()
                 void sendPrompt(input)
               }}
-              className="flex gap-2 border-t border-slate-200 bg-white p-3"
+              className="flex gap-2 border-t border-slate-200 bg-white px-3 pt-3 pb-16"
             >
               <input
                 type="text"
@@ -347,7 +347,7 @@ export default function AssistantDrawer({
             </form>
           </>
         ) : (
-          <div className="flex-1 space-y-4 overflow-y-auto p-4">
+          <div className="flex-1 space-y-4 overflow-y-auto p-4 pb-16">
             <p className="text-xs leading-5 text-slate-600">
               Paste council announcement text, meeting minutes, or draft
               guidelines below to extract key bullet points, entities (dates,
