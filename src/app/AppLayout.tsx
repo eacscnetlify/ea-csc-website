@@ -322,12 +322,12 @@ export default function AppLayout() {
           const isOfficer = pathname.startsWith('/officer')
 
           const bg = isAuth
-            ? { src: '/bg-auth.jpg', opacity: 'opacity-[0.28]', wash: 'bg-slate-100/55' }
+            ? { src: '/bg-auth.jpg', opacity: 'opacity-[0.52]', wash: 'bg-slate-100/30' }
             : isContinuity
               ? { src: '/bg-continuity.jpg', opacity: 'opacity-[0.55]', wash: 'bg-white/40' }
               : isOfficer
                 ? { src: '/bg-officer.jpg', opacity: 'opacity-[0.55]', wash: 'bg-white/40' }
-                : { src: '/bg-public.jpg', opacity: 'opacity-[0.26]', wash: 'bg-slate-100/55' }
+                : { src: '/bg-public.jpg', opacity: 'opacity-[0.48]', wash: 'bg-slate-100/35' }
 
           return (
             <div
