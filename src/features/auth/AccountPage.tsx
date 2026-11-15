@@ -522,6 +522,62 @@ export default function AccountPage() {
           </div>
         )}
       </div>
+
+      {/* Role Capabilities & Account Security Reference */}
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+        <div>
+          <h2 className="text-lg font-bold text-slate-900">
+            Role Capabilities &amp; Security Reference
+          </h2>
+          <p className="mt-1 text-xs text-slate-600">
+            Quick overview of what each functional role unlocks across the EA-CSC IIDGS portal.
+          </p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-xs">
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
+            <p className="font-bold text-slate-900 uppercase">Author</p>
+            <p className="mt-1 leading-relaxed text-slate-600">
+              Create and edit Draft notes, upload PDF/DOCX/PNG/JPEG files (up to 10 MB), and submit versions for 6-point review.
+            </p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
+            <p className="font-bold text-slate-900 uppercase">Custodian</p>
+            <p className="mt-1 leading-relaxed text-slate-600">
+              Maintain assigned council records, compile Update Bulletins, and prepare end-of-term Turnover packages.
+            </p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
+            <p className="font-bold text-slate-900 uppercase">Reviewer</p>
+            <p className="mt-1 leading-relaxed text-slate-600">
+              Inspect non-authored submissions in Review Queue, run the 6-point verification checklist, or Return for Correction.
+            </p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
+            <p className="font-bold text-slate-900 uppercase">Approver</p>
+            <p className="mt-1 leading-relaxed text-slate-600">
+              Grant Substantive Approval after all 6 checklist points pass, and review pending officer role applications.
+            </p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
+            <p className="font-bold text-slate-900 uppercase">Publisher</p>
+            <p className="mt-1 leading-relaxed text-slate-600">
+              Publish Approved releases immediately or on a schedule, supersede prior versions, or execute emergency Withdrawals.
+            </p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
+            <p className="font-bold text-slate-900 uppercase">Technical Admin</p>
+            <p className="mt-1 leading-relaxed text-slate-600">
+              Transfer document custody, update officer roles, and deactivate outgoing accounts during Access Transfer.
+            </p>
+          </div>
+        </div>
+
+        <p className="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-600">
+          <strong>Tip:</strong> After the Council President approves your role application, click{' '}
+          <strong>Refresh</strong> in the top bar to sync your new Officer Operations menu immediately.
+        </p>
+      </div>
     </div>
   )
 }

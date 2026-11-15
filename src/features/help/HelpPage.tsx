@@ -225,7 +225,24 @@ const SECTIONS: AccordionSection[] = [
           'A student creates an account at /signup (starts as Student Observer with read-only access).',
           'They open My Account & Role (/account), choose their appointed position (e.g., Graphic Designer), and submit an application.',
           'President opens /account, sees the pending application in the President’s Role Approval Console, and clicks Approve.',
-          'The student clicks "Refresh access" (or signs back in) and immediately gains Document Workspace access.',
+          'The student clicks "Refresh" in the top bar (or signs back in) and immediately gains Document Workspace access.',
+        ],
+      },
+      {
+        title: 'Scenario E: Emergency Withdrawal, Rechecking & Republishing',
+        steps: [
+          'If an already-Published document contains an error or outdated schedule, a Publisher (PIO) opens Release Panel (/officer/releases) and executes an Emergency Withdrawal with a clear withdrawal reason.',
+          'Public downloads immediately stop and a visible Withdrawal notice appears on the Record Detail page.',
+          'An Author creates a new Draft version (v2), uploads the corrected file, and submits it through the 6-point Review Queue and Approval.',
+          'Publisher releases v2 on Release Panel—v2 becomes the current Public release and v1 is marked Superseded.',
+        ],
+      },
+      {
+        title: 'Scenario F: Compiling & Updating Bulletins (v1 → v2)',
+        steps: [
+          'Executive Secretary or Custodian opens Bulletin Compiler (/officer/bulletins), chooses Public or Internal, and sets the reporting window and Manila (UTC+8) cutoff timestamp.',
+          'Preview and issue the compiled PDF (v1). Public bulletins appear immediately on /bulletins.',
+          'If a new release is published after v1 or a correction is needed, re-compile the bulletin—the system issues v2 and automatically marks v1 as Superseded.',
         ],
       },
     ],

@@ -122,6 +122,7 @@ export default function AppLayout() {
   const [assistantOpen, setAssistantOpen] = useState(false)
   const [assistantMounted, setAssistantMounted] = useState(false)
   const [profile, setProfile] = useState<OfficerProfile | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
 
   const userId = session?.user?.id ?? null
 
@@ -159,6 +160,20 @@ export default function AppLayout() {
       setProfile(null)
       setSidebarOpen(false)
       navigate('/login')
+    }
+  }
+
+  async function handleRefreshAccess() {
+    if (!userId || refreshing) return
+    setRefreshing(true)
+    try {
+      await getSupabaseClient().auth.refreshSession()
+      const loaded = await getOfficerProfile(userId, new AbortController().signal)
+      setProfile(loaded)
+    } catch {
+      // keep existing profile on transient failure
+    } finally {
+      setRefreshing(false)
     }
   }
 
@@ -219,61 +234,36 @@ export default function AppLayout() {
       </nav>
 
       <div className="border-t border-slate-800 p-4">
-        {status === 'signed-in' ? (
-          <div className="space-y-3 rounded-xl bg-slate-900 p-3.5">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-bold text-white">
-                {activeProfile?.full_name ?? session?.user?.email ?? 'Signed-in Account'}
-              </p>
-              <p className="truncate text-xs text-slate-400">
-                {activeProfile
-                  ? (activeProfile.council_position ?? 'Council Account')
-                  : (session?.user?.email ?? 'Profile loading…')}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1">
-                {activeProfile && activeProfile.functional_roles.length > 0 ? (
-                  activeProfile.functional_roles.map((r) => (
-                    <span
-                      key={r}
-                      className="rounded bg-emerald-900/80 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-emerald-200 uppercase"
-                    >
-                      {r}
-                    </span>
-                  ))
-                ) : (
-                  <span className="rounded bg-slate-800 px-2 py-0.5 text-[10px] font-medium text-slate-300">
-                    Observer (Read-only)
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="flex">
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="w-full rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-slate-800 hover:text-white"
-              >
-                Sign Out
-              </button>
-            </div>
+        <div className="space-y-2.5 rounded-xl border border-slate-800 bg-slate-900/90 p-3.5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] font-bold tracking-wider text-slate-300 uppercase">
+              Governance Guard
+            </span>
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-950/90 px-2 py-0.5 text-[10px] font-semibold text-emerald-300 ring-1 ring-emerald-700/40">
+              <span className="size-1.5 rounded-full bg-emerald-400" />
+              SHA-256
+            </span>
           </div>
-        ) : (
-          <div className="space-y-2.5 rounded-xl bg-slate-900 p-3.5">
-            <div>
-              <p className="text-sm font-semibold text-white">Public Visitor</p>
-              <p className="text-xs text-slate-400">
-                Viewing verified public releases
-              </p>
-            </div>
+          <p className="text-[11px] leading-4 text-slate-400">
+            6-Point Verification · Segregation of Duties · RA 10173 Privacy · UTC+8
+          </p>
+          <div className="flex gap-2 pt-0.5">
             <Link
-              to="/login"
+              to="/help"
               onClick={() => setSidebarOpen(false)}
-              className="block w-full rounded-lg bg-emerald-800 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-emerald-700"
+              className="flex-1 rounded-lg border border-slate-700 bg-slate-800/70 px-2.5 py-1.5 text-center text-[11px] font-semibold text-slate-200 transition hover:border-slate-500 hover:bg-slate-800 hover:text-white"
             >
-              Officer Sign-In
+              Guide
+            </Link>
+            <Link
+              to="/bulletins"
+              onClick={() => setSidebarOpen(false)}
+              className="flex-1 rounded-lg border border-slate-700 bg-slate-800/70 px-2.5 py-1.5 text-center text-[11px] font-semibold text-slate-200 transition hover:border-slate-500 hover:bg-slate-800 hover:text-white"
+            >
+              Bulletins
             </Link>
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
@@ -366,18 +356,127 @@ export default function AppLayout() {
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+              {status === 'signed-in' && (
+                <button
+                  type="button"
+                  disabled={refreshing}
+                  onClick={() => void handleRefreshAccess()}
+                  title="Refresh access & roles"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-emerald-700 hover:bg-emerald-50 hover:text-emerald-900 hover:shadow-sm active:scale-95 disabled:opacity-60"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className={`size-3.5 ${refreshing ? 'animate-spin' : ''}`}
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                  <span className="hidden sm:inline">
+                    {refreshing ? 'Syncing' : 'Refresh'}
+                  </span>
+                </button>
+              )}
+
+              <Link
+                to="/"
+                title="Home Library"
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-emerald-700 hover:bg-emerald-50 hover:text-emerald-900 hover:shadow-sm active:scale-95"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="size-3.5"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3 10.5L12 3l9 7.5V20a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1v-9.5z"
+                  />
+                </svg>
+                <span className="hidden sm:inline">Home</span>
+              </Link>
+
               <Link
                 to={`/help#${pageInfo.help}`}
                 aria-label={`Help for ${pageInfo.label}`}
                 title={`Help for ${pageInfo.label}`}
-                className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-emerald-700 hover:bg-emerald-50 hover:text-emerald-900"
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-emerald-700 hover:bg-emerald-50 hover:text-emerald-900 hover:shadow-sm active:scale-95"
               >
-                <span className="inline-flex size-4 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-bold text-emerald-900">
-                  ?
-                </span>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="size-3.5"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="9" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9.5 9a2.5 2.5 0 014.8.8c0 1.7-2.3 2.2-2.3 3.7m.05 3h.01"
+                  />
+                </svg>
                 <span className="hidden sm:inline">Help</span>
               </Link>
+
+              {status === 'signed-in' ? (
+                <button
+                  type="button"
+                  onClick={() => void handleSignOut()}
+                  title="Sign out"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-rose-700 hover:bg-rose-50 hover:text-rose-900 hover:shadow-sm active:scale-95"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="size-3.5"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"
+                    />
+                  </svg>
+                  <span className="hidden sm:inline">Sign out</span>
+                </button>
+              ) : (
+                <Link
+                  to="/login"
+                  title="Sign in"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 transition-all duration-150 hover:-translate-y-0.5 hover:border-emerald-700 hover:bg-emerald-50 hover:text-emerald-900 hover:shadow-sm active:scale-95"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    className="size-3.5"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"
+                    />
+                  </svg>
+                  <span className="hidden sm:inline">Sign in</span>
+                </Link>
+              )}
 
               <button
                 type="button"
@@ -385,11 +484,11 @@ export default function AppLayout() {
                   setAssistantMounted(true)
                   setAssistantOpen(true)
                 }}
-                className="ai-launcher-btn inline-flex min-h-[38px] items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-900 via-emerald-800 to-[#8B0029] px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-all duration-200 hover:shadow-md hover:shadow-emerald-900/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+                className="ai-launcher-btn inline-flex h-9 items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-900 via-emerald-800 to-[#8B0029] px-3.5 text-xs font-semibold text-white shadow-sm transition-all duration-200 hover:shadow-md hover:shadow-emerald-900/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
               >
-                <span className="relative flex size-2.5">
+                <span className="relative flex size-2">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-75" />
-                  <span className="relative inline-flex size-2.5 rounded-full bg-emerald-300" />
+                  <span className="relative inline-flex size-2 rounded-full bg-emerald-300" />
                 </span>
                 <span>AI Assistant</span>
               </button>
