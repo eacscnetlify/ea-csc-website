@@ -16,6 +16,11 @@ const ReviewQueuePage = lazy(
   () => import('../features/reviews/ReviewQueuePage'),
 )
 const LoginPage = lazy(() => import('../features/auth/LoginPage'))
+const SignUpPage = lazy(() => import('../features/auth/SignUpPage'))
+const AccountPage = lazy(() => import('../features/auth/AccountPage'))
+const CouncilHistoryPage = lazy(
+  () => import('../features/history/CouncilHistoryPage'),
+)
 const ResetPasswordPage = lazy(
   () => import('../features/auth/ResetPasswordPage'),
 )
@@ -60,6 +65,8 @@ export default function AppRouter() {
             <Route path="bulletins" element={<PublicBulletinsPage />} />
             <Route path="help" element={<HelpPage />} />
             <Route path="login" element={<LoginPage />} />
+            <Route path="signup" element={<SignUpPage />} />
+            <Route path="account" element={<AccountPage />} />
 
             <Route path="auth/reset-password" element={<ResetPasswordPage />} />
             <Route
@@ -96,6 +103,14 @@ export default function AppRouter() {
               element={
                 <RequireAuth>
                   <BulletinBuilderPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="officer/history"
+              element={
+                <RequireAuth>
+                  <CouncilHistoryPage />
                 </RequireAuth>
               }
             />

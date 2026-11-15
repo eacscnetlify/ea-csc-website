@@ -17,42 +17,44 @@ const TOPICS: HelpTopic[] = [
     title: 'How the EA-CSC Governance System Works',
     badge: 'Start Here',
     summary:
-      'This system ensures every student council announcement, resolution, financial report, and activity guideline goes through a verified lifecycle before reaching students—and preserves full council history across academic terms.',
+      'This system organizes council files into Folders and Documents, ensuring every announcement, resolution, financial report, and activity guideline goes through verified version control before reaching students—while preserving full council history across academic terms.',
     steps: [
-      '1. Draft (Author / Custodian): Upload source files (.pdf, .docx, .png, .jpg) and write version notes.',
-      '2. For Review (Author -> Reviewer): Submit the draft so a different officer can inspect it.',
-      '3. Approved (Reviewer / Approver): All 6 verification checks pass and substantive approval is recorded.',
-      '4. Published (Publisher / PIO): The document becomes visible and downloadable in the Public Library.',
-      '5. Superseded or Withdrawn: Newer approved versions replace older ones (keeping history), or urgent errors can be withdrawn with a public notice.',
+      '1. Folders & Documents: Officers organize related Documents inside Folders (e.g., Governance & Charter, Secretariat & Minutes, Financial & Audit, Activities). Each Document tracks multiple Versions over time (v1, v2, v3…).',
+      '2. Draft (Author / Custodian): Upload source files (.pdf, .docx, .png, .jpg) and write version notes.',
+      '3. For Review (Author -> Reviewer): Submit the draft so another officer can inspect it. (The President and Executive Secretary also have Executive Fast-Track Self-Approval for urgent bulletins.)',
+      '4. Approved (Reviewer / Approver): All 6 verification checks pass and substantive approval is recorded.',
+      '5. Published (Publisher / PRO): The approved document version becomes visible and downloadable on the Home — Public Library.',
+      '6. Superseded or Withdrawn: Publishing a newer version (e.g. v2) automatically supersedes v1 while keeping version history, or urgent errors can be withdrawn with a public notice.',
     ],
   },
   {
     id: 'public-library',
-    title: 'Public Library & Record Details',
+    title: 'Home — Public Library, Student Accounts & Role Requests',
     badge: 'Public Portal',
     route: '/',
-    routeLabel: 'Open Public Library',
+    routeLabel: 'Open Home — Public Library',
     summary:
-      'Anyone (students, faculty, guests) can browse the Public Library without signing in. Only Published, non-restricted records whose effective date has arrived appear here.',
+      'Anyone (students, faculty, guests) can browse the Home — Public Library without signing in. Only Published, non-restricted Documents whose effective date has arrived appear here. Students can also create an Observer account and apply for an officer role.',
     steps: [
-      'Search by record title, canonical ID (e.g. EACSC-2099-BT-9228), or keyword.',
-      'Filter by official category: Governance (GOV), Secretariat (SEC), Activities (ACT), Financial (FIN), Forms (FRM), or Turnover (TRN).',
-      'Click "View record" to inspect metadata, download the official verified file, view Superseded prior versions, or read any emergency Withdrawal notice.',
+      'Search by document title, canonical ID (e.g. EACSC-2026-GOV-0001), or keyword, and filter by category (GOV, SEC, ACT, FIN, FRM, TRN).',
+      'Click "View document" to inspect metadata, download the official verified file, view Superseded prior versions, or read any Withdrawal notice.',
+      'Click "Create Account" (/signup) to register as a Student Observer (read-only), then open "My Account & Role" (/account) to apply for one of the 28 official EA-CSC positions (Executive Officers, Board Members, or Advisory).',
+      'Once the Council President approves your application in /account, refresh access to unlock your Officer Operations tabs.',
     ],
   },
   {
     id: 'workspace',
-    title: 'Officer Workspace (Drafts, Uploads & Submissions)',
+    title: 'Document Workspace (Folders, Documents, Drafts & Submissions)',
     badge: 'Author / Custodian',
     route: '/officer',
-    routeLabel: 'Open Officer Workspace',
+    routeLabel: 'Open Document Workspace',
     summary:
-      'Assigned Authors and Custodians work on Draft versions here. Only records you have an active assignment for appear in your workspace.',
+      'Assigned Authors and Custodians create Folders, create Documents, and work on Draft versions here. Documents marked Restricted stay hidden from the Public Library and are visible only to explicitly assigned officers.',
     steps: [
-      'Select an assigned record and open its current Draft version.',
-      'Upload a valid attachment (.pdf, .docx, .png, or .jpg/.jpeg, maximum 10 MB). The server checks real file contents (magic bytes), so renamed files are rejected.',
-      'Update version notes and click Save Draft Notes.',
-      'When ready for checking, click "Submit for Review". Once submitted, the version locks from further author edits until a reviewer returns or approves it.',
+      'Use "Create Folder" to organize documents cleanly, and "Create Document" to register a new Public or Restricted document.',
+      'Select a Document and open its current Draft version (or upload a new Draft version when updating an existing document).',
+      'Upload a valid attachment (.pdf, .docx, .png, or .jpg/.jpeg, maximum 10 MB). The server verifies real file contents (magic bytes) and computes a SHA-256 checksum.',
+      'Update version notes, click "Save Draft Notes", and click "Submit for Review" when ready—or use "Executive Fast-Track Self-Approve" if you are the President or Executive Secretary handling an urgent release.',
     ],
   },
   {
@@ -62,7 +64,7 @@ const TOPICS: HelpTopic[] = [
     route: '/officer/reviews',
     routeLabel: 'Open Review Queue',
     summary:
-      'Segregation of duties prevents any officer from approving their own work. Non-author Reviewers and Approvers inspect submitted versions here.',
+      'Segregation of duties prevents regular officers from approving their own drafts (except the President and Executive Secretary who have Executive Fast-Track privileges for urgent council releases).',
     steps: [
       'Open a submitted "For Review" version from the queue.',
       'Inspect the uploaded file and complete all 6 verification points: (1) Identity & version alignment, (2) Dates, deadlines & Manila UTC+8 time, (3) Location, venue or link, (4) Audience eligibility, (5) Issuing authority & privacy disclosure, and (6) Contact channel & reference IDs.',
@@ -97,6 +99,19 @@ const TOPICS: HelpTopic[] = [
       'Choose Audience (Public or Internal) and set the reporting window and Manila (UTC+8) cutoff timestamp.',
       'Click "Compile Bulletin & Preview PDF" to freeze the snapshot of eligible releases.',
       'Review the generated PDF and click "Issue Bulletin" to archive v1 (or issue v2 to correct/supersede v1).',
+    ],
+  },
+  {
+    id: 'history',
+    title: 'Council Activity & History',
+    badge: 'Audit Trail',
+    route: '/officer/history',
+    routeLabel: 'Open Activity & History',
+    summary:
+      'Every major action across the council—document creation, new draft uploads, submissions, returns, approvals, fast-track releases, and role changes—is logged in a tamper-evident audit timeline.',
+    steps: [
+      'Filter by action type (Uploads, Reviews, Approvals, Releases, Role Changes) or search by document ID or actor.',
+      'Use this tab to quickly verify what changed across all council folders without opening individual documents.',
     ],
   },
   {
@@ -153,30 +168,30 @@ const ROLE_MATRIX = [
   },
   {
     role: 'Unassigned / Observer (roles: [])',
-    who: 'Signed-in account without officer roles',
-    canDo: 'Same as Public Visitor.',
+    who: 'Signed-in student account without officer roles',
+    canDo: 'Same as Public Visitor, plus can manage their own account and submit an Officer Role Application on /account.',
     cannotDo:
-      'Blocked from Officer Workspace, Review Queue, Release Panel, Bulletin Compiler, and Turnover.',
+      'Blocked from Officer Workspace, Review Queue, Release Panel, Bulletin Compiler, Activity & History, and Turnover.',
   },
   {
     role: 'Author (author)',
-    who: 'Committee Heads / Record Drafters',
+    who: 'Committee Heads / Representatives / Board Members',
     canDo:
-      'Edit Draft notes, upload attachments, and Submit for Review on records explicitly assigned to them.',
+      'Create Folders/Documents, edit Draft notes, upload attachments, and Submit for Review on assigned Documents.',
     cannotDo:
-      'Cannot approve their own submissions, publish releases, or access Restricted records unless explicitly permitted.',
+      'Cannot approve their own submissions (segregation of duties), publish releases, or access Restricted documents unless explicitly permitted.',
   },
   {
     role: 'Custodian (custodian)',
-    who: 'Executive Secretary / Primary Records Custodian',
+    who: 'Executive Secretary / Assistant Secretary / File Inventory Manager / Treasurer',
     canDo:
-      'Author actions + compile Update Bulletins + prepare and freeze Turnover packages.',
+      'Manage Folders and Documents, compile Update Bulletins, and prepare Turnover packages. Executive Secretary also holds Executive Fast-Track Self-Approval for urgent council releases.',
     cannotDo:
-      'Cannot approve versions they authored or publish without Publisher role.',
+      'Non-executive custodians cannot approve versions they authored or publish without Publisher role.',
   },
   {
     role: 'Reviewer (reviewer)',
-    who: 'VP Internal / Reviewing Officers',
+    who: 'VP Internal / VP External / Auditors / Board of Directors',
     canDo:
       'Inspect For Review submissions (non-author), fill out the 6-point verification checklist, add review comments, and Return for Correction.',
     cannotDo:
@@ -184,11 +199,11 @@ const ROLE_MATRIX = [
   },
   {
     role: 'Approver (approver)',
-    who: 'EA-CSC President / Approving Authority',
+    who: 'EA-CSC President / Executive Secretary / Adviser',
     canDo:
-      'Complete 6-point verification and grant final Substantive Approval (Approved) on non-author submissions.',
+      'Complete 6-point verification and grant final Substantive Approval (Approved). President & Executive Secretary also hold Executive Fast-Track Self-Approval for urgent releases.',
     cannotDo:
-      'Cannot approve their own authored drafts or publish without Publisher role.',
+      'Cannot publish releases without the Publisher role.',
   },
   {
     role: 'Publisher (publisher)',

@@ -299,9 +299,59 @@ export default function BulletinBuilderPage() {
       )}
 
       <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
-        <h2 className="text-lg font-bold">
-          1. Reporting window &amp; audience
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-bold">
+            1. Reporting window &amp; audience
+          </h2>
+          <div className="flex flex-wrap gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                const t = todayManilaDate()
+                setCoverageStart(t)
+                setCoverageEnd(t)
+                setCutoffLocal(nowManilaDateTimeLocal())
+              }}
+              className="rounded-md border border-slate-300 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+            >
+              Today
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const now = new Date()
+                const weekAgo = new Date(now.getTime() - 6 * 86400_000)
+                const fmt = (d: Date) =>
+                  new Intl.DateTimeFormat('en-CA', {
+                    timeZone: 'Asia/Manila',
+                  }).format(d)
+                setCoverageStart(fmt(weekAgo))
+                setCoverageEnd(fmt(now))
+                setCutoffLocal(nowManilaDateTimeLocal())
+              }}
+              className="rounded-md border border-slate-300 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+            >
+              Last 7 Days
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const now = new Date()
+                const t = todayManilaDate()
+                setCoverageStart(`${t.slice(0, 7)}-01`)
+                setCoverageEnd(
+                  new Intl.DateTimeFormat('en-CA', {
+                    timeZone: 'Asia/Manila',
+                  }).format(now),
+                )
+                setCutoffLocal(nowManilaDateTimeLocal())
+              }}
+              className="rounded-md border border-slate-300 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+            >
+              This Month
+            </button>
+          </div>
+        </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>

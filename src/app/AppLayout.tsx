@@ -10,22 +10,37 @@ const AssistantDrawer = lazy(
   () => import('../features/assistant/AssistantDrawer'),
 )
 
-const NAV_GROUPS = [
-  {
-    heading: 'Public Portal',
-    items: [
-      { to: '/', label: 'Public Library', end: true },
-      { to: '/bulletins', label: 'Update Bulletins', end: false },
-      { to: '/help', label: 'Help & Guide', end: false },
-    ],
-  },
+const PUBLIC_NAV = {
+  heading: 'Public Portal',
+  items: [
+    { to: '/', label: 'Home', end: true },
+    { to: '/bulletins', label: 'Update Bulletins', end: false },
+    { to: '/help', label: 'Help & Guide', end: false },
+  ],
+}
+
+const VISITOR_AUTH_NAV = {
+  heading: 'Account Access',
+  items: [
+    { to: '/signup', label: 'Create Account', end: false },
+    { to: '/login', label: 'Sign In', end: false },
+  ],
+}
+
+const OBSERVER_NAV = {
+  heading: 'Student Account',
+  items: [{ to: '/account', label: 'My Account & Role', end: false }],
+}
+
+const OFFICER_NAV_GROUPS = [
   {
     heading: 'Officer Operations',
     items: [
-      { to: '/officer', label: 'Officer Workspace', end: true },
+      { to: '/officer', label: 'Document Workspace', end: true },
       { to: '/officer/reviews', label: 'Review Queue', end: false },
       { to: '/officer/releases', label: 'Release Panel', end: false },
       { to: '/officer/bulletins', label: 'Bulletin Compiler', end: false },
+      { to: '/officer/history', label: 'Activity & History', end: false },
     ],
   },
   {
@@ -33,6 +48,7 @@ const NAV_GROUPS = [
     items: [
       { to: '/officer/turnover', label: 'Turnover & Continuity', end: false },
       { to: '/officer/admin/access', label: 'Access Transfer', end: false },
+      { to: '/account', label: 'My Account & Roles', end: false },
     ],
   },
 ]
@@ -42,10 +58,10 @@ const PAGE_LABELS: Array<{
   label: string
   help: string
 }> = [
-  { match: (p) => p === '/', label: 'Public Library', help: 'public-library' },
+  { match: (p) => p === '/', label: 'Home — Public Library', help: 'public-library' },
   {
     match: (p) => p.startsWith('/records/'),
-    label: 'Record Detail',
+    label: 'Document Detail',
     help: 'public-library',
   },
   {
@@ -58,10 +74,12 @@ const PAGE_LABELS: Array<{
     label: 'Help & Operations Guide',
     help: 'overview',
   },
-  { match: (p) => p === '/login', label: 'Officer Sign-In', help: 'roles' },
+  { match: (p) => p === '/signup', label: 'Create Student Account', help: 'roles' },
+  { match: (p) => p === '/login', label: 'Sign In', help: 'roles' },
+  { match: (p) => p === '/account', label: 'My Account & Role', help: 'roles' },
   {
     match: (p) => p === '/officer',
-    label: 'Officer Workspace',
+    label: 'Document Workspace',
     help: 'workspace',
   },
   {
@@ -78,6 +96,11 @@ const PAGE_LABELS: Array<{
     match: (p) => p === '/officer/bulletins',
     label: 'Bulletin Compiler',
     help: 'bulletins',
+  },
+  {
+    match: (p) => p === '/officer/history',
+    label: 'Council Activity & History',
+    help: 'overview',
   },
   {
     match: (p) => p === '/officer/turnover',
@@ -113,6 +136,16 @@ export default function AppLayout() {
   }, [status, userId])
 
   const activeProfile = status === 'signed-in' && userId ? profile : null
+  const isOfficer =
+    Boolean(activeProfile?.is_active) &&
+    (activeProfile?.functional_roles.length ?? 0) > 0
+
+  const navGroups = isOfficer
+    ? [PUBLIC_NAV, ...OFFICER_NAV_GROUPS]
+    : status === 'signed-in'
+      ? [PUBLIC_NAV, OBSERVER_NAV]
+      : [PUBLIC_NAV, VISITOR_AUTH_NAV]
+
   const pageInfo = PAGE_LABELS.find((p) => p.match(pathname)) ?? {
     label: 'EA-CSC Portal',
     help: 'overview',
@@ -129,24 +162,23 @@ export default function AppLayout() {
   }
 
   const sidebarContent = (
-    <div className="flex h-full flex-col bg-slate-950 text-slate-100">
-      <div className="border-b border-slate-800 px-5 py-4">
+    <div className="flex h-full flex-col bg-slate-950 text-slate-100 border-r border-slate-800">
+      <div className="border-b border-rose-900/50 bg-gradient-to-r from-slate-950 to-rose-950/30 px-5 py-4">
         <Link
           to="/"
           onClick={() => setSidebarOpen(false)}
-          className="flex items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400"
+          className="flex items-center gap-3 rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400"
         >
-          <span
-            aria-hidden="true"
-            className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-emerald-700 text-sm font-bold text-white"
-          >
-            EA
-          </span>
+          <img
+            src="/eacsc-logo-2026.jpg"
+            alt="CatSU EA-CSC 2026 Seal"
+            className="size-10 shrink-0 rounded-full border border-slate-400 object-cover shadow"
+          />
           <span className="min-w-0">
             <span className="block truncate text-sm font-bold text-white">
               EA-CSC IIDGS Portal
             </span>
-            <span className="block truncate text-xs text-slate-400">
+            <span className="block truncate text-[11px] text-rose-300 font-medium">
               CatSU · CEA Student Council
             </span>
           </span>
@@ -157,7 +189,7 @@ export default function AppLayout() {
         aria-label="Main navigation"
         className="flex-1 space-y-6 overflow-y-auto px-3 py-5"
       >
-        {NAV_GROUPS.map((group) => (
+        {navGroups.map((group) => (
           <div key={group.heading}>
             <p className="px-3 text-[11px] font-bold tracking-wider text-slate-400 uppercase">
               {group.heading}
@@ -170,9 +202,9 @@ export default function AppLayout() {
                   end={item.end}
                   onClick={() => setSidebarOpen(false)}
                   className={({ isActive }) =>
-                    `flex min-h-[44px] items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400 ${
+                    `flex min-h-[42px] items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-400 ${
                       isActive
-                        ? 'bg-emerald-800 font-semibold text-white'
+                        ? 'bg-rose-800 font-semibold text-white shadow-sm'
                         : 'text-slate-300 hover:bg-slate-900 hover:text-white'
                     }`
                   }
@@ -186,17 +218,19 @@ export default function AppLayout() {
       </nav>
 
       <div className="border-t border-slate-800 p-4">
-        {activeProfile ? (
+        {status === 'signed-in' ? (
           <div className="space-y-3 rounded-xl bg-slate-900 p-3.5">
             <div className="min-w-0">
               <p className="truncate text-sm font-bold text-white">
-                {activeProfile.full_name}
+                {activeProfile?.full_name ?? session?.user?.email ?? 'Signed-in Account'}
               </p>
               <p className="truncate text-xs text-slate-400">
-                {activeProfile.council_position ?? 'Council Account'}
+                {activeProfile
+                  ? (activeProfile.council_position ?? 'Council Account')
+                  : (session?.user?.email ?? 'Profile loading…')}
               </p>
               <div className="mt-2 flex flex-wrap gap-1">
-                {activeProfile.functional_roles.length > 0 ? (
+                {activeProfile && activeProfile.functional_roles.length > 0 ? (
                   activeProfile.functional_roles.map((r) => (
                     <span
                       key={r}
@@ -212,18 +246,11 @@ export default function AppLayout() {
                 )}
               </div>
             </div>
-            <div className="flex gap-2">
-              <Link
-                to="/login"
-                onClick={() => setSidebarOpen(false)}
-                className="flex-1 rounded-lg border border-slate-700 px-2.5 py-1.5 text-center text-xs font-semibold text-slate-200 hover:bg-slate-800"
-              >
-                Switch Account
-              </Link>
+            <div className="flex">
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="rounded-lg border border-slate-700 px-2.5 py-1.5 text-xs font-semibold text-slate-300 hover:bg-slate-800 hover:text-white"
+                className="w-full rounded-lg border border-slate-700 bg-slate-800/70 px-3 py-2 text-xs font-semibold text-slate-200 transition hover:bg-slate-800 hover:text-white"
               >
                 Sign Out
               </button>

@@ -177,23 +177,19 @@ export default function RecordDetails({ record, history }: RecordDetailsProps) {
         </div>
       </section>
 
-      <section
-        aria-label="Public version history"
-        className="min-w-0 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
-      >
-        <h2 className="text-xl font-bold text-slate-900">
-          Public version history
-        </h2>
+      {history.length > 0 && (
+        <details className="min-w-0 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <summary className="cursor-pointer list-none flex items-center justify-between text-lg font-bold text-slate-900">
+            <span>Archived Past Versions ({history.length})</span>
+            <span className="text-xs font-semibold text-rose-800 underline">
+              Show / Hide Superseded History
+            </span>
+          </summary>
 
-        <p className="mt-2 text-sm leading-6 text-slate-600">
-          Only earlier releases permitted for public history appear here.
-        </p>
-
-        {history.length === 0 ? (
-          <p className="mt-5 rounded-lg bg-slate-100 p-4 text-sm leading-6 text-slate-600">
-            No earlier public releases are available.
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Earlier superseded releases preserved for public institutional transparency.
           </p>
-        ) : (
+
           <ol className="mt-5 list-none space-y-4 p-0">
             {history.map((item) => (
               <li
@@ -241,8 +237,8 @@ export default function RecordDetails({ record, history }: RecordDetailsProps) {
               </li>
             ))}
           </ol>
-        )}
-      </section>
+        </details>
+      )}
     </div>
   )
 }

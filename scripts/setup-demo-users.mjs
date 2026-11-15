@@ -90,14 +90,25 @@ async function main() {
   })
   await client.connect()
 
-  // 1. Deactivate legacy batch*/r3* test users in app_users (preserving audit FKs)
+  // 1. Deactivate legacy batch*/r3* test users in app_users (preserving audit FKs and retained batch9-admin/incoming fixtures)
   await client.query(`
     UPDATE public.app_users
     SET is_active = false,
         functional_roles = '{}'::text[],
         updated_at = now()
-    WHERE email LIKE 'batch%@example.invalid'
-       OR email LIKE 'r3-%@example.invalid';
+    WHERE (email LIKE 'batch%@example.invalid' OR email LIKE 'r3-%@example.invalid')
+      AND email NOT IN ('batch9-admin@example.invalid', 'batch9-incoming@example.invalid');
+  `)
+
+  await client.query(`
+    UPDATE public.app_users
+    SET is_active = true,
+        functional_roles = CASE
+          WHEN email = 'batch9-admin@example.invalid' THEN ARRAY['technical_admin','custodian']
+          ELSE ARRAY['custodian']
+        END,
+        updated_at = now()
+    WHERE email IN ('batch9-admin@example.invalid', 'batch9-incoming@example.invalid');
   `)
 
   // 2. Fetch existing auth users

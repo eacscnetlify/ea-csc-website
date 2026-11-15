@@ -1,16 +1,16 @@
 {
-  "executed_at": "2026-11-14T13:18:09.251Z",
+  "executed_at": "2026-11-14T23:35:36.778Z",
   "project_ref": "gkhhwrrvqlzpayphvsqp",
   "total_checks": 18,
   "passed": 18,
   "failed": 0,
   "fixtures": {
-    "recPub1": "EACSC-2099-BT-9228",
-    "recPub2": "EACSC-2099-BW-1229",
-    "recRest": "EACSC-2099-BR-1230",
-    "recSched": "EACSC-2099-BS-1231",
-    "bulPubId": "EACSC-2099-BUL-9228",
-    "bulIntId": "EACSC-2099-BUL-1229",
+    "recPub1": "EACSC-2099-BT-1280",
+    "recPub2": "EACSC-2099-BW-2281",
+    "recRest": "EACSC-2099-BR-2282",
+    "recSched": "EACSC-2099-BS-2283",
+    "bulPubId": "EACSC-2099-BUL-1280",
+    "bulIntId": "EACSC-2099-BUL-2281",
     "retained_batch9_package": "42ad127b-7159-431b-bbc6-8613fa40bcf0",
     "retained_missing_object_fixture": "EACSC-2099-HTTP-9604"
   },
@@ -20,7 +20,7 @@
       "id": "D01/P03",
       "title": "Connection check RPC",
       "status": "PASS",
-      "detail": "{\"status\":\"ok\",\"service\":\"ea-csc-records\",\"server_time\":\"2026-11-14T13:17:12.789129+00:00\"}"
+      "detail": "{\"status\":\"ok\",\"service\":\"ea-csc-records\",\"server_time\":\"2026-11-14T23:34:39.919262+00:00\"}"
     },
     {
       "phase": "R1",
@@ -55,14 +55,14 @@
       "id": "D04/P04",
       "title": "PDF upload stage & accept pipeline",
       "status": "PASS",
-      "detail": "version_id=812c463f-d2b3-4fc9-8e40-b98b2c9588ef"
+      "detail": "version_id=6dd2e235-a296-403e-b261-994783a556c7"
     },
     {
       "phase": "R1",
       "id": "P04",
       "title": "DOCX, PNG, and JPEG upload verifications",
       "status": "PASS",
-      "detail": "docx=1dc3f08f-4fc5-43e5-89f0-c2a30b039957, png=4fd951a1-d544-4593-9fcd-8a7648c3df65, jpg=2be78a3f-89a2-4a19-869b-34bc6cbceacb"
+      "detail": "docx=e230e6a7-2409-4943-9f29-ebd529f3b539, png=63f87dc0-2411-44bc-a3ab-b6d58de4ea4c, jpg=cdb7cb40-0773-468c-bc85-d4b383b6d14c"
     },
     {
       "phase": "R1",
@@ -76,7 +76,7 @@
       "id": "D08/D14",
       "title": "Retry idempotency and PT409 optimistic concurrency",
       "status": "PASS",
-      "detail": "audit_uuid=19ee2bd2-5400-4258-8c19-3928e361e0e1, conflict=PT409"
+      "detail": "audit_uuid=03d8454f-df84-43f0-afdb-1146f1268bdb, conflict=PT409"
     },
     {
       "phase": "R2",
@@ -111,7 +111,7 @@
       "id": "P01",
       "title": "Scheduled future release blocked before effective_from, then activated cleanly",
       "status": "PASS",
-      "detail": "premature_blocked=true, activated=true"
+      "detail": "premature_blocked=true, activated=true, due_err=none"
     },
     {
       "phase": "R2",

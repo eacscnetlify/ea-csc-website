@@ -17,6 +17,8 @@ export interface OfficerProfile {
   is_active: boolean
   revision_counter: number
   updated_at: string
+  student_id?: string | null
+  degree_program?: string | null
 }
 
 function isKnownRole(value: unknown): value is string {
@@ -57,6 +59,9 @@ function parseProfile(value: unknown, userId: string): OfficerProfile {
     is_active: row.is_active,
     revision_counter: row.revision_counter,
     updated_at: row.updated_at,
+    student_id: typeof row.student_id === 'string' ? row.student_id : null,
+    degree_program:
+      typeof row.degree_program === 'string' ? row.degree_program : null,
   }
 }
 
@@ -67,7 +72,7 @@ export async function getOfficerProfile(
   const { data, error } = await getSupabaseClient()
     .from('app_users')
     .select(
-      'user_id,full_name,council_position,functional_roles,is_active,revision_counter,updated_at',
+      'user_id,full_name,council_position,functional_roles,is_active,revision_counter,updated_at,student_id,degree_program',
     )
     .eq('user_id', userId)
     .abortSignal(signal)
@@ -78,4 +83,23 @@ export async function getOfficerProfile(
   }
 
   return data === null ? null : parseProfile(data, userId)
+}
+
+export async function ensureObserverProfile(params: {
+  fullName?: string
+  studentId?: string
+  degreeProgram?: string
+}) {
+  const { data, error } = await getSupabaseClient().rpc(
+    'eacsc_ensure_observer_profile',
+    {
+      p_full_name: params.fullName ?? null,
+      p_student_id: params.studentId ?? null,
+      p_degree_program: params.degreeProgram ?? null,
+    },
+  )
+  if (error) {
+    throw new Error(error.message)
+  }
+  return data
 }

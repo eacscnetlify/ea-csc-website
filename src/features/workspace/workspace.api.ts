@@ -13,6 +13,15 @@ export interface AssignedRecord {
   custodianPosition: string
   recordDate: string | null
   revision: number
+  folderId: string | null
+}
+
+export interface DocumentFolder {
+  folderId: string
+  name: string
+  description: string
+  createdAt: string
+  documentCount: number
 }
 export interface AssignedVersion {
   versionId: string
@@ -66,7 +75,7 @@ export class WorkspaceError extends Error {
   }
 }
 const recordColumns =
-  'record_id,title,summary,category,document_type,originating_office,access_class,custodian_position,record_date,revision_counter'
+  'record_id,title,summary,category,document_type,originating_office,access_class,custodian_position,record_date,revision_counter,folder_id'
 const versionColumns =
   'version_id,record_id,version_number,revision_counter,state,previous_version_id,change_summary,correction_classification,approved_at,created_at,updated_at'
 const pageSize = 20
@@ -125,6 +134,7 @@ function recordRow(value: unknown): AssignedRecord {
     custodianPosition: text(row.custodian_position),
     recordDate: optionalText(row.record_date),
     revision: positive(row.revision_counter),
+    folderId: optionalText(row.folder_id),
   }
 }
 function versionRow(value: unknown, recordId: string): AssignedVersion {
@@ -561,4 +571,90 @@ export async function updateDraftNotes(
     auditEventId: row.audit_event_uuid,
     updatedAt: row.updated_at,
   }
+}
+
+export async function listDocumentFolders(): Promise<DocumentFolder[]> {
+  const { data, error } = await getSupabaseClient().rpc('eacsc_list_folders')
+  if (error || !Array.isArray(data)) {
+    return []
+  }
+  return (data as Record<string, unknown>[]).map((row) => ({
+    folderId: String(row.folder_id),
+    name: String(row.name),
+    description: typeof row.description === 'string' ? row.description : '',
+    createdAt: String(row.created_at),
+    documentCount: Number(row.document_count ?? 0),
+  }))
+}
+
+export async function createDocumentFolder(name: string, description = '') {
+  const { data, error } = await getSupabaseClient().rpc('eacsc_create_folder', {
+    p_name: name,
+    p_description: description,
+  })
+  if (error) {
+    throw new WorkspaceError('validation', error.message)
+  }
+  return data as { folder_id: string; name: string }
+}
+
+export async function assignDocumentFolder(
+  recordId: string,
+  folderId: string | null,
+) {
+  const { error } = await getSupabaseClient().rpc(
+    'eacsc_assign_document_folder',
+    {
+      p_record_id: recordId,
+      p_folder_id: folderId,
+    },
+  )
+  if (error) {
+    throw new WorkspaceError('validation', error.message)
+  }
+}
+
+export async function createWorkspaceDocument(input: {
+  title: string
+  category: string
+  documentType: string
+  accessClass: 'public' | 'internal' | 'restricted'
+  summary: string
+  folderId: string | null
+}) {
+  const { data, error } = await getSupabaseClient().rpc(
+    'eacsc_create_document',
+    {
+      p_title: input.title,
+      p_category: input.category,
+      p_document_type: input.documentType,
+      p_access_class: input.accessClass,
+      p_summary: input.summary,
+      p_folder_id: input.folderId,
+    },
+  )
+  if (error) {
+    throw new WorkspaceError('validation', error.message)
+  }
+  return data as { record_id: string; title: string }
+}
+
+export async function executiveSelfApprove(input: {
+  versionId: string
+  expectedRevision: number
+  rationale: string
+}) {
+  const { data, error } = await getSupabaseClient().rpc(
+    'eacsc_executive_self_approve',
+    {
+      p_version_id: input.versionId,
+      p_expected_revision: input.expectedRevision,
+      p_rationale: input.rationale,
+      p_request_id: crypto.randomUUID(),
+    },
+  )
+  if (error) {
+    throw new WorkspaceError('validation', error.message)
+  }
+  return data
 }

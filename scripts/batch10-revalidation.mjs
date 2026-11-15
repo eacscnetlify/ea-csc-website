@@ -1085,7 +1085,9 @@ async function main() {
       p_provisional_update_owner: null,
       p_request_id: randomUUID(),
     })
-    const futureEff = new Date(Date.now() + 6000).toISOString()
+    const srvNow = await anon.rpc('eacsc_connection_check')
+    const baseMs = Date.parse(srvNow.data?.server_time ?? '') || Date.now()
+    const futureEff = new Date(baseMs + 6000).toISOString()
     const schedRelId = randomUUID()
     const schedRes = await fetch(
       `${config.url}/functions/v1/ea-csc-publish-release`,
@@ -1130,7 +1132,7 @@ async function main() {
         p_request_id: randomUUID(),
       },
     )
-    await new Promise((r) => setTimeout(r, 7000))
+    await new Promise((r) => setTimeout(r, 9000))
     const dueAct = await actors.publisher.client.rpc(
       'eacsc_activate_scheduled_release',
       {
@@ -1151,7 +1153,7 @@ async function main() {
       'P01',
       'Scheduled future release blocked before effective_from, then activated cleanly',
       Boolean(premAct.error) && !dueAct.error && schedInCat,
-      `premature_blocked=${Boolean(premAct.error)}, activated=${Boolean(dueAct.data?.activated_at)}`,
+      `premature_blocked=${Boolean(premAct.error)}, activated=${Boolean(dueAct.data?.activated_at)}, due_err=${dueAct.error?.message ?? 'none'}`,
     )
 
     // Emergency withdrawal & public notice

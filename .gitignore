@@ -27,3 +27,6 @@ Thumbs.db
 .env.backup.local
 supabase-root.crt
 /backups/
+
+# Local Netlify folder
+.netlify
