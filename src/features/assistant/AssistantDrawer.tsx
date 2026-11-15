@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router'
+import { MarkdownMessage } from './MarkdownMessage'
 import {
   askAssistant,
   summarizeWithAssistant,
@@ -282,13 +283,17 @@ export default function AssistantDrawer({
                     />
                   )}
                   <div
-                    className={`max-w-[85%] rounded-xl p-3 text-sm leading-relaxed whitespace-pre-line ${
+                    className={`max-w-[85%] rounded-xl p-3 text-sm leading-relaxed ${
                       msg.role === 'user'
-                        ? 'bg-emerald-900 text-white shadow-sm'
+                        ? 'whitespace-pre-line bg-emerald-900 text-white shadow-sm'
                         : 'border border-slate-200 bg-slate-50 text-slate-800'
                     }`}
                   >
-                    <p>{msg.text}</p>
+                    {msg.role === 'assistant' ? (
+                      <MarkdownMessage text={msg.text} />
+                    ) : (
+                      <p>{msg.text}</p>
+                    )}
                     {msg.helpSection && (
                       <Link
                         to={`/help#${msg.helpSection}`}
