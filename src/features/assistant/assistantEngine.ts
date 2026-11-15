@@ -135,7 +135,7 @@ const GOVERNANCE_GLOSSARY: Record<string, { term: string; definition: string; se
   custodian: {
     term: 'Custodian',
     definition:
-      'An officer (typically the Executive Secretary) responsible for maintaining assigned council records, compiling Update Bulletins, and preparing the end-of-term Turnover package.',
+      'An officer (typically the Secretary or Property Custodian) responsible for maintaining assigned council records, compiling Update Bulletins, and preparing the end-of-term Turnover package.',
     section: 'roles',
   },
   approver: {
@@ -250,7 +250,7 @@ const KNOWLEDGE_TOPICS: Array<{
       'EA-CSC uses 6 officer functions plus Public/Observer access:\n' +
       '• Public Visitor / Observer: View & download Public Library releases and Public Bulletins.\n' +
       '• Author: Edit Draft notes, upload attachments (PDF/DOCX/PNG/JPEG <= 10 MB), and Submit for Review.\n' +
-      '• Custodian (Executive Secretary): Author duties + Bulletin compilation + Turnover preparation.\n' +
+      '• Custodian (Secretary / Property Custodian): Author duties + Bulletin compilation + Turnover preparation.\n' +
       '• Reviewer: Inspect For Review items (non-author only), run the 6-point check, or Return for Correction.\n' +
       '• Approver (President/VP): Grant Substantive Approval after all 6 checklist points pass.\n' +
       '• Publisher (PIO): Publish, schedule, supersede, or execute emergency Withdrawals.\n' +

@@ -158,3 +158,14 @@
   - `pro@eacsc.example` — `publisher`, `author`
   - `admin@eacsc.example` — `technical_admin`, `custodian`
 - **Operations & Disaster Recovery Runbooks:** Located in `docs/operations/01_EA_CSC_ADOPTED_SOP.md` through `06_PILOT_EVALUATION_PACK_AND_RECEIPT.md`.
+
+---
+
+## 6. Official FY 2026–2027 Officer Roster Alignment (Batch 13)
+
+- **Source Document:** `CEA_ROSTER-OF-OFFICERS_(EA-CSC)2026-2027`
+- **Changes Applied:**
+  - `src/features/auth/AccountPage.tsx`: Replaced the earlier placeholder position list with the official FY 2026–2027 EA-CSC officer roster grouped into **Executive Officers** (`President`, `Vice President`, `Secretary`, `Assistant Secretary`, `Treasurer`, `Budget Secretary`, `Auditor`, `Public Information Officer`, `Property Custodian`), **Legislative & Representatives** (`Legislator`, `Senator`, `Representative`), **Committees** (`Secretariat Committee`, `Finance, Budget and Appropriation Committee`, `Ways and Means Committee`, `Student Grievance and Concerns Committee`, `Revisions and Constitutional Amendment Committee`, `Publication Committee`, `Esports and Gaming Committee`, `Event Organization and Participation Committee`, `Web Development Committee`), and **Advisory & System Administration** (`Faculty Adviser`, `Technical Administrator`).
+  - `src/features/help/HelpPage.tsx`: Updated `ROLE_MATRIX`, `OFFICIAL_TEST_SAMPLE`, role descriptions, workspace steps, and operational Scenarios A–F to reflect the official FY 2026–2027 position titles.
+  - `src/features/assistant/assistantEngine.ts` & `supabase/functions/ea-csc-ai-assistant/index.ts`: Updated AI Assistant role/position terminology and system prompt (`SYSTEM_INSTRUCTION`) to reference the official FY 2026–2027 roster and redeployed the `ea-csc-ai-assistant` Edge Function.
+- **Verification:** `npm run typecheck`, `npm run lint`, and `npm run build` passed with 0 errors; redeployed to Supabase Edge Functions and Netlify (`https://eacsc.netlify.app`).

@@ -51,11 +51,11 @@ Your capabilities:
    - Explain roles & Segregation of Duties:
      * Public Visitor / Observer: Browse & download published public records and public bulletins.
      * Author: Edit Draft notes, upload PDF/DOCX/PNG/JPEG (max 10 MB, magic-byte checked), submit versions for review. Cannot approve own submissions.
-     * Custodian (e.g., Executive Secretary): Author duties + Bulletin compilation + Turnover preparation.
-     * Reviewer: Non-author verification using the 6-point checklist; can Return for Correction.
-     * Approver (e.g., President, VP): Grants Substantive Approval after all 6 checklist items pass.
-     * Publisher (e.g., PIO): Publishes, schedules, supersedes, or executes emergency Withdrawals in Release Panel.
-     * Technical Admin: Manages roles & Access Transfer during end-of-term turnover.
+     * Custodian (e.g., Secretary, Property Custodian, Treasurer, Budget Secretary, Secretariat Committee): Author duties + Bulletin compilation + Turnover preparation.
+     * Reviewer (e.g., Vice President, Auditor, Faculty Adviser): Non-author verification using the 6-point checklist; can Return for Correction.
+     * Approver (e.g., President, Secretary, Faculty Adviser): Grants Substantive Approval after all 6 checklist items pass.
+     * Publisher (e.g., Public Information Officer, Publication Committee): Publishes, schedules, supersedes, or executes emergency Withdrawals in Release Panel.
+     * Technical Admin (e.g., Web Development Committee): Manages roles & Access Transfer during end-of-term turnover.
    - 6-Point Verification Checklist:
      1) Identity & version alignment
      2) Dates, deadlines & Asia/Manila (UTC+8) time

@@ -35,7 +35,7 @@ const ROLE_MATRIX = [
   },
   {
     role: 'Author (author)',
-    who: 'Committee Heads, Representatives, Board Members',
+    who: 'Legislators, Senators, Representatives, Standing Committees',
     canDo:
       'Create Folders and Documents, upload Draft attachments, save version notes, and Submit for Review on assigned Documents.',
     cannotDo:
@@ -43,15 +43,15 @@ const ROLE_MATRIX = [
   },
   {
     role: 'Custodian (custodian)',
-    who: 'Executive Secretary, Assistant Secretary, File Inventory Manager, Executive Treasurer',
+    who: 'Secretary, Assistant Secretary, Treasurer, Budget Secretary, Property Custodian, Secretariat Committee',
     canDo:
-      'Manage Folders and Documents, compile Update Bulletins, and prepare/freeze Turnover packages. Executive Secretary also holds Executive Fast-Track Self-Approval.',
+      'Manage Folders and Documents, compile Update Bulletins, and prepare/freeze Turnover packages. Secretary also holds Executive Fast-Track Self-Approval.',
     cannotDo:
       'Non-executive custodians cannot approve versions they authored or publish without Publisher role.',
   },
   {
     role: 'Reviewer (reviewer)',
-    who: 'Internal VP, External VP, Auditors, Board of Directors',
+    who: 'Vice President, Auditor, Faculty Adviser',
     canDo:
       'Inspect For Review submissions (non-author), complete the 6-point verification checklist, add review comments, and Return for Correction.',
     cannotDo:
@@ -59,15 +59,15 @@ const ROLE_MATRIX = [
   },
   {
     role: 'Approver (approver)',
-    who: 'Council President, Executive Secretary, Adviser',
+    who: 'President, Secretary, Faculty Adviser',
     canDo:
-      'Complete 6-point verification and grant final Substantive Approval (Approved). President & Executive Secretary also hold Executive Fast-Track Self-Approval.',
+      'Complete 6-point verification and grant final Substantive Approval (Approved). President & Secretary also hold Executive Fast-Track Self-Approval.',
     cannotDo:
       'Cannot publish releases to the public without the Publisher role.',
   },
   {
     role: 'Publisher (publisher)',
-    who: 'Public Relations Officer (PRO), Editorial',
+    who: 'Public Information Officer (PIO), Publication Committee',
     canDo:
       'Publish Approved versions immediately, schedule future effective dates, supersede older versions, or perform Emergency Withdrawal.',
     cannotDo:
@@ -75,7 +75,7 @@ const ROLE_MATRIX = [
   },
   {
     role: 'Technical Admin (technical_admin)',
-    who: 'Technical Administrator',
+    who: 'Web Development Committee, Technical Administrator',
     canDo:
       'Activate/deactivate officer accounts, update functional roles, and execute record custody Access Transfers.',
     cannotDo:
@@ -85,15 +85,14 @@ const ROLE_MATRIX = [
 
 const OFFICIAL_TEST_SAMPLE = [
   { email: 'president@eacsc.example', position: 'President', roles: 'approver, reviewer, author, custodian (Fast-Track)' },
-  { email: 'executive.secretary@eacsc.example', position: 'Executive Secretary', roles: 'custodian, author, approver, reviewer (Fast-Track)' },
-  { email: 'internal.vp@eacsc.example', position: 'Internal Vice President', roles: 'reviewer, author' },
-  { email: 'external.vp@eacsc.example', position: 'External Vice President', roles: 'reviewer, author' },
-  { email: 'executive.treasurer@eacsc.example', position: 'Executive Treasurer', roles: 'custodian, author' },
-  { email: 'executive.auditor@eacsc.example', position: 'Executive Auditor', roles: 'reviewer' },
-  { email: 'pro@eacsc.example', position: 'Public Relations Officer', roles: 'publisher, author' },
-  { email: 'event.chairperson@eacsc.example', position: 'Event Chairperson', roles: 'author' },
-  { email: 'adviser@eacsc.example', position: 'Adviser', roles: 'reviewer, approver' },
-  { email: 'admin@eacsc.example', position: 'Technical Administrator', roles: 'technical_admin, custodian' },
+  { email: 'executive.secretary@eacsc.example', position: 'Secretary', roles: 'custodian, author, approver, reviewer (Fast-Track)' },
+  { email: 'internal.vp@eacsc.example', position: 'Vice President', roles: 'reviewer, author' },
+  { email: 'executive.treasurer@eacsc.example', position: 'Treasurer', roles: 'custodian, author' },
+  { email: 'executive.auditor@eacsc.example', position: 'Auditor', roles: 'reviewer' },
+  { email: 'pro@eacsc.example', position: 'Public Information Officer', roles: 'publisher, author' },
+  { email: 'event.chairperson@eacsc.example', position: 'Event Organization and Participation Committee', roles: 'author' },
+  { email: 'adviser@eacsc.example', position: 'Faculty Adviser', roles: 'reviewer, approver' },
+  { email: 'admin@eacsc.example', position: 'Web Development Committee / Technical Admin', roles: 'technical_admin, custodian' },
 ]
 
 const SECTIONS: AccordionSection[] = [
@@ -134,24 +133,24 @@ const SECTIONS: AccordionSection[] = [
   {
     id: 'roles',
     title: 'Council Positions, Functional Roles & Fast-Track Rule',
-    subtitle: 'The 28 EA-CSC positions, Segregation of Duties, President & Executive Secretary Fast-Track, and Role Matrix',
+    subtitle: 'Official EA-CSC FY 2026-2027 Roster positions, Segregation of Duties, President & Secretary Fast-Track, and Role Matrix',
     badge: 'Access Control',
     icon: 'shield',
     definitions: [
       {
-        term: '28 Official EA-CSC Positions',
+        term: 'Official EA-CSC FY 2026-2027 Positions',
         detail:
-          'Organized into Executive Officers (President, Internal VP, External VP, Executive Secretary, Executive Treasurer, Executive Auditor, Business Manager, Public Relations Officer, Board of Director), Board Members (Assistant/Auxiliary Secretaries, File Inventory Manager, Assistant Treasurer/Auditor, Graphic Designer, Editorial, Documentary Team, Logistics, Procurement, Event Chairperson/Organizers, Ways & Means, 1st–4th Year Representatives), and Advisory (Adviser).',
+          'Organized into Executive Officers (President, Vice President, Secretary, Assistant Secretary, Treasurer, Budget Secretary, Auditor, Public Information Officer, Property Custodian), Legislative & Representatives (Legislator, Senator, Representative), Committees (Secretariat; Finance, Budget and Appropriation; Ways and Means; Student Grievance and Concerns; Revisions and Constitutional Amendment; Publication; Esports and Gaming; Event Organization and Participation; Web Development), and Advisory (Faculty Adviser).',
       },
       {
         term: 'Segregation of Duties (Standard Rule)',
         detail:
-          'Regular officers cannot approve their own Drafts. An Author submits a Draft ("For Review"), and a separate Reviewer/Approver inspects it via the 6-point checklist before a Publisher (PRO) releases it.',
+          'Regular officers cannot approve their own Drafts. An Author submits a Draft ("For Review"), and a separate Reviewer/Approver inspects it via the 6-point checklist before the Public Information Officer (PIO) or Publication Committee releases it.',
       },
       {
-        term: 'President & Executive Secretary Fast-Track Exception',
+        term: 'President & Secretary Fast-Track Exception',
         detail:
-          'For urgent council memos or time-sensitive bulletins, the Council President and Executive Secretary hold Executive Fast-Track Self-Approval privileges directly inside the Document Workspace, logged in the permanent audit trail with their stated rationale.',
+          'For urgent council memos or time-sensitive bulletins, the Council President and Secretary hold Executive Fast-Track Self-Approval privileges directly inside the Document Workspace, logged in the permanent audit trail with their stated rationale.',
       },
     ],
     includeRoleMatrix: true,
@@ -170,7 +169,7 @@ const SECTIONS: AccordionSection[] = [
       'Printable Verification Slip (/records/:recordId): Open any published record and click "Print Verification Slip" to print a formal governance receipt with Record ID, version, effective date, and official link.',
       'Update Bulletins (/bulletins): View, preview in-browser, generate QR codes for, and download official periodic PDF digests compiling verified releases within a reporting window.',
       'Create Observer Account (/signup): Students register with their Full Name, Student ID, Degree Program (BS Civil, Electronics, Computer Engineering, or BS Architecture), Email, and Password. Duplicate names, Student IDs, and emails are automatically blocked with clear warnings.',
-      'Apply for Officer Role (/account): Signed-in Student Observers select their appointed EA-CSC position from the 28-position dropdown and submit a justification. Once the Council President approves the request in /account, Officer Operations tabs unlock immediately.',
+      'Apply for Officer Role (/account): Signed-in Student Observers select their appointed EA-CSC position from the official FY 2026-2027 roster dropdown and submit a justification. Once the Council President approves the request in /account, Officer Operations tabs unlock immediately.',
     ],
   },
   {
@@ -182,10 +181,10 @@ const SECTIONS: AccordionSection[] = [
     route: '/officer',
     routeLabel: 'Open Document Workspace',
     steps: [
-      '0. Role-Guided Quick Actions (/account & /officer/workspace): Signed-in officers see a collapsible "What You Can Do Next" card tailored to their active roles with 1-click jump links to their workspace, review queue, release panel, or turnover page.',
-      '1. Document Workspace (/officer): Create Folders, create Public or Restricted Documents, upload valid attachments (.pdf, .docx, .png, .jpg), save Draft notes, and click "Submit for Review" (or use Executive Fast-Track if President/Executive Secretary).',
+      '0. Role-Guided Quick Actions (/account & /officer): Signed-in officers see a collapsible "What You Can Do Next" card tailored to their active roles with 1-click jump links to their workspace, review queue, release panel, or turnover page.',
+      '1. Document Workspace (/officer): Create Folders, create Public or Restricted Documents, upload valid attachments (.pdf, .docx, .png, .jpg), save Draft notes, and click "Submit for Review" (or use Executive Fast-Track if President/Secretary).',
       '2. Review Queue (/officer/reviews): Reviewers and Approvers inspect "For Review" submissions against the 6-point verification checklist (Identity, Dates/Manila UTC+8 time, Venue/Link, Eligibility, Authority/Privacy, Contact/IDs). Return for Correction with comments, or record Substantive Approval.',
-      '3. Release Panel (/officer/releases): The Public Relations Officer (Publisher) publishes Approved versions immediately, schedules a future Manila effective date, supersedes prior versions, or executes an Emergency Withdrawal.',
+      '3. Release Panel (/officer/releases): The Public Information Officer / Publication Committee (Publisher) publishes Approved versions immediately, schedules a future Manila effective date, supersedes prior versions, or executes an Emergency Withdrawal.',
       '4. Bulletin Compiler (/officer/bulletins): Compiles Public or Internal PDF digests over a chosen Manila (UTC+8) reporting window and issues v1/v2 bulletins.',
       '5. Council Activity & History (/officer/history): View the chronological, tamper-evident audit timeline of all document creations, uploads, reviews, approvals, releases, and role changes across the entire council.',
     ],
@@ -198,35 +197,35 @@ const SECTIONS: AccordionSection[] = [
     icon: 'scenarios',
     scenarios: [
       {
-        title: 'Scenario A: Event Chairperson Publishes Engineering Week Guidelines',
+        title: 'Scenario A: Event Organization Committee Publishes Engineering Week Guidelines',
         steps: [
-          'Event Chairperson signs in, opens Document Workspace (/officer), selects "Engineering Week & Council Operations 2026", and creates or opens EACSC-2026-ACT-0001.',
+          'An Event Organization and Participation Committee officer signs in, opens Document Workspace (/officer), selects "Engineering Week & Council Operations 2026", and creates or opens EACSC-2026-ACT-0001.',
           'Uploads the PDF, writes Draft notes, and clicks "Submit for Review". The draft locks.',
-          'Internal Vice President (Reviewer) opens Review Queue (/officer/reviews), checks the 6 points, and President (Approver) records Substantive Approval.',
-          'Public Relations Officer (Publisher) opens Release Panel (/officer/releases) and clicks "Publish Immediately"—students can now download it on Home (/).',
+          'Vice President (Reviewer) opens Review Queue (/officer/reviews), checks the 6 points, and President (Approver) records Substantive Approval.',
+          'Public Information Officer (Publisher) opens Release Panel (/officer/releases) and clicks "Publish Immediately"—students can now download it on Home (/).',
         ],
       },
       {
         title: 'Scenario B: Reviewer Returns a Draft for Correction',
         steps: [
-          'Executive Treasurer uploads a budget draft and submits it for review.',
-          'Executive Auditor spots a missing Manila deadline, marks that checklist item "Correction Required", writes a review comment, and clicks "Return for Correction".',
-          'The version returns to Draft. Executive Treasurer sees the review comment in "Review return history", uploads the corrected file, saves notes, and re-submits.',
+          'Treasurer (or Budget Secretary) uploads a budget draft and submits it for review.',
+          'Auditor spots a missing Manila deadline, marks that checklist item "Correction Required", writes a review comment, and clicks "Return for Correction".',
+          'The version returns to Draft. Treasurer sees the review comment in "Review return history", uploads the corrected file, saves notes, and re-submits.',
         ],
       },
       {
-        title: 'Scenario C: Urgent Bulletin by President or Executive Secretary',
+        title: 'Scenario C: Urgent Bulletin by President or Secretary',
         steps: [
-          'During an urgent class suspension or venue change, the President or Executive Secretary creates/uploads the Draft in Document Workspace (/officer).',
+          'During an urgent class suspension or venue change, the President or Secretary creates/uploads the Draft in Document Workspace (/officer).',
           'Using the "Executive Fast-Track Self-Approval" panel, they enter a brief urgency rationale and approve the version immediately—bypassing the separate-reviewer wait while logging the action in Activity & History.',
-          'Public Relations Officer (or Editorial) publishes it on Release Panel.',
+          'Public Information Officer (or Publication Committee) publishes it on Release Panel.',
         ],
       },
       {
         title: 'Scenario D: New Student Becomes an Officer',
         steps: [
           'A student creates an account at /signup (starts as Student Observer with read-only access).',
-          'They open My Account & Role (/account), choose their appointed position (e.g., Graphic Designer), and submit an application.',
+          'They open My Account & Role (/account), choose their appointed position (e.g., Publication Committee), and submit an application.',
           'President opens /account, sees the pending application in the President’s Role Approval Console, and clicks Approve.',
           'The student clicks "Refresh" in the top bar (or signs back in) and immediately gains Document Workspace access.',
         ],
@@ -234,7 +233,7 @@ const SECTIONS: AccordionSection[] = [
       {
         title: 'Scenario E: Emergency Withdrawal, Rechecking & Republishing',
         steps: [
-          'If an already-Published document contains an error or outdated schedule, a Publisher (PIO) opens Release Panel (/officer/releases) and executes an Emergency Withdrawal with a clear withdrawal reason.',
+          'If an already-Published document contains an error or outdated schedule, a Publisher (Public Information Officer) opens Release Panel (/officer/releases) and executes an Emergency Withdrawal with a clear withdrawal reason.',
           'Public downloads immediately stop and a visible Withdrawal notice appears on the Record Detail page.',
           'An Author creates a new Draft version (v2), uploads the corrected file, and submits it through the 6-point Review Queue and Approval.',
           'Publisher releases v2 on Release Panel—v2 becomes the current Public release and v1 is marked Superseded.',
@@ -243,7 +242,7 @@ const SECTIONS: AccordionSection[] = [
       {
         title: 'Scenario F: Compiling & Updating Bulletins (v1 → v2)',
         steps: [
-          'Executive Secretary or Custodian opens Bulletin Compiler (/officer/bulletins), chooses Public or Internal, and sets the reporting window and Manila (UTC+8) cutoff timestamp.',
+          'Secretary or Property Custodian opens Bulletin Compiler (/officer/bulletins), chooses Public or Internal, and sets the reporting window and Manila (UTC+8) cutoff timestamp.',
           'Preview and issue the compiled PDF (v1). Public bulletins appear immediately on /bulletins.',
           'If a new release is published after v1 or a correction is needed, re-compile the bulletin—the system issues v2 and automatically marks v1 as Superseded.',
         ],

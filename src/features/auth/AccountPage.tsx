@@ -25,51 +25,51 @@ interface RoleRequestRow {
 }
 
 const POSITION_PRESETS: Array<{
-  group: 'Executive Officers' | 'Board Members' | 'Advisory' | 'System Administration'
+  group:
+    | 'Executive Officers'
+    | 'Legislative & Representatives'
+    | 'Committees'
+    | 'Advisory & System Administration'
   label: string
   roles: string[]
 }> = [
-  // Executive Officers
+  // Executive Officers (FY 2026-2027)
   { group: 'Executive Officers', label: 'President', roles: ['approver', 'reviewer', 'author', 'custodian'] },
-  { group: 'Executive Officers', label: 'Internal Vice President', roles: ['reviewer', 'author'] },
-  { group: 'Executive Officers', label: 'External Vice President', roles: ['reviewer', 'author'] },
-  { group: 'Executive Officers', label: 'Executive Secretary', roles: ['custodian', 'author', 'approver', 'reviewer'] },
-  { group: 'Executive Officers', label: 'Executive Treasurer', roles: ['custodian', 'author'] },
-  { group: 'Executive Officers', label: 'Executive Auditor', roles: ['reviewer'] },
-  { group: 'Executive Officers', label: 'Business Manager', roles: ['author'] },
-  { group: 'Executive Officers', label: 'Public Relations Officer', roles: ['publisher', 'author'] },
-  { group: 'Executive Officers', label: 'Board of Director', roles: ['reviewer'] },
+  { group: 'Executive Officers', label: 'Vice President', roles: ['reviewer', 'author'] },
+  { group: 'Executive Officers', label: 'Secretary', roles: ['custodian', 'author', 'approver', 'reviewer'] },
+  { group: 'Executive Officers', label: 'Assistant Secretary', roles: ['custodian', 'author'] },
+  { group: 'Executive Officers', label: 'Treasurer', roles: ['custodian', 'author'] },
+  { group: 'Executive Officers', label: 'Budget Secretary', roles: ['custodian', 'author'] },
+  { group: 'Executive Officers', label: 'Auditor', roles: ['reviewer'] },
+  { group: 'Executive Officers', label: 'Public Information Officer', roles: ['publisher', 'author'] },
+  { group: 'Executive Officers', label: 'Property Custodian', roles: ['custodian', 'author'] },
 
-  // Board Members
-  { group: 'Board Members', label: 'Assistant Secretary', roles: ['custodian', 'author'] },
-  { group: 'Board Members', label: 'File Inventory Manager', roles: ['custodian'] },
-  { group: 'Board Members', label: 'Auxiliary Secretary', roles: ['author'] },
-  { group: 'Board Members', label: 'Assistant Treasurer', roles: ['author'] },
-  { group: 'Board Members', label: 'Assistant Auditor', roles: ['reviewer'] },
-  { group: 'Board Members', label: 'Graphic Designer', roles: ['author'] },
-  { group: 'Board Members', label: 'Editorial', roles: ['author', 'publisher'] },
-  { group: 'Board Members', label: 'Documentary Team', roles: ['author'] },
-  { group: 'Board Members', label: 'Logistics Coordinator', roles: ['author'] },
-  { group: 'Board Members', label: 'Procurement Officer', roles: ['author'] },
-  { group: 'Board Members', label: 'Event Chairperson', roles: ['author'] },
-  { group: 'Board Members', label: 'Event Organizer', roles: ['author'] },
-  { group: 'Board Members', label: 'Assistant Organizer', roles: ['author'] },
-  { group: 'Board Members', label: 'Ways and Means', roles: ['author'] },
-  { group: 'Board Members', label: 'First Year Representative', roles: ['author'] },
-  { group: 'Board Members', label: 'Second Year Representative', roles: ['author'] },
-  { group: 'Board Members', label: 'Third Year Representative', roles: ['author'] },
-  { group: 'Board Members', label: 'Fourth Year Representative', roles: ['author'] },
+  // Legislative & Representatives
+  { group: 'Legislative & Representatives', label: 'Legislator', roles: ['author'] },
+  { group: 'Legislative & Representatives', label: 'Senator', roles: ['author'] },
+  { group: 'Legislative & Representatives', label: 'Representative', roles: ['author'] },
 
-  // Advisory & Admin
-  { group: 'Advisory', label: 'Adviser', roles: ['reviewer', 'approver'] },
-  { group: 'System Administration', label: 'Technical Administrator', roles: ['technical_admin', 'custodian'] },
+  // Committees
+  { group: 'Committees', label: 'Secretariat Committee', roles: ['custodian', 'author'] },
+  { group: 'Committees', label: 'Finance, Budget and Appropriation Committee', roles: ['author'] },
+  { group: 'Committees', label: 'Ways and Means Committee', roles: ['author'] },
+  { group: 'Committees', label: 'Student Grievance and Concerns Committee', roles: ['author'] },
+  { group: 'Committees', label: 'Revisions and Constitutional Amendment Committee', roles: ['author'] },
+  { group: 'Committees', label: 'Publication Committee', roles: ['publisher', 'author'] },
+  { group: 'Committees', label: 'Esports and Gaming Committee', roles: ['author'] },
+  { group: 'Committees', label: 'Event Organization and Participation Committee', roles: ['author'] },
+  { group: 'Committees', label: 'Web Development Committee', roles: ['technical_admin', 'custodian'] },
+
+  // Advisory & System Administration
+  { group: 'Advisory & System Administration', label: 'Faculty Adviser', roles: ['reviewer', 'approver'] },
+  { group: 'Advisory & System Administration', label: 'Technical Administrator', roles: ['technical_admin', 'custodian'] },
 ]
 
 const POSITION_GROUPS = [
   'Executive Officers',
-  'Board Members',
-  'Advisory',
-  'System Administration',
+  'Legislative & Representatives',
+  'Committees',
+  'Advisory & System Administration',
 ] as const
 
 export default function AccountPage() {
