@@ -1,5 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router'
+import {
+  askAssistant,
+  summarizeWithAssistant,
+  type EngineSource,
+  type SummaryAnalysis,
+} from './assistantEngine'
 
 interface AssistantDrawerProps {
   open: boolean
@@ -10,287 +16,10 @@ interface Message {
   id: string
   role: 'assistant' | 'user'
   text: string
+  engine?: EngineSource
+  model?: string
   helpSection?: string
   helpLabel?: string
-}
-
-const ROUTE_CONTEXT: Array<{
-  match: (path: string) => boolean
-  title: string
-  summary: string
-  section: string
-}> = [
-  {
-    match: (p) => p === '/',
-    title: 'Public Library',
-    summary:
-      'You are on the Public Library. Anyone can search, filter by category, preview details, and download verified current public releases without signing in.',
-    section: 'public-library',
-  },
-  {
-    match: (p) => p.startsWith('/records/'),
-    title: 'Record Detail',
-    summary:
-      'You are viewing an official record page. It shows the current public release, official file download, any Superseded prior versions, and any emergency Withdrawal notice.',
-    section: 'public-library',
-  },
-  {
-    match: (p) => p === '/bulletins',
-    title: 'Update Bulletins',
-    summary:
-      'You are on Update Bulletins. Public visitors can browse and download compiled council update PDFs issued by officers.',
-    section: 'bulletins',
-  },
-  {
-    match: (p) => p === '/officer',
-    title: 'Officer Workspace',
-    summary:
-      'You are in the Officer Workspace. Assigned Authors and Custodians can edit Draft notes, upload PDF/DOCX/PNG/JPEG files (max 10 MB), and Submit versions for review.',
-    section: 'workspace',
-  },
-  {
-    match: (p) => p === '/officer/reviews',
-    title: 'Review Queue',
-    summary:
-      'You are in the Review Queue. Non-author Reviewers and Approvers inspect submitted versions, complete the 6-point verification checklist, and either Return for Correction or Approve.',
-    section: 'review-queue',
-  },
-  {
-    match: (p) => p === '/officer/releases',
-    title: 'Release Panel',
-    summary:
-      'You are in the Release Panel. Authorized Publishers (PIOs) publish Approved versions immediately or on a schedule, activate scheduled releases, supersede old versions, or execute emergency Withdrawals.',
-    section: 'release-panel',
-  },
-  {
-    match: (p) => p === '/officer/bulletins',
-    title: 'Bulletin Compiler',
-    summary:
-      'You are in the Bulletin Compiler. Officers select a reporting window and cutoff time (Asia/Manila), preview a compiled PDF, and issue versioned Public or Internal bulletins.',
-    section: 'bulletins',
-  },
-  {
-    match: (p) => p === '/officer/turnover',
-    title: 'Turnover & Continuity',
-    summary:
-      'You are in Turnover & Continuity. Outgoing and incoming officers prepare, freeze, export, and acknowledge the end-of-term council records package.',
-    section: 'turnover',
-  },
-  {
-    match: (p) => p === '/officer/admin/access',
-    title: 'Access Transfer',
-    summary:
-      'You are in Access Transfer. Technical Administrators update officer roles, transfer record custody to incoming officers, and deactivate outgoing accounts.',
-    section: 'access-transfer',
-  },
-  {
-    match: (p) => p === '/help',
-    title: 'Help & Operations Guide',
-    summary:
-      'You are in the Help Center. Use the search box or topic links to read step-by-step instructions for every role and page.',
-    section: 'overview',
-  },
-]
-
-function answerQuestion(
-  question: string,
-  pathname: string,
-): Omit<Message, 'id' | 'role'> {
-  const q = question.toLowerCase()
-  const ctx = ROUTE_CONTEXT.find((c) => c.match(pathname)) ?? ROUTE_CONTEXT[0]
-
-  if (
-    q.includes('this page') ||
-    q.includes('where am i') ||
-    q.includes('what can i do')
-  ) {
-    return {
-      text: `${ctx.summary}`,
-      helpSection: ctx.section,
-      helpLabel: `Open ${ctx.title} guide`,
-    }
-  }
-
-  if (
-    q.includes('role') ||
-    q.includes('privilege') ||
-    q.includes('permission') ||
-    q.includes('account') ||
-    q.includes('who can')
-  ) {
-    return {
-      text:
-        'EA-CSC uses 6 officer roles plus public/observer access:\n' +
-        '• Public Visitor (no login): View & download Public Library releases and Public Bulletins.\n' +
-        '• Author: Edit Draft notes, upload attachments, and Submit for Review on assigned records.\n' +
-        '• Custodian (Executive Secretary): Author duties + Bulletin compilation + Turnover preparation.\n' +
-        '• Reviewer: Inspect For Review items (non-author only), run the 6-point check, or Return with comments.\n' +
-        '• Approver (President/VP): Grant Substantive Approval after all 6 checklist points pass.\n' +
-        '• Publisher (PIO): Publish, schedule, supersede, or withdraw releases.\n' +
-        '• Technical Admin: Manage roles & Access Transfer during turnover.',
-      helpSection: 'roles',
-      helpLabel: 'View full Roles & Demo Accounts table',
-    }
-  }
-
-  if (
-    q.includes('6-point') ||
-    q.includes('six') ||
-    q.includes('checklist') ||
-    q.includes('approve') ||
-    q.includes('review')
-  ) {
-    return {
-      text:
-        'Before a version can be Approved, a non-author Reviewer/Approver must mark all 6 checklist items as Confirmed or Not Applicable (none may be Correction Required):\n' +
-        '1. Identity & version alignment\n' +
-        '2. Dates, deadlines & Manila (UTC+8) time\n' +
-        '3. Location, venue, or official link\n' +
-        '4. Audience eligibility & requirements\n' +
-        '5. Issuing authority & privacy disclosure\n' +
-        '6. Contact channel & reference IDs.\n' +
-        'Note: Authors cannot approve their own submissions (segregation of duties).',
-      helpSection: 'review-queue',
-      helpLabel: 'Open Review Queue guide',
-    }
-  }
-
-  if (
-    q.includes('status') ||
-    q.includes('draft') ||
-    q.includes('superseded') ||
-    q.includes('withdraw') ||
-    q.includes('lifecycle')
-  ) {
-    return {
-      text:
-        'Record version lifecycle:\n' +
-        '• Draft: Being edited by Author/Custodian (private).\n' +
-        '• For Review: Submitted for 6-point verification (locked from author edits).\n' +
-        '• Approved: Passed 6-point check and substantive approval; ready for Release Panel.\n' +
-        '• Published: Live in Public Library (once effective_from arrives).\n' +
-        '• Superseded: Replaced by a newer Published version (kept in version history).\n' +
-        '• Withdrawn: Emergency removal of public file download with a visible withdrawal notice.',
-      helpSection: 'overview',
-      helpLabel: 'View Lifecycle Overview',
-    }
-  }
-
-  if (
-    q.includes('upload') ||
-    q.includes('file') ||
-    q.includes('pdf') ||
-    q.includes('docx') ||
-    q.includes('409') ||
-    q.includes('conflict')
-  ) {
-    return {
-      text: 'Allowed file formats are PDF (.pdf), Word (.docx), PNG (.png), and JPEG (.jpg/.jpeg) up to 10 MB. The server checks file magic bytes, so renamed executables are rejected. If you see a conflict error (PT409 / HTTP 409), another officer updated the record—click Reload to get the latest revision before saving.',
-      helpSection: 'troubleshooting',
-      helpLabel: 'Open Troubleshooting & File Rules',
-    }
-  }
-
-  if (q.includes('bulletin') || q.includes('cutoff')) {
-    return {
-      text: 'Update Bulletins compile verified releases within a reporting window up to a Manila (UTC+8) cutoff timestamp. Public bulletins appear on /bulletins for everyone; Internal bulletins are restricted to signed-in officers. Re-issuing a corrected bulletin creates v2 and marks v1 as Superseded.',
-      helpSection: 'bulletins',
-      helpLabel: 'Open Bulletin Compiler guide',
-    }
-  }
-
-  if (
-    q.includes('turnover') ||
-    q.includes('handover') ||
-    q.includes('access')
-  ) {
-    return {
-      text: 'At the end of an academic term, outgoing officers freeze the Turnover package (/officer/turnover), Technical Admins transfer role & record assignments to incoming officers (/officer/admin/access) and deactivate outgoing accounts, and incoming officers sign off with an Incoming Acknowledgment.',
-      helpSection: 'turnover',
-      helpLabel: 'Open Turnover & Access guide',
-    }
-  }
-
-  return {
-    text: `Here is what I can help with on ${ctx.title}: ask about user roles & privileges, the 6-point checklist, record statuses (Draft -> Published -> Superseded), file upload rules, Update Bulletins, or Turnover. You can also switch to the "Summarize & Classify" tab to summarize council text!`,
-    helpSection: ctx.section,
-    helpLabel: `Open ${ctx.title} in Help`,
-  }
-}
-
-function summarizeAndClassify(rawText: string) {
-  const clean = rawText.replace(/\s+/g, ' ').trim()
-  if (!clean) {
-    return null
-  }
-
-  const sentences = clean
-    .split(/(?<=[.!?])\s+/)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 15)
-
-  const bullets =
-    sentences.length > 0
-      ? sentences.slice(0, 4)
-      : [clean.slice(0, 220) + (clean.length > 220 ? '…' : '')]
-
-  const lower = clean.toLowerCase()
-  let category = 'ACT — Activities & Events'
-  if (
-    lower.includes('constitution') ||
-    lower.includes('resolution') ||
-    lower.includes('policy') ||
-    lower.includes('bylaw')
-  ) {
-    category = 'GOV — Governance & Legislation'
-  } else if (
-    lower.includes('minutes') ||
-    lower.includes('agenda') ||
-    lower.includes('meeting') ||
-    lower.includes('quorum')
-  ) {
-    category = 'SEC — Secretariat & Minutes'
-  } else if (
-    lower.includes('budget') ||
-    lower.includes('liquidation') ||
-    lower.includes('expense') ||
-    lower.includes('php') ||
-    lower.includes('financial')
-  ) {
-    category = 'FIN — Financial Records'
-  } else if (
-    lower.includes('form') ||
-    lower.includes('template') ||
-    lower.includes('application') ||
-    lower.includes('request')
-  ) {
-    category = 'FRM — Official Forms'
-  } else if (
-    lower.includes('turnover') ||
-    lower.includes('handover') ||
-    lower.includes('outgoing') ||
-    lower.includes('incoming')
-  ) {
-    category = 'TRN — Turnover & Continuity'
-  }
-
-  const reminders: string[] = []
-  if (!/(utc\+8|manila|am|pm|\d{4})/i.test(clean)) {
-    reminders.push('Add explicit date & Asia/Manila (UTC+8) time.')
-  }
-  if (!/(room|hall|zoom|meet|venue|http)/i.test(clean)) {
-    reminders.push('Confirm venue, room, or official link.')
-  }
-  if (!/(contact|email|@|page|desk)/i.test(clean)) {
-    reminders.push('Include official EA-CSC contact channel.')
-  }
-  if (reminders.length === 0) {
-    reminders.push(
-      'Dates, location/link, and contact details appear present—verify authority & privacy disclosure before submitting.',
-    )
-  }
-
-  return { bullets, category, reminders }
 }
 
 export default function AssistantDrawer({
@@ -300,82 +29,198 @@ export default function AssistantDrawer({
   const { pathname } = useLocation()
   const [tab, setTab] = useState<'chat' | 'summarize'>('chat')
   const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [engineMode, setEngineMode] = useState<EngineSource>('local')
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
       role: 'assistant',
-      text: 'Hi! I am the EA-CSC Governance Assistant. Ask me how any page works, what a role can do, or switch to "Summarize & Classify" to draft clean record notes.',
+      engine: 'local',
+      text:
+        'Hi! I am the EA-CSC AI Assistant. I can help you with:\n' +
+        '• Website & governance questions (roles, 6-point checklist, statuses, bulletins, turnover)\n' +
+        '• Word & term definitions (e.g., "define superseded" or "define algorithm")\n' +
+        '• Text summarization & entity extraction (use the Summarize & Analyze tab or type "summarize: <text>")',
       helpSection: 'overview',
       helpLabel: 'Open full Help Center',
     },
   ])
   const [draftText, setDraftText] = useState('')
-  const [summaryResult, setSummaryResult] = useState<ReturnType<
-    typeof summarizeAndClassify
-  > | null>(null)
+  const [summarizing, setSummarizing] = useState(false)
+  const [summaryResult, setSummaryResult] = useState<SummaryAnalysis | null>(null)
+  const [copiedSummary, setCopiedSummary] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, loading])
 
   if (!open) return null
 
-  function sendPrompt(text: string) {
+  async function sendPrompt(text: string) {
     const trimmed = text.trim()
-    if (!trimmed) return
-    const reply = answerQuestion(trimmed, pathname)
-    setMessages((prev) => [
-      ...prev,
-      { id: `${Date.now()}-u`, role: 'user', text: trimmed },
-      { id: `${Date.now()}-a`, role: 'assistant', ...reply },
-    ])
+    if (!trimmed || loading) return
+
+    const userMsg: Message = {
+      id: `${Date.now()}-u`,
+      role: 'user',
+      text: trimmed,
+    }
+    const historySnapshot = messages
+      .filter((m) => m.id !== 'welcome')
+      .map((m) => ({ role: m.role, text: m.text }))
+
+    setMessages((prev) => [...prev, userMsg])
     setInput('')
+    setLoading(true)
+
+    try {
+      const reply = await askAssistant({
+        question: trimmed,
+        pathname,
+        history: historySnapshot,
+      })
+      if (reply.engine === 'gemini') {
+        setEngineMode('gemini')
+      }
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `${Date.now()}-a`,
+          role: 'assistant',
+          text: reply.text,
+          engine: reply.engine,
+          model: reply.model,
+          helpSection: reply.helpSection,
+          helpLabel: reply.helpLabel,
+        },
+      ])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleSummarize() {
+    if (!draftText.trim() || summarizing) return
+    setSummarizing(true)
+    setCopiedSummary(false)
+    try {
+      const result = await summarizeWithAssistant({
+        rawText: draftText,
+        pathname,
+      })
+      if (result?.engine === 'gemini') {
+        setEngineMode('gemini')
+      }
+      setSummaryResult(result)
+    } finally {
+      setSummarizing(false)
+    }
+  }
+
+  function handleCopySummary() {
+    if (!summaryResult) return
+    const text = [
+      `Category: ${summaryResult.category}`,
+      '',
+      'Key Points:',
+      ...summaryResult.bullets.map((b) => `- ${b}`),
+      '',
+      '6-Point Checklist Reminders:',
+      ...summaryResult.reminders.map((r) => `- ${r}`),
+    ].join('\n')
+    void navigator.clipboard?.writeText(text).then(() => {
+      setCopiedSummary(true)
+      window.setTimeout(() => setCopiedSummary(false), 2000)
+    })
   }
 
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end bg-slate-900/40"
+      className="fixed inset-0 z-50 flex justify-end bg-slate-900/45 backdrop-blur-[2px] transition-opacity duration-200"
       role="dialog"
       aria-modal="true"
-      aria-label="EA-CSC Governance Assistant"
+      aria-label="EA-CSC AI Assistant"
     >
       <div className="flex h-full w-full max-w-md flex-col bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-200 bg-emerald-950 px-5 py-4 text-white">
-          <div>
-            <h2 className="text-base font-bold">EA-CSC Governance Assistant</h2>
-            <p className="text-xs text-emerald-200">
-              Operations guide, role helper &amp; text summarizer
-            </p>
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-[#0e172a] via-[#1c1020] to-[#3a0a18] px-4 py-3.5 text-white">
+          <div className="flex items-center gap-3">
+            <img
+              src="/ai-chatbot-icon.png"
+              alt="EA-CSC AI Chatbot"
+              className="size-11 shrink-0 rounded-full border border-white/25 bg-slate-950/60 object-cover shadow-md"
+            />
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-bold tracking-tight sm:text-base">
+                  EA-CSC AI Assistant
+                </h2>
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                    engineMode === 'gemini'
+                      ? 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/40'
+                      : 'bg-white/10 text-slate-200 ring-1 ring-white/20'
+                  }`}
+                  title={
+                    engineMode === 'gemini'
+                      ? 'Powered by Google Gemini API via Supabase Edge Function'
+                      : 'Running local governance, dictionary & TextRank engine (connect Gemini API key for full LLM)'
+                  }
+                >
+                  {engineMode === 'gemini' ? 'Gemini AI' : 'Smart Local'}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300">
+                Portal guide, definitions &amp; text analyzer
+              </p>
+            </div>
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close assistant"
-            className="rounded-lg border border-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-900"
+            className="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-white/20"
           >
             Close
           </button>
         </div>
 
-        <div className="flex border-b border-slate-200 bg-slate-50 px-4 pt-2">
-          <button
-            type="button"
-            onClick={() => setTab('chat')}
-            className={`border-b-2 px-4 py-2 text-sm font-semibold ${
-              tab === 'chat'
-                ? 'border-emerald-800 text-emerald-900'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            Ask &amp; Guide
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('summarize')}
-            className={`border-b-2 px-4 py-2 text-sm font-semibold ${
-              tab === 'summarize'
-                ? 'border-emerald-800 text-emerald-900'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            Summarize &amp; Classify
-          </button>
+        {/* Tabs */}
+        <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 pt-2">
+          <div className="flex">
+            <button
+              type="button"
+              onClick={() => setTab('chat')}
+              className={`border-b-2 px-3.5 py-2 text-xs font-semibold transition sm:text-sm ${
+                tab === 'chat'
+                  ? 'border-[#8B0029] text-[#8B0029]'
+                  : 'border-transparent text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Ask &amp; Define
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('summarize')}
+              className={`border-b-2 px-3.5 py-2 text-xs font-semibold transition sm:text-sm ${
+                tab === 'summarize'
+                  ? 'border-[#8B0029] text-[#8B0029]'
+                  : 'border-transparent text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Summarize &amp; Analyze
+            </button>
+          </div>
+          {tab === 'chat' && messages.length > 1 && (
+            <button
+              type="button"
+              onClick={() => setMessages((prev) => prev.slice(0, 1))}
+              className="mb-1 text-[11px] font-medium text-slate-500 hover:text-slate-800"
+            >
+              Clear chat
+            </button>
+          )}
         </div>
 
         {tab === 'chat' ? (
@@ -384,14 +229,15 @@ export default function AssistantDrawer({
               {[
                 'What can I do on this page?',
                 'Explain user roles',
+                'Define superseded',
                 '6-point checklist',
-                'Explain statuses',
               ].map((chip) => (
                 <button
                   key={chip}
                   type="button"
-                  onClick={() => sendPrompt(chip)}
-                  className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 hover:border-emerald-700 hover:bg-emerald-50 hover:text-emerald-900"
+                  disabled={loading}
+                  onClick={() => void sendPrompt(chip)}
+                  className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-medium text-slate-700 transition hover:border-emerald-700 hover:bg-emerald-50 hover:text-emerald-900 disabled:opacity-50"
                 >
                   {chip}
                 </button>
@@ -402,43 +248,72 @@ export default function AssistantDrawer({
               {messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`rounded-xl p-3.5 text-sm leading-relaxed whitespace-pre-line ${
-                    msg.role === 'user'
-                      ? 'ml-8 bg-emerald-900 text-white'
-                      : 'mr-4 border border-slate-200 bg-slate-50 text-slate-800'
+                  className={`flex gap-2.5 ${
+                    msg.role === 'user' ? 'justify-end' : 'justify-start'
                   }`}
                 >
-                  <p>{msg.text}</p>
-                  {msg.helpSection && (
-                    <Link
-                      to={`/help#${msg.helpSection}`}
-                      onClick={onClose}
-                      className="mt-2 inline-block text-xs font-semibold text-emerald-800 underline hover:text-emerald-950"
-                    >
-                      {msg.helpLabel ?? 'Read more in Help'} →
-                    </Link>
+                  {msg.role === 'assistant' && (
+                    <img
+                      src="/ai-chatbot-icon.png"
+                      alt=""
+                      className="mt-0.5 size-7 shrink-0 rounded-full border border-slate-200 bg-slate-900 object-cover"
+                    />
                   )}
+                  <div
+                    className={`max-w-[85%] rounded-xl p-3 text-sm leading-relaxed whitespace-pre-line ${
+                      msg.role === 'user'
+                        ? 'bg-emerald-900 text-white shadow-sm'
+                        : 'border border-slate-200 bg-slate-50 text-slate-800'
+                    }`}
+                  >
+                    <p>{msg.text}</p>
+                    {msg.helpSection && (
+                      <Link
+                        to={`/help#${msg.helpSection}`}
+                        onClick={onClose}
+                        className="mt-2 inline-block text-xs font-semibold text-emerald-800 underline hover:text-emerald-950"
+                      >
+                        {msg.helpLabel ?? 'Read more in Help'} →
+                      </Link>
+                    )}
+                  </div>
                 </div>
               ))}
+
+              {loading && (
+                <div className="flex items-center gap-2.5">
+                  <img
+                    src="/ai-chatbot-icon.png"
+                    alt=""
+                    className="size-7 shrink-0 rounded-full border border-slate-200 bg-slate-900 object-cover"
+                  />
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs font-medium text-slate-500">
+                    Analyzing your question…
+                  </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
             </div>
 
             <form
               onSubmit={(e) => {
                 e.preventDefault()
-                sendPrompt(input)
+                void sendPrompt(input)
               }}
-              className="flex gap-2 border-t border-slate-200 p-3"
+              className="flex gap-2 border-t border-slate-200 bg-white p-3"
             >
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask how a button, role, or workflow works…"
-                className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-700 focus:outline-none"
+                placeholder="Ask about the site, define a word, or summarize…"
+                disabled={loading}
+                className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:border-emerald-700 focus:outline-none disabled:bg-slate-50"
               />
               <button
                 type="submit"
-                className="rounded-lg bg-emerald-900 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+                disabled={loading || !input.trim()}
+                className="rounded-lg bg-emerald-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-50"
               >
                 Ask
               </button>
@@ -447,9 +322,10 @@ export default function AssistantDrawer({
         ) : (
           <div className="flex-1 space-y-4 overflow-y-auto p-4">
             <p className="text-xs leading-5 text-slate-600">
-              Paste council announcement text, meeting notes, or draft
-              guidelines below to extract a clean bullet summary, suggested
-              record category, and 6-point checklist reminders.
+              Paste council announcement text, meeting minutes, or draft
+              guidelines below to extract key bullet points, entities (dates,
+              venues, contacts, amounts), suggested record category, and 6-point
+              checklist reminders.
             </p>
             <textarea
               rows={6}
@@ -458,21 +334,21 @@ export default function AssistantDrawer({
               placeholder="Paste resolution, memo, or event announcement text here…"
               className="w-full rounded-lg border border-slate-300 p-3 text-sm focus:border-emerald-700 focus:outline-none"
             />
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() =>
-                  setSummaryResult(summarizeAndClassify(draftText))
-                }
-                className="rounded-lg bg-emerald-900 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+                disabled={summarizing || !draftText.trim()}
+                onClick={() => void handleSummarize()}
+                className="rounded-lg bg-emerald-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 disabled:opacity-50"
               >
-                Summarize &amp; Classify
+                {summarizing ? 'Analyzing…' : 'Summarize & Analyze'}
               </button>
               <button
                 type="button"
                 onClick={() => {
                   setDraftText('')
                   setSummaryResult(null)
+                  setCopiedSummary(false)
                 }}
                 className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
               >
@@ -482,16 +358,26 @@ export default function AssistantDrawer({
 
             {summaryResult && (
               <div className="space-y-3 rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 text-sm">
-                <div>
-                  <p className="text-xs font-bold tracking-wide text-emerald-900 uppercase">
-                    Suggested Category
-                  </p>
-                  <p className="mt-1 font-semibold text-slate-900">
-                    {summaryResult.category}
-                  </p>
+                <div className="flex items-center justify-between gap-2">
+                  <div>
+                    <p className="text-[11px] font-bold tracking-wide text-emerald-900 uppercase">
+                      Suggested Category
+                    </p>
+                    <p className="mt-0.5 font-semibold text-slate-900">
+                      {summaryResult.category}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCopySummary}
+                    className="rounded-md border border-emerald-300 bg-white px-2.5 py-1 text-xs font-semibold text-emerald-900 hover:bg-emerald-100"
+                  >
+                    {copiedSummary ? 'Copied!' : 'Copy'}
+                  </button>
                 </div>
+
                 <div>
-                  <p className="text-xs font-bold tracking-wide text-emerald-900 uppercase">
+                  <p className="text-[11px] font-bold tracking-wide text-emerald-900 uppercase">
                     Key Points Summary
                   </p>
                   <ul className="mt-1 list-disc space-y-1 pl-4 text-slate-800">
@@ -500,8 +386,46 @@ export default function AssistantDrawer({
                     ))}
                   </ul>
                 </div>
+
+                {(summaryResult.entities.dates.length > 0 ||
+                  summaryResult.entities.locations.length > 0 ||
+                  summaryResult.entities.contacts.length > 0 ||
+                  summaryResult.entities.amounts.length > 0) && (
+                  <div>
+                    <p className="text-[11px] font-bold tracking-wide text-emerald-900 uppercase">
+                      Detected Details
+                    </p>
+                    <div className="mt-1 space-y-1 text-xs text-slate-700">
+                      {summaryResult.entities.dates.length > 0 && (
+                        <p>
+                          <strong>Dates/Times:</strong>{' '}
+                          {summaryResult.entities.dates.join(', ')}
+                        </p>
+                      )}
+                      {summaryResult.entities.locations.length > 0 && (
+                        <p>
+                          <strong>Venues/Links:</strong>{' '}
+                          {summaryResult.entities.locations.join(', ')}
+                        </p>
+                      )}
+                      {summaryResult.entities.contacts.length > 0 && (
+                        <p>
+                          <strong>Contacts:</strong>{' '}
+                          {summaryResult.entities.contacts.join(', ')}
+                        </p>
+                      )}
+                      {summaryResult.entities.amounts.length > 0 && (
+                        <p>
+                          <strong>Amounts:</strong>{' '}
+                          {summaryResult.entities.amounts.join(', ')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div>
-                  <p className="text-xs font-bold tracking-wide text-emerald-900 uppercase">
+                  <p className="text-[11px] font-bold tracking-wide text-emerald-900 uppercase">
                     6-Point Verification Reminders
                   </p>
                   <ul className="mt-1 list-disc space-y-1 pl-4 text-slate-700">

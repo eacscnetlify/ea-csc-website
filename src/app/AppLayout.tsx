@@ -381,9 +381,14 @@ export default function AppLayout() {
               <button
                 type="button"
                 onClick={() => setAssistantOpen(true)}
-                className="inline-flex min-h-[38px] items-center gap-1.5 rounded-lg bg-emerald-900 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+                className="inline-flex min-h-[38px] items-center gap-2 rounded-lg bg-emerald-900 pl-2 pr-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
               >
-                AI Assistant
+                <img
+                  src="/ai-chatbot-icon.png"
+                  alt=""
+                  className="size-6 rounded-full border border-white/25 bg-slate-950 object-cover"
+                />
+                <span>AI Assistant</span>
               </button>
             </div>
           </div>

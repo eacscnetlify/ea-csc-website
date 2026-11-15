@@ -19,3 +19,7 @@ entrypoint = "./functions/ea-csc-public-download/index.ts"
 [functions.ea-csc-bulletin-file]
 verify_jwt = false
 entrypoint = "./functions/ea-csc-bulletin-file/index.ts"
+
+[functions.ea-csc-ai-assistant]
+verify_jwt = false
+entrypoint = "./functions/ea-csc-ai-assistant/index.ts"
