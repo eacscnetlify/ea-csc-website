@@ -50,7 +50,7 @@ export function RoleActionBanner() {
     items.push({
       roleLabel: 'Author',
       summary: 'Create folders/records, upload PDF/DOCX drafts, fix returned items, and submit for review.',
-      to: '/officer/workspace',
+      to: '/officer',
       cta: 'Open Workspace',
       tone: 'border-emerald-200 bg-emerald-50/70 text-emerald-950',
     })
