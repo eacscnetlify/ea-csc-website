@@ -287,7 +287,7 @@ export default function AppLayout() {
       </a>
 
       {/* Desktop persistent sidebar */}
-      <aside className="hidden w-72 shrink-0 lg:sticky lg:top-0 lg:block lg:h-screen">
+      <aside className="relative z-20 hidden w-72 shrink-0 lg:sticky lg:top-0 lg:block lg:h-screen">
         {sidebarContent}
       </aside>
 
@@ -322,17 +322,17 @@ export default function AppLayout() {
           const isOfficer = pathname.startsWith('/officer')
 
           const bg = isAuth
-            ? { src: '/bg-auth.jpg', opacity: 'opacity-[0.16]', wash: 'bg-slate-100/80' }
+            ? { src: '/bg-auth.jpg', opacity: 'opacity-[0.28]', wash: 'bg-slate-100/55' }
             : isContinuity
-              ? { src: '/bg-continuity.jpg', opacity: 'opacity-[0.30]', wash: 'bg-slate-50/75' }
+              ? { src: '/bg-continuity.jpg', opacity: 'opacity-[0.55]', wash: 'bg-white/40' }
               : isOfficer
-                ? { src: '/bg-officer.jpg', opacity: 'opacity-[0.32]', wash: 'bg-slate-50/75' }
-                : { src: '/bg-public.jpg', opacity: 'opacity-[0.14]', wash: 'bg-slate-100/82' }
+                ? { src: '/bg-officer.jpg', opacity: 'opacity-[0.55]', wash: 'bg-white/40' }
+                : { src: '/bg-public.jpg', opacity: 'opacity-[0.26]', wash: 'bg-slate-100/55' }
 
           return (
             <div
               aria-hidden="true"
-              className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none lg:left-64"
+              className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none lg:left-72"
             >
               <img
                 src={bg.src}
