@@ -4,8 +4,11 @@ declare const Deno: {
 }
 
 const DEFAULT_ORIGIN = 'http://localhost:5173'
-const DEFAULT_MODEL = 'gemini-2.5-flash'
-const FALLBACK_MODEL = 'gemini-2.0-flash'
+const MODEL_CANDIDATES = [
+  'gemini-3.8-flash',
+  'gemini-3.0-flash',
+  'gemini-2.5-flash',
+]
 
 function resolveAllowedOrigin(origin: string | null): string | null {
   if (!origin) return null
@@ -186,21 +189,25 @@ Deno.serve(async (request) => {
     }
     contents.push({ role: 'user', parts: [{ text: modePrompt }] })
 
-    const preferredModel = (Deno.env.get('GEMINI_MODEL') ?? DEFAULT_MODEL).trim() || DEFAULT_MODEL
-    let res = await callGemini(apiKey, preferredModel, contents)
-    let usedModel = preferredModel
+    const preferredModel = (Deno.env.get('GEMINI_MODEL') ?? '').trim()
+    const candidates = preferredModel
+      ? [preferredModel, ...MODEL_CANDIDATES.filter((m) => m !== preferredModel)]
+      : MODEL_CANDIDATES
 
-    if (res.status === 404 && preferredModel !== FALLBACK_MODEL) {
-      res = await callGemini(apiKey, FALLBACK_MODEL, contents)
-      usedModel = FALLBACK_MODEL
+    let res: Response | null = null
+    let usedModel = candidates[0]
+    for (const candidate of candidates) {
+      usedModel = candidate
+      res = await callGemini(apiKey, candidate, contents)
+      if (res.status !== 404) break
     }
 
-    if (!res.ok) {
-      const errText = await res.text().catch(() => '')
+    if (!res || !res.ok) {
+      const errText = res ? await res.text().catch(() => '') : 'NO_RESPONSE'
       return reply(origin, 200, {
         configured: true,
         fallback: true,
-        status: res.status,
+        status: res?.status ?? 500,
         error: errText.slice(0, 300),
       })
     }

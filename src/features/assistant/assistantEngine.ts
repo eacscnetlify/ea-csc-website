@@ -331,9 +331,12 @@ const KNOWLEDGE_TOPICS: Array<{
 
 function getSupabaseEdgeConfig() {
   const url = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim()
-  const anonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim()
-  if (!url || !anonKey) return null
-  return { url: url.replace(/\/$/, ''), anonKey }
+  const publishableKey = (
+    (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ??
+    (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)
+  )?.trim()
+  if (!url || !publishableKey) return null
+  return { url: url.replace(/\/$/, ''), publishableKey }
 }
 
 async function callEdgeAssistant(payload: {
@@ -359,8 +362,7 @@ async function callEdgeAssistant(payload: {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        apikey: cfg.anonKey,
-        Authorization: `Bearer ${cfg.anonKey}`,
+        apikey: cfg.publishableKey,
       },
       body: JSON.stringify(payload),
       signal: controller.signal,
