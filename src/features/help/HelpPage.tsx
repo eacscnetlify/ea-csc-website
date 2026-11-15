@@ -29,7 +29,7 @@ const ROLE_MATRIX = [
     role: 'Student Observer (roles: [])',
     who: 'Signed-in student account without officer roles',
     canDo:
-      'Same as Public Visitor, plus can manage their account and apply for one of the 28 EA-CSC officer positions on /account.',
+      'Same as Public Visitor, plus can manage their account and apply for an official EA-CSC FY 2026–2027 officer position on /account.',
     cannotDo:
       'Blocked from Document Workspace, Review Queue, Release Panel, Bulletin Compiler, Activity & History, and Turnover.',
   },
