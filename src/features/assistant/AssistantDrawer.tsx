@@ -181,7 +181,7 @@ export default function AssistantDrawer({
                   EA-CSC AI Assistant
                 </h2>
                 <span
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                  className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                     engineMode === 'gemini'
                       ? 'bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/40'
                       : 'bg-white/10 text-slate-200 ring-1 ring-white/20'

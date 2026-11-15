@@ -357,7 +357,7 @@ async function callEdgeAssistant(payload: {
 
   try {
     const controller = new AbortController()
-    const timeout = window.setTimeout(() => controller.abort(), 14000)
+    const timeout = window.setTimeout(() => controller.abort(), 30000)
     const res = await fetch(`${cfg.url}/functions/v1/ea-csc-ai-assistant`, {
       method: 'POST',
       headers: {

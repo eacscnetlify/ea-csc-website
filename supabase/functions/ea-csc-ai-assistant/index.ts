@@ -5,9 +5,9 @@ declare const Deno: {
 
 const DEFAULT_ORIGIN = 'http://localhost:5173'
 const MODEL_CANDIDATES = [
-  'gemini-3.8-flash',
   'gemini-2.5-flash',
   'gemini-2.5-flash-lite',
+  'gemini-3.8-flash',
   'gemini-3.0-flash',
 ]
 
@@ -119,6 +119,7 @@ async function callGemini(
   return await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    signal: AbortSignal.timeout(9000),
     body: JSON.stringify({
       system_instruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
       contents,
@@ -199,7 +200,12 @@ Deno.serve(async (request) => {
     let usedModel = candidates[0]
     for (const candidate of candidates) {
       usedModel = candidate
-      res = await callGemini(apiKey, candidate, contents)
+      try {
+        res = await callGemini(apiKey, candidate, contents)
+      } catch {
+        res = null
+        continue
+      }
       if (res.ok) break
       // Retry next model on 404 (retired), 429 (rate limit), or 5xx (temporary high demand)
       if (res.status !== 404 && res.status !== 429 && res.status < 500) {
