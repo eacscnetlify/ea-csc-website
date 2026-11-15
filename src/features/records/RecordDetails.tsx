@@ -1,5 +1,9 @@
 import { useState } from 'react'
+import { PdfPreviewModal } from './PdfPreviewModal'
 import type { PublicRecordItem } from './records.types'
+import { ShareQrModal } from './ShareQrModal'
+import { useBookmarks } from './useBookmarks'
+import { printVerificationSlip } from './VerificationSlipPrint'
 
 interface RecordDetailsProps {
   record: PublicRecordItem
@@ -14,6 +18,10 @@ const dateFormatter = new Intl.DateTimeFormat('en-PH', {
 export default function RecordDetails({ record, history }: RecordDetailsProps) {
   const [downloading, setDownloading] = useState(false)
   const [downloadError, setDownloadError] = useState('')
+  const [showPreview, setShowPreview] = useState(false)
+  const [showQr, setShowQr] = useState(false)
+  const { isPinned, togglePin } = useBookmarks()
+  const pinned = isPinned(record.recordId)
 
   async function downloadPublicCopy() {
     if (downloading) return
@@ -161,14 +169,55 @@ export default function RecordDetails({ record, history }: RecordDetailsProps) {
         </div>
 
         <div className="mt-6 space-y-2 border-t border-slate-200 pt-5">
-          <button
-            type="button"
-            disabled={downloading}
-            onClick={() => void downloadPublicCopy()}
-            className="rounded-lg bg-green-800 px-4 py-2 text-sm font-semibold text-white hover:bg-green-900 disabled:opacity-50"
-          >
-            {downloading ? 'Downloading…' : 'Download official copy'}
-          </button>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              disabled={downloading}
+              onClick={() => void downloadPublicCopy()}
+              className="rounded-lg bg-green-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-900 disabled:opacity-50"
+            >
+              {downloading ? 'Downloading…' : 'Download official copy'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPreview(true)}
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+            >
+              Preview PDF
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowQr(true)}
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+            >
+              Share / QR Code
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                togglePin({
+                  recordId: record.recordId,
+                  title: record.title,
+                  category: record.category,
+                  versionNumber: record.versionNumber,
+                })
+              }
+              className={`rounded-lg border px-4 py-2 text-sm font-semibold transition ${
+                pinned
+                  ? 'border-amber-300 bg-amber-50 text-amber-900'
+                  : 'border-slate-300 bg-white text-slate-800 hover:bg-slate-50'
+              }`}
+            >
+              {pinned ? 'Pinned to Home' : 'Pin Document'}
+            </button>
+            <button
+              type="button"
+              onClick={() => printVerificationSlip(record)}
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+            >
+              Print Verification Slip
+            </button>
+          </div>
           {downloadError && (
             <p role="alert" className="text-sm text-red-800">
               {downloadError}
@@ -176,6 +225,23 @@ export default function RecordDetails({ record, history }: RecordDetailsProps) {
           )}
         </div>
       </section>
+
+      <PdfPreviewModal
+        open={showPreview}
+        title={record.title}
+        subtitle={`${record.recordId} · Version ${record.versionNumber}`}
+        fetchUrl={`${import.meta.env.VITE_SUPABASE_URL.trim()}/functions/v1/ea-csc-public-download?record_id=${encodeURIComponent(record.recordId)}`}
+        downloadFilename={`${record.recordId}_v${record.versionNumber}.pdf`}
+        onClose={() => setShowPreview(false)}
+      />
+
+      <ShareQrModal
+        open={showQr}
+        title={record.title}
+        subtitle={record.recordId}
+        url={`${window.location.origin}/records/${encodeURIComponent(record.recordId)}`}
+        onClose={() => setShowQr(false)}
+      />
 
       {history.length > 0 && (
         <details className="min-w-0 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">

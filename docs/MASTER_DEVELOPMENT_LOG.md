@@ -122,6 +122,18 @@
    - Added **Role Capabilities & Security Reference** to `AccountPage.tsx` and Scenarios **E** & **F** to `HelpPage.tsx`.
    - **Bug Discovered & Fixed:** `20261115000100_fix_republish_after_withdrawal.sql` fixed a production SQL bug in `eacsc_private.publish_version` where republishing `v2` after an emergency withdrawal of `v1` threw `55000: A withdrawn release cannot be changed.` because it tried to update `effective_until` on the already-withdrawn `prior_release`.
 
+### Batch 12: Zero-Backend UX Enhancements, Markdown AI & Human Pilot Pack
+- **AI Assistant Markdown Rendering (`94200ab`):** Added XSS-safe React Markdown renderer (`src/features/assistant/MarkdownMessage.tsx`) wired into `AssistantDrawer.tsx` so Gemini AI headings, bold text, lists, code blocks, and links render cleanly.
+- **Human Pilot & User Manual Pack (`aa29e15`, `5b3d313`):** Created `docs/pilot/01_CEAFEST_PILOT_FACILITATOR_SCRIPT.md` through `05_WEBSITE_USER_AND_OFFICER_MANUAL.md` covering the two-part CEAFest simulation + live turnover handover, Google Forms survey (30+ student observers & CEA officers), observation sheet, and beginner-friendly officer manual.
+- **Six Zero-Backend Interactive Features:**
+  1. **In-Browser SHA-256 File Verifier** (`src/features/records/FileVerifierWidget.tsx`) — Drag-and-drop file checker on `/` comparing local file bytes against live official releases or pasted SHA-256 hashes.
+  2. **Shareable QR Code Generator** (`src/features/records/ShareQrModal.tsx`) — Generates scannable QR codes + copyable links + downloadable PNGs on `/`, `/records/:recordId`, and `/bulletins`.
+  3. **In-Browser PDF/Image Quick Preview** (`src/features/records/PdfPreviewModal.tsx`) — Modal viewer with live SHA-256 display on `/`, `/records/:recordId`, and `/bulletins`.
+  4. **Role-Guided Quick Actions Banner** (`src/features/auth/RoleActionBanner.tsx`) — Collapsible role-specific action cards with 1-click jump links on `/account` and `/officer/workspace`.
+  5. **Student Bookmarks / Pinned Documents** (`src/features/records/useBookmarks.ts`) — `localStorage`-persisted pinning on `/` and `/records/:recordId` with a "Pinned by You" strip.
+  6. **Printable Verification Slip** (`src/features/records/VerificationSlipPrint.ts`) — Hidden-iframe print receipt on `/records/:recordId` for hard-copy submissions.
+- **Help Center Updates:** Updated `src/features/help/HelpPage.tsx` with instructions for all 6 new tools.
+
 ---
 
 ## 4. Verification, Testing & Live Production Checks

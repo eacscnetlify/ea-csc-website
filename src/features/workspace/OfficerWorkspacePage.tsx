@@ -5,6 +5,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { FormEvent, SubmitEvent } from 'react'
 import { getOfficerProfile } from '../auth/auth.api'
 import type { OfficerProfile } from '../auth/auth.api'
+import { RoleActionBanner } from '../auth/RoleActionBanner'
 import { useAuth } from '../auth/useAuth'
 import { RECORD_CATEGORIES } from '../records/records.types'
 import ReviewHistory from '../records/ReviewHistory'
@@ -670,6 +671,7 @@ export default function OfficerWorkspacePage() {
 
   return (
     <section aria-labelledby="workspace-heading" className="space-y-6">
+      <RoleActionBanner />
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-wider text-rose-800">

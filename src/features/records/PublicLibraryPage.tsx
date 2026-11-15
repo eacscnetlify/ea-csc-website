@@ -2,10 +2,14 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import HelpLink from '../../components/ui/HelpLink'
 import { useAuth } from '../auth/useAuth'
+import { FileVerifierWidget } from './FileVerifierWidget'
+import { PdfPreviewModal } from './PdfPreviewModal'
 import RecordDetailsModal from './RecordDetailsModal'
 import { getPublicRecords } from './records.api'
 import { RECORD_CATEGORIES } from './records.types'
 import type { PublicRecordItem } from './records.types'
+import { ShareQrModal } from './ShareQrModal'
+import { useBookmarks } from './useBookmarks'
 
 type LoadStatus = 'loading' | 'success' | 'error'
 
@@ -23,6 +27,11 @@ export default function PublicLibraryPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [category, setCategory] = useState('all')
   const [previewRecordId, setPreviewRecordId] = useState<string | null>(null)
+  const [pdfPreviewItem, setPdfPreviewItem] = useState<PublicRecordItem | null>(
+    null,
+  )
+  const [qrRecord, setQrRecord] = useState<PublicRecordItem | null>(null)
+  const { bookmarks, isPinned, togglePin, clearPins } = useBookmarks()
 
   useEffect(() => {
     let ignore = false
@@ -295,6 +304,50 @@ export default function PublicLibraryPage() {
         </div>
       </div>
 
+      {/* In-Browser SHA-256 Verifier */}
+      <FileVerifierWidget records={records} />
+
+      {/* Pinned / Bookmarked Documents Strip */}
+      {bookmarks.length > 0 && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 shadow-sm space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs font-extrabold uppercase tracking-wider text-amber-900">
+              Pinned by You ({bookmarks.length})
+            </p>
+            <button
+              type="button"
+              onClick={clearPins}
+              className="text-xs font-semibold text-amber-900 hover:underline"
+            >
+              Clear all pins
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {bookmarks.map((pin) => (
+              <div
+                key={pin.recordId}
+                className="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-white px-3 py-1.5 text-xs shadow-2xs"
+              >
+                <Link
+                  to={`/records/${encodeURIComponent(pin.recordId)}`}
+                  className="font-semibold text-slate-900 hover:text-rose-800"
+                >
+                  {pin.title}
+                </Link>
+                <button
+                  type="button"
+                  aria-label={`Unpin ${pin.title}`}
+                  onClick={() => togglePin(pin)}
+                  className="rounded px-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Document Cards Grid */}
       {status === 'loading' && (
         <div
@@ -385,19 +438,51 @@ export default function PublicLibraryPage() {
                       </strong>
                     </span>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          togglePin({
+                            recordId: record.recordId,
+                            title: record.title,
+                            category: record.category,
+                            versionNumber: record.versionNumber,
+                          })
+                        }
+                        className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${
+                          isPinned(record.recordId)
+                            ? 'border-amber-300 bg-amber-50 text-amber-900'
+                            : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                        }`}
+                      >
+                        {isPinned(record.recordId) ? 'Pinned' : 'Pin'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPdfPreviewItem(record)}
+                        className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        Preview
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setQrRecord(record)}
+                        className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        QR
+                      </button>
                       <button
                         type="button"
                         onClick={() => setPreviewRecordId(record.recordId)}
-                        className="rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                        className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                       >
-                        Quick Inspect
+                        Details
                       </button>
                       <Link
                         to={`/records/${encodeURIComponent(record.recordId)}`}
-                        className="rounded-lg bg-slate-900 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-rose-800 transition"
+                        className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-800 transition"
                       >
-                        Open Document →
+                        Open →
                       </Link>
                     </div>
                   </div>
@@ -412,6 +497,27 @@ export default function PublicLibraryPage() {
         <RecordDetailsModal
           recordId={previewRecordId}
           onClose={() => setPreviewRecordId(null)}
+        />
+      )}
+
+      {pdfPreviewItem && (
+        <PdfPreviewModal
+          open
+          title={pdfPreviewItem.title}
+          subtitle={`${pdfPreviewItem.recordId} · v${pdfPreviewItem.versionNumber}`}
+          fetchUrl={`${import.meta.env.VITE_SUPABASE_URL.trim()}/functions/v1/ea-csc-public-download?record_id=${encodeURIComponent(pdfPreviewItem.recordId)}`}
+          downloadFilename={`${pdfPreviewItem.recordId}_v${pdfPreviewItem.versionNumber}.pdf`}
+          onClose={() => setPdfPreviewItem(null)}
+        />
+      )}
+
+      {qrRecord && (
+        <ShareQrModal
+          open
+          title={qrRecord.title}
+          subtitle={qrRecord.recordId}
+          url={`${window.location.origin}/records/${encodeURIComponent(qrRecord.recordId)}`}
+          onClose={() => setQrRecord(null)}
         />
       )}
     </section>

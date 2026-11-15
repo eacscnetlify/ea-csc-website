@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { formatManilaDate, formatManilaDateTime } from '../../lib/dates'
 import { getSupabaseClient } from '../../lib/supabase'
+import { PdfPreviewModal } from '../records/PdfPreviewModal'
+import { ShareQrModal } from '../records/ShareQrModal'
 
 interface PublicBulletinItem {
   bulletinId: string
@@ -19,6 +21,9 @@ export default function PublicBulletinsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
+  const [previewBulletin, setPreviewBulletin] =
+    useState<PublicBulletinItem | null>(null)
+  const [qrBulletin, setQrBulletin] = useState<PublicBulletinItem | null>(null)
 
   useEffect(() => {
     let active = true
@@ -167,21 +172,56 @@ export default function PublicBulletinsPage() {
                 Cutoff: {formatManilaDateTime(b.cutoffAt)} · {b.sourcesCount}{' '}
                 releases summarized
               </p>
-              <div className="pt-2">
+              <div className="flex flex-wrap items-center gap-2 pt-2">
                 <button
                   type="button"
                   disabled={downloadingId === b.bulletinId}
                   onClick={() => void downloadPdf(b.bulletinId, b.issueVersion)}
-                  className="rounded-lg bg-emerald-800 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-900 disabled:opacity-50"
+                  className="rounded-lg bg-emerald-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-900 disabled:opacity-50"
                 >
                   {downloadingId === b.bulletinId
                     ? 'Downloading…'
                     : 'Download official PDF'}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewBulletin(b)}
+                  className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+                >
+                  Preview PDF
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQrBulletin(b)}
+                  className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+                >
+                  QR Code
+                </button>
               </div>
             </article>
           ))}
         </div>
+      )}
+
+      {previewBulletin && (
+        <PdfPreviewModal
+          open
+          title={previewBulletin.title}
+          subtitle={`${previewBulletin.bulletinId} · Issue v${previewBulletin.issueVersion}`}
+          fetchUrl={`${import.meta.env.VITE_SUPABASE_URL.trim()}/functions/v1/ea-csc-bulletin-file?bulletin_id=${encodeURIComponent(previewBulletin.bulletinId)}&issue_version=${previewBulletin.issueVersion}`}
+          downloadFilename={`${previewBulletin.bulletinId}_v${previewBulletin.issueVersion}.pdf`}
+          onClose={() => setPreviewBulletin(null)}
+        />
+      )}
+
+      {qrBulletin && (
+        <ShareQrModal
+          open
+          title={qrBulletin.title}
+          subtitle={`${qrBulletin.bulletinId}_v${qrBulletin.issueVersion}`}
+          url={`${window.location.origin}/bulletins`}
+          onClose={() => setQrBulletin(null)}
+        />
       )}
     </section>
   )

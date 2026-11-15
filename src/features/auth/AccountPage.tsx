@@ -5,6 +5,7 @@ import { formatManilaDateTime } from '../../lib/dates'
 import { getSupabaseClient } from '../../lib/supabase'
 import { ensureObserverProfile, getOfficerProfile } from './auth.api'
 import type { OfficerProfile } from './auth.api'
+import { RoleActionBanner } from './RoleActionBanner'
 import { useAuth } from './useAuth'
 
 interface RoleRequestRow {
@@ -207,6 +208,7 @@ export default function AccountPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
+      <RoleActionBanner />
       <div>
         <h1 className="text-2xl font-bold text-slate-900">
           Account & Role Management

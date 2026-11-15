@@ -165,8 +165,10 @@ const SECTIONS: AccordionSection[] = [
     route: '/',
     routeLabel: 'Open Home — Public Library',
     steps: [
-      'Home — Public Library (/): Anyone can search published documents by title or canonical ID, filter by category (GOV, SEC, ACT, FIN, FRM, TRN), and download verified files or inspect superseded version history.',
-      'Update Bulletins (/bulletins): View and download official periodic PDF digests compiling verified releases within a reporting window.',
+      'Home — Public Library (/): Anyone can search published documents by title or canonical ID, filter by category (GOV, SEC, ACT, FIN, FRM, TRN), Preview PDFs/images in-browser, Pin favorite documents to the top strip, or open Share / QR Code to download a scannable QR PNG.',
+      'In-Browser SHA-256 File Verifier (/): Expand "Verify a Downloaded File" on the Public Library to drop any PDF/DOCX/image and confirm byte-for-byte in your browser that it matches an official release or pasted SHA-256 checksum.',
+      'Printable Verification Slip (/records/:recordId): Open any published record and click "Print Verification Slip" to print a formal governance receipt with Record ID, version, effective date, and official link.',
+      'Update Bulletins (/bulletins): View, preview in-browser, generate QR codes for, and download official periodic PDF digests compiling verified releases within a reporting window.',
       'Create Observer Account (/signup): Students register with their Full Name, Student ID, Degree Program (BS Civil, Electronics, Computer Engineering, or BS Architecture), Email, and Password. Duplicate names, Student IDs, and emails are automatically blocked with clear warnings.',
       'Apply for Officer Role (/account): Signed-in Student Observers select their appointed EA-CSC position from the 28-position dropdown and submit a justification. Once the Council President approves the request in /account, Officer Operations tabs unlock immediately.',
     ],
@@ -180,6 +182,7 @@ const SECTIONS: AccordionSection[] = [
     route: '/officer',
     routeLabel: 'Open Document Workspace',
     steps: [
+      '0. Role-Guided Quick Actions (/account & /officer/workspace): Signed-in officers see a collapsible "What You Can Do Next" card tailored to their active roles with 1-click jump links to their workspace, review queue, release panel, or turnover page.',
       '1. Document Workspace (/officer): Create Folders, create Public or Restricted Documents, upload valid attachments (.pdf, .docx, .png, .jpg), save Draft notes, and click "Submit for Review" (or use Executive Fast-Track if President/Executive Secretary).',
       '2. Review Queue (/officer/reviews): Reviewers and Approvers inspect "For Review" submissions against the 6-point verification checklist (Identity, Dates/Manila UTC+8 time, Venue/Link, Eligibility, Authority/Privacy, Contact/IDs). Return for Correction with comments, or record Substantive Approval.',
       '3. Release Panel (/officer/releases): The Public Relations Officer (Publisher) publishes Approved versions immediately, schedules a future Manila effective date, supersedes prior versions, or executes an Emergency Withdrawal.',
