@@ -44,7 +44,10 @@ export default function CouncilHistoryPage() {
   }, [])
 
   useEffect(() => {
-    void loadHistory()
+    const timer = window.setTimeout(() => {
+      void loadHistory()
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [loadHistory])
 
   const filtered = events.filter((ev) => {

@@ -122,9 +122,11 @@ export default function AccountPage() {
   }, [session])
 
   useEffect(() => {
-    if (status === 'signed-in') {
+    if (status !== 'signed-in') return
+    const timer = window.setTimeout(() => {
       void loadData()
-    }
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [status, loadData])
 
   if (status === 'loading') {

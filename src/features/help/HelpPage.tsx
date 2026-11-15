@@ -310,11 +310,12 @@ export default function HelpPage() {
       'access-transfer': 'continuity',
     }
     const sectionId = mapHashToSection[targetId] ?? targetId
-    setOpenIds((prev) => (prev.includes(sectionId) ? prev : [...prev, sectionId]))
-    setTimeout(() => {
+    const timer = window.setTimeout(() => {
+      setOpenIds((prev) => (prev.includes(sectionId) ? prev : [...prev, sectionId]))
       const el = document.getElementById(sectionId)
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 80)
+    return () => window.clearTimeout(timer)
   }, [hash])
 
   const normalized = query.trim().toLowerCase()

@@ -49,35 +49,33 @@ export default function AssistantDrawer({
   const [summarizing, setSummarizing] = useState(false)
   const [summaryResult, setSummaryResult] = useState<SummaryAnalysis | null>(null)
   const [copiedSummary, setCopiedSummary] = useState(false)
-  const [rendered, setRendered] = useState(open)
   const [visible, setVisible] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
+  const msgCounterRef = useRef(0)
 
   useEffect(() => {
     if (open) {
-      setRendered(true)
       const raf = window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => setVisible(true))
       })
       return () => window.cancelAnimationFrame(raf)
     }
-    setVisible(false)
-    const timer = window.setTimeout(() => setRendered(false), 260)
-    return () => window.clearTimeout(timer)
+    const raf = window.requestAnimationFrame(() => setVisible(false))
+    return () => window.cancelAnimationFrame(raf)
   }, [open])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  if (!rendered) return null
-
   async function sendPrompt(text: string) {
     const trimmed = text.trim()
     if (!trimmed || loading) return
 
+    msgCounterRef.current += 1
+    const seq = msgCounterRef.current
     const userMsg: Message = {
-      id: `${Date.now()}-u`,
+      id: `m-${seq}-u`,
       role: 'user',
       text: trimmed,
     }
@@ -101,7 +99,7 @@ export default function AssistantDrawer({
       setMessages((prev) => [
         ...prev,
         {
-          id: `${Date.now()}-a`,
+          id: `m-${seq}-a`,
           role: 'assistant',
           text: reply.text,
           engine: reply.engine,

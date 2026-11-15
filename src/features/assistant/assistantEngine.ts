@@ -384,8 +384,8 @@ async function callEdgeAssistant(payload: {
 function extractDefineTarget(question: string): string | null {
   const trimmed = question.trim()
   const patterns = [
-    /^(?:define|definition of|meaning of|what does|what is(?: the meaning of)?|explain the term)\s+["'“]?([a-z0-9\-\s]{2,40}?)["'”]?(?:\s+mean)?[?.!]*$/i,
-    /^["']([a-z0-9\-]{2,30})["']\s*\??$/i,
+    /^(?:define|definition of|meaning of|what does|what is(?: the meaning of)?|explain the term)\s+["'“]?([a-z0-9-\s]{2,40}?)["'”]?(?:\s+mean)?[?.!]*$/i,
+    /^["']([a-z0-9-]{2,30})["']\s*\??$/i,
   ]
   for (const re of patterns) {
     const match = trimmed.match(re)
@@ -426,7 +426,7 @@ async function lookupDefinitionLocal(rawTerm: string): Promise<AssistantReply> {
 
   // Free public English Dictionary API (no API key required)
   const singleWord = normalized.split(/\s+/)[0]
-  if (/^[a-z\-]{2,30}$/i.test(singleWord)) {
+  if (/^[a-z-]{2,30}$/i.test(singleWord)) {
     try {
       const res = await fetch(
         `https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(singleWord)}`,
@@ -582,7 +582,7 @@ export function summarizeLocally(rawText: string): SummaryAnalysis | null {
   const locations = Array.from(
     new Set(
       clean.match(
-        /(?:https?:\/\/\S+|(?:Room|Hall|Building|Auditorium|Studio|Lab|Zoom|Google Meet)\s+[A-Za-z0-9\-]+)/gi,
+        /(?:https?:\/\/\S+|(?:Room|Hall|Building|Auditorium|Studio|Lab|Zoom|Google Meet)\s+[A-Za-z0-9-]+)/gi,
       ) ?? [],
     ),
   ).slice(0, 4)
