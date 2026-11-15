@@ -624,6 +624,16 @@ function answerLocally(question: string, pathname: string): AssistantReply {
   const q = question.toLowerCase().trim()
   const ctx = ROUTE_CONTEXT.find((c) => c.match(pathname)) ?? ROUTE_CONTEXT[0]
 
+  if (/^(hi|hello|hey|good\s+(morning|afternoon|evening)|kumusta)[!.\s]*$/i.test(q)) {
+    return {
+      text: `Hello! You are currently on ${ctx.title}. Ask me anything about how this page works, council roles, the 6-point checklist, word definitions (e.g., "define superseded"), or paste text in Summarize & Analyze.`,
+      engine: 'local',
+      helpSection: ctx.section,
+      helpLabel: `Open ${ctx.title} guide`,
+      geminiConfigured: false,
+    }
+  }
+
   if (
     q.includes('this page') ||
     q.includes('where am i') ||

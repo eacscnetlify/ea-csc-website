@@ -120,6 +120,7 @@ export default function AppLayout() {
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [assistantOpen, setAssistantOpen] = useState(false)
+  const [assistantMounted, setAssistantMounted] = useState(false)
   const [profile, setProfile] = useState<OfficerProfile | null>(null)
 
   const userId = session?.user?.id ?? null
@@ -380,14 +381,16 @@ export default function AppLayout() {
 
               <button
                 type="button"
-                onClick={() => setAssistantOpen(true)}
-                className="inline-flex min-h-[38px] items-center gap-2 rounded-lg bg-emerald-900 pl-2 pr-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+                onClick={() => {
+                  setAssistantMounted(true)
+                  setAssistantOpen(true)
+                }}
+                className="ai-launcher-btn inline-flex min-h-[38px] items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-900 via-emerald-800 to-[#8B0029] px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm transition-all duration-200 hover:shadow-md hover:shadow-emerald-900/25 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
               >
-                <img
-                  src="/ai-chatbot-icon.png"
-                  alt=""
-                  className="size-6 rounded-full border border-white/25 bg-slate-950 object-cover"
-                />
+                <span className="relative flex size-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-75" />
+                  <span className="relative inline-flex size-2.5 rounded-full bg-emerald-300" />
+                </span>
                 <span>AI Assistant</span>
               </button>
             </div>
@@ -417,7 +420,7 @@ export default function AppLayout() {
         </footer>
       </div>
 
-      {assistantOpen && (
+      {assistantMounted && (
         <Suspense fallback={null}>
           <AssistantDrawer
             open={assistantOpen}

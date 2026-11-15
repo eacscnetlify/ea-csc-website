@@ -49,13 +49,28 @@ export default function AssistantDrawer({
   const [summarizing, setSummarizing] = useState(false)
   const [summaryResult, setSummaryResult] = useState<SummaryAnalysis | null>(null)
   const [copiedSummary, setCopiedSummary] = useState(false)
+  const [rendered, setRendered] = useState(open)
+  const [visible, setVisible] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (open) {
+      setRendered(true)
+      const raf = window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => setVisible(true))
+      })
+      return () => window.cancelAnimationFrame(raf)
+    }
+    setVisible(false)
+    const timer = window.setTimeout(() => setRendered(false), 260)
+    return () => window.clearTimeout(timer)
+  }, [open])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  if (!open) return null
+  if (!rendered) return null
 
   async function sendPrompt(text: string) {
     const trimmed = text.trim()
@@ -137,19 +152,28 @@ export default function AssistantDrawer({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end bg-slate-900/45 backdrop-blur-[2px] transition-opacity duration-200"
+      className={`fixed inset-0 z-[9999] flex justify-end bg-slate-900/45 backdrop-blur-[2px] transition-opacity duration-250 ${
+        visible ? 'opacity-100' : 'pointer-events-none opacity-0'
+      }`}
       role="dialog"
       aria-modal="true"
       aria-label="EA-CSC AI Assistant"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose()
+      }}
     >
-      <div className="flex h-full w-full max-w-md flex-col bg-white shadow-2xl">
+      <div
+        className={`flex h-full w-full max-w-md flex-col bg-white shadow-2xl transition-transform duration-300 ease-out ${
+          visible ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-200 bg-gradient-to-r from-[#0e172a] via-[#1c1020] to-[#3a0a18] px-4 py-3.5 text-white">
           <div className="flex items-center gap-3">
             <img
               src="/ai-chatbot-icon.png"
               alt="EA-CSC AI Chatbot"
-              className="size-11 shrink-0 rounded-full border border-white/25 bg-slate-950/60 object-cover shadow-md"
+              className="size-12 shrink-0 object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.45)]"
             />
             <div>
               <div className="flex items-center gap-2">
@@ -256,7 +280,7 @@ export default function AssistantDrawer({
                     <img
                       src="/ai-chatbot-icon.png"
                       alt=""
-                      className="mt-0.5 size-7 shrink-0 rounded-full border border-slate-200 bg-slate-900 object-cover"
+                      className="mt-0.5 size-8 shrink-0 object-contain"
                     />
                   )}
                   <div
@@ -285,7 +309,7 @@ export default function AssistantDrawer({
                   <img
                     src="/ai-chatbot-icon.png"
                     alt=""
-                    className="size-7 shrink-0 rounded-full border border-slate-200 bg-slate-900 object-cover"
+                    className="size-8 shrink-0 object-contain"
                   />
                   <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs font-medium text-slate-500">
                     Analyzing your question…
