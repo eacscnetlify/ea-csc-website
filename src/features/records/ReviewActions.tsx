@@ -15,6 +15,7 @@ export default function ReviewActions({
   versions,
   canSubmit,
   canReturn,
+  reviewerPassed = false,
   onConfirmed,
   onReload,
 }: {
@@ -23,6 +24,7 @@ export default function ReviewActions({
   versions: AssignedVersion[]
   canSubmit: boolean
   canReturn: boolean
+  reviewerPassed?: boolean
   onConfirmed: (state: 'Draft' | 'For Review') => void
   onReload: () => void
 }) {
@@ -245,9 +247,13 @@ export default function ReviewActions({
               disabled={!selected || (operation === 'return' && !comment.trim())}
               onClick={() => void send()}
             >
-              {operation === 'submit' ? 'Submit for review' : 'Return with suggestions to Draft'}
+              {operation === 'submit'
+                ? 'Submit for review'
+                : reviewerPassed
+                  ? 'Return to Author (Requires Re-Review)'
+                  : 'Return with suggestions to Draft'}
             </button>
-            {operation === 'return' && (
+            {operation === 'return' && !reviewerPassed && (
               <button
                 type="button"
                 className="rounded-lg bg-emerald-800 px-4 py-2 font-semibold text-white hover:bg-emerald-900 disabled:opacity-50"

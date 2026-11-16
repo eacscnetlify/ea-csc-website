@@ -33,6 +33,9 @@ export interface AssignedVersion {
   notes: string
   correctionClassification: string | null
   approvedAt: string | null
+  reviewerPassedAt: string | null
+  reviewerPassedBy: string | null
+  reviewerFeedback: string | null
   createdAt: string
   updatedAt: string
 }
@@ -77,7 +80,7 @@ export class WorkspaceError extends Error {
 const recordColumns =
   'record_id,title,summary,category,document_type,originating_office,access_class,custodian_position,record_date,revision_counter,folder_id'
 const versionColumns =
-  'version_id,record_id,version_number,revision_counter,state,previous_version_id,change_summary,correction_classification,approved_at,created_at,updated_at'
+  'version_id,record_id,version_number,revision_counter,state,previous_version_id,change_summary,correction_classification,approved_at,reviewer_passed_at,reviewer_passed_by,reviewer_feedback,created_at,updated_at'
 const pageSize = 50
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 function object(value: unknown): Record<string, unknown> {
@@ -164,6 +167,12 @@ function versionRow(value: unknown, recordId: string): AssignedVersion {
       row.approved_at === null || row.approved_at === undefined
         ? null
         : timestamp(row.approved_at),
+    reviewerPassedAt:
+      row.reviewer_passed_at === null || row.reviewer_passed_at === undefined
+        ? null
+        : timestamp(row.reviewer_passed_at),
+    reviewerPassedBy: optionalText(row.reviewer_passed_by),
+    reviewerFeedback: optionalText(row.reviewer_feedback),
     createdAt: timestamp(row.created_at),
     updatedAt: timestamp(row.updated_at),
   }
@@ -421,7 +430,7 @@ export async function getForReviewQueue(
     if (!master) continue
 
     const version = versionRow(raw, recId)
-    const assignedFunctions = assignmentsResult.data
+    const explicitAssignments = assignmentsResult.data
       .map((a: unknown) => object(a))
       .filter(
         (a) =>
@@ -433,6 +442,18 @@ export async function getForReviewQueue(
           (master.accessClass !== 'restricted' || a.allow_restricted === true),
       )
       .map((a) => String(a.assignment_function))
+
+    const isAuthorOnDoc = explicitAssignments.includes('author')
+    const mergedFunctions = new Set(explicitAssignments)
+    if (master.accessClass !== 'restricted' || currentProfile.functional_roles.includes('approver')) {
+      if (currentProfile.functional_roles.includes('reviewer') && !isAuthorOnDoc) {
+        mergedFunctions.add('reviewer')
+      }
+      if (currentProfile.functional_roles.includes('approver') && !isAuthorOnDoc) {
+        mergedFunctions.add('approver')
+      }
+    }
+    const assignedFunctions = Array.from(mergedFunctions)
 
     if (assignedFunctions.length === 0) continue
 

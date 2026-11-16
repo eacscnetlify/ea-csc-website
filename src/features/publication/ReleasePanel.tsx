@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router'
+import { getSupabaseClient } from '../../lib/supabase'
 import { useAuth } from '../auth/useAuth'
 import { RECORD_CATEGORIES } from '../records/records.types'
 import { WorkspaceError } from '../workspace/workspace.api'
@@ -440,6 +441,28 @@ export default function ReleasePanel() {
       controller.abort()
     }
   }, [userId, attempt])
+
+  useEffect(() => {
+    function onFocus() {
+      setAttempt((n) => n + 1)
+    }
+    window.addEventListener('focus', onFocus)
+
+    const client = getSupabaseClient()
+    const channel = client
+      .channel('release-panel-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'record_versions' },
+        () => setAttempt((n) => n + 1),
+      )
+      .subscribe()
+
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      void client.removeChannel(channel)
+    }
+  }, [])
 
   return (
     <section aria-labelledby="release-panel-heading" className="space-y-6">

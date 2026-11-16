@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router'
+import { getSupabaseClient } from '../../lib/supabase'
 import { getOfficerProfile } from '../auth/auth.api'
 import { useAuth } from '../auth/useAuth'
 import { formatManilaDateTime } from '../../lib/dates'
@@ -30,11 +31,11 @@ async function loadAdminData(
   signal: AbortSignal,
 ): Promise<AdminData> {
   const profile = await getOfficerProfile(userId, signal)
+  const isTechAdmin =
+    Boolean(profile?.is_active) &&
+    Boolean(profile?.functional_roles.includes('technical_admin'))
 
-  if (
-    !profile?.is_active ||
-    !profile.functional_roles.includes('technical_admin')
-  ) {
+  if (!profile?.is_active) {
     return {
       allowed: false,
       packages: [],
@@ -43,12 +44,12 @@ async function loadAdminData(
   }
 
   const [packages, people] = await Promise.all([
-    listTurnoverPackages(),
-    getTurnoverDirectory(),
+    listTurnoverPackages().catch(() => [] as PackageSummary[]),
+    getTurnoverDirectory().catch(() => [] as TurnoverPerson[]),
   ])
 
   return {
-    allowed: true,
+    allowed: isTechAdmin,
     packages,
     people,
   }
@@ -312,12 +313,101 @@ export default function AccessPage() {
       </button>
 
       {data && !data.allowed && (
-        <p className="rounded-lg border border-slate-300 bg-white p-4">
-          An active technical administrator is required. Record authors and
-          custodians do not receive administrative transfer authority from their
-          record roles.
+        <p className="rounded-lg border border-slate-300 bg-white p-4 text-sm text-slate-700">
+          Administrative transfer execution requires an active Technical Administrator. If you are an incoming officer, any package transferred to you appears below for one-click acceptance.
         </p>
       )}
+
+      {/* Incoming Officer Package Receipt (One-click Accept & Acknowledge) */}
+      {data &&
+        data.packages.filter(
+          (p) => p.incoming_officer_id === userId && p.access_transferred_at,
+        ).length > 0 && (
+          <div className="space-y-4 rounded-xl border border-emerald-300 bg-emerald-50/70 p-5">
+            <h2 className="text-xl font-bold text-emerald-950">
+              Incoming Officer Package Receipt
+            </h2>
+            <p className="text-sm text-emerald-900">
+              Review your transferred handover package below. Clicking{' '}
+              <strong>Accept &amp; Acknowledge Package</strong> confirms your
+              takeover, activates your term, retires the outgoing officer, and
+              marks this transfer as <strong>Done</strong>.
+            </p>
+            <div className="space-y-3">
+              {data.packages
+                .filter(
+                  (p) =>
+                    p.incoming_officer_id === userId &&
+                    p.access_transferred_at,
+                )
+                .map((pkg) => {
+                  const outgoing = data.people.find(
+                    (person) => person.user_id === pkg.outgoing_officer_id,
+                  )
+                  return (
+                    <div
+                      key={pkg.package_id}
+                      className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-emerald-200 bg-white p-4"
+                    >
+                      <div className="space-y-1 text-sm">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-bold text-slate-900">
+                            {pkg.position_title}
+                          </span>
+                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-900">
+                            PENDING TAKEOVER - INCOMING
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-600">
+                          Term: {pkg.term_covered} · Outgoing:{' '}
+                          {outgoing ? outgoing.full_name : 'Outgoing Officer'}{' '}
+                          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
+                            OUTGOING
+                          </span>
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          Transferred:{' '}
+                          {formatManilaDateTime(pkg.access_transferred_at ?? '')}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={async () => {
+                          setBusy(true)
+                          setError('')
+                          setNotice('')
+                          try {
+                            const { error: ackErr } =
+                              await getSupabaseClient().rpc(
+                                'eacsc_complete_turnover_acknowledgment',
+                                { p_package_id: pkg.package_id },
+                              )
+                            if (ackErr) throw new Error(ackErr.message)
+                            setNotice(
+                              `Package for ${pkg.position_title} accepted & acknowledged. Handover is now Done!`,
+                            )
+                            await refresh()
+                          } catch (err) {
+                            setError(
+                              err instanceof Error
+                                ? err.message
+                                : 'Could not acknowledge package.',
+                            )
+                          } finally {
+                            setBusy(false)
+                          }
+                        }}
+                        className="rounded-lg bg-emerald-800 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-900 disabled:opacity-50"
+                      >
+                        Accept &amp; Acknowledge Package
+                      </button>
+                    </div>
+                  )
+                })}
+            </div>
+          </div>
+        )}
 
       {data?.allowed && (
         <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
@@ -373,12 +463,22 @@ export default function AccessPage() {
 
                 <div>
                   <dt className="font-semibold">Outgoing officer</dt>
-                  <dd>{personName(selected.outgoing_officer_id)}</dd>
+                  <dd className="flex flex-wrap items-center gap-2">
+                    <span>{personName(selected.outgoing_officer_id)}</span>
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase text-slate-700">
+                      {selected.access_transferred_at ? 'Transferred - Outgoing' : 'Active - Outgoing'}
+                    </span>
+                  </dd>
                 </div>
 
                 <div>
                   <dt className="font-semibold">Incoming officer</dt>
-                  <dd>{personName(selected.incoming_officer_id)}</dd>
+                  <dd className="flex flex-wrap items-center gap-2">
+                    <span>{personName(selected.incoming_officer_id)}</span>
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-900">
+                      {selected.access_transferred_at ? 'Pending Acknowledgment - Incoming' : 'Pending Takeover - Incoming'}
+                    </span>
+                  </dd>
                 </div>
 
                 <div>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router'
+import { getSupabaseClient } from '../../lib/supabase'
 import { useAuth } from '../auth/useAuth'
 import VerificationChecklist from './VerificationChecklist'
 import ReviewActions from '../records/ReviewActions'
@@ -73,10 +74,43 @@ function InspectionPanel({
     }
   }, [item.version.versionId])
 
-  const canReturn = item.assignedFunctions.includes('reviewer')
+  const isReviewer = item.assignedFunctions.includes('reviewer')
+  const isApprover = item.assignedFunctions.includes('approver')
+  const isStage2 = Boolean(item.version.reviewerPassedAt)
+  const canReturn = isStage2 ? isApprover || isReviewer : isReviewer
 
   return (
     <section aria-label="Review inspection" className="space-y-5">
+      <div
+        className={`rounded-xl border p-4 text-sm ${
+          isStage2
+            ? 'border-emerald-300 bg-emerald-50 text-emerald-950'
+            : 'border-amber-300 bg-amber-50 text-amber-950'
+        }`}
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="font-bold">
+            {isStage2
+              ? 'Stage 2: Passed by Reviewer — Ready for President’s 6-Point Approval'
+              : 'Stage 1: Initial Reviewer Inspection (Suggestions / Endorsement)'}
+          </span>
+          {isStage2 && item.version.reviewerPassedAt && (
+            <span className="text-xs font-medium">
+              Passed {manilaDateTime.format(new Date(item.version.reviewerPassedAt))}
+            </span>
+          )}
+        </div>
+        {isStage2 && item.version.reviewerFeedback && (
+          <p className="mt-2 rounded-lg bg-white/80 p-2.5 text-xs text-slate-800">
+            <strong>Reviewer Note:</strong> {item.version.reviewerFeedback}
+          </p>
+        )}
+        {!isStage2 && isApprover && !isReviewer && (
+          <p className="mt-1 text-xs">
+            Awaiting Stage 1 Reviewer endorsement before Executive 6-Point Approval unlocks.
+          </p>
+        )}
+      </div>
       <div className="rounded-xl border border-slate-200 bg-white p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -247,24 +281,27 @@ function InspectionPanel({
       </div>
 
       <ReviewActions
-        key={`queue-actions:${userId}:${item.record.recordId}`}
+        key={`queue-actions:${userId}:${item.record.recordId}:${isStage2 ? 's2' : 's1'}`}
         userId={userId}
         recordId={item.record.recordId}
         versions={[item.version]}
         canSubmit={false}
         canReturn={canReturn}
+        reviewerPassed={isStage2}
         onConfirmed={onConfirmed}
         onReload={onReload}
       />
-      <VerificationChecklist
-        key={`queue-verify:${userId}:${item.record.recordId}:${item.version.versionId}`}
-        userId={userId}
-        recordId={item.record.recordId}
-        version={item.version}
-        assignedFunctions={item.assignedFunctions}
-        onConfirmed={onConfirmed}
-        onReload={onReload}
-      />
+      {isStage2 && (
+        <VerificationChecklist
+          key={`queue-verify:${userId}:${item.record.recordId}:${item.version.versionId}`}
+          userId={userId}
+          recordId={item.record.recordId}
+          version={item.version}
+          assignedFunctions={item.assignedFunctions}
+          onConfirmed={onConfirmed}
+          onReload={onReload}
+        />
+      )}
       <ReviewHistory
         key={`queue-history:${userId}:${item.record.recordId}`}
         userId={userId}
@@ -313,6 +350,28 @@ export default function ReviewQueuePage() {
       controller.abort()
     }
   }, [userId, attempt])
+
+  useEffect(() => {
+    function onFocus() {
+      setAttempt((n) => n + 1)
+    }
+    window.addEventListener('focus', onFocus)
+
+    const client = getSupabaseClient()
+    const channel = client
+      .channel('review-queue-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'record_versions' },
+        () => setAttempt((n) => n + 1),
+      )
+      .subscribe()
+
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      void client.removeChannel(channel)
+    }
+  }, [])
 
   const selected =
     items?.find((item) => item.version.versionId === selectedVersionId) ??

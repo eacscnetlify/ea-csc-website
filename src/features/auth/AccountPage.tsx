@@ -128,7 +128,29 @@ export default function AccountPage() {
     const timer = window.setTimeout(() => {
       void loadData()
     }, 0)
-    return () => window.clearTimeout(timer)
+
+    function onFocus() {
+      void loadData()
+    }
+    window.addEventListener('focus', onFocus)
+
+    const client = getSupabaseClient()
+    const channel = client
+      .channel('account-role-requests-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'role_requests' },
+        () => {
+          void loadData()
+        },
+      )
+      .subscribe()
+
+    return () => {
+      window.clearTimeout(timer)
+      window.removeEventListener('focus', onFocus)
+      void client.removeChannel(channel)
+    }
   }, [status, loadData])
 
   if (status === 'loading') {
@@ -439,6 +461,7 @@ export default function AccountPage() {
                 { role: 'approver', name: 'Approver', desc: '6-point check & approve (Executive)' },
                 { role: 'publisher', name: 'Publisher', desc: 'Publish approved docs to Home Library' },
                 { role: 'custodian', name: 'Custodian', desc: 'Compile bulletins & prepare turnover' },
+                { role: 'technical_admin', name: 'Technical Admin', desc: 'Transfer custody, manage roles & turnover' },
               ].map(({ role, name, desc }) => (
                 <label
                   key={role}

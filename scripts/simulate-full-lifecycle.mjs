@@ -344,10 +344,18 @@ async function main() {
       })
       assert(!subErr2 && sub2.state === 'For Review', `Resubmit failed: ${subErr2?.message}`)
 
-      // President completes 6-point verification and approves
-      const { data: app1, error: appErr } = await presSb.rpc('eacsc_approve_version', {
+      // Stage 1: Auditor (Reviewer) passes the resubmitted draft to President
+      const { data: pass1, error: passErr1 } = await audSb.rpc('eacsc_reviewer_pass_version', {
         p_version_id: doc1Ver1Id,
         p_expected_revision: sub2.revision_counter,
+        p_feedback: 'Looks complete after correction.',
+      })
+      assert(!passErr1 && pass1.reviewer_passed, `Reviewer pass failed: ${passErr1?.message}`)
+
+      // Stage 2: President completes 6-point verification and approves
+      const { data: app1, error: appErr } = await presSb.rpc('eacsc_approve_version', {
+        p_version_id: doc1Ver1Id,
+        p_expected_revision: sub2.revision_counter + 1,
         p_checklist: buildChecklist(),
         p_approval_kind: 'substantive_approval',
         p_approving_position: 'President',
@@ -425,9 +433,16 @@ async function main() {
       })
       assert(!s2Err && subV2.state === 'For Review', s2Err?.message)
 
-      const { data: appV2, error: a2Err } = await presSb.rpc('eacsc_approve_version', {
+      const { data: passV2, error: p2Err } = await audSb.rpc('eacsc_reviewer_pass_version', {
         p_version_id: doc1Ver2Id,
         p_expected_revision: subV2.revision_counter,
+        p_feedback: 'v2 verified by reviewer.',
+      })
+      assert(!p2Err && passV2.reviewer_passed, p2Err?.message)
+
+      const { data: appV2, error: a2Err } = await presSb.rpc('eacsc_approve_version', {
+        p_version_id: doc1Ver2Id,
+        p_expected_revision: subV2.revision_counter + 1,
         p_checklist: buildChecklist(),
         p_approval_kind: 'substantive_approval',
         p_approving_position: 'President',
@@ -516,9 +531,16 @@ async function main() {
       })
       assert(!sErr, sErr?.message)
 
-      const { data: app, error: aErr } = await presSb.rpc('eacsc_approve_version', {
+      const { data: passDoc2, error: pDoc2Err } = await audSb.rpc('eacsc_reviewer_pass_version', {
         p_version_id: vId,
         p_expected_revision: sub.revision_counter,
+        p_feedback: 'Endorsed for presidential approval.',
+      })
+      assert(!pDoc2Err && passDoc2.reviewer_passed, pDoc2Err?.message)
+
+      const { data: app, error: aErr } = await presSb.rpc('eacsc_approve_version', {
+        p_version_id: vId,
+        p_expected_revision: sub.revision_counter + 1,
         p_checklist: buildChecklist(),
         p_approval_kind: 'substantive_approval',
         p_approving_position: 'President',
