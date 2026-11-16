@@ -78,7 +78,7 @@ const recordColumns =
   'record_id,title,summary,category,document_type,originating_office,access_class,custodian_position,record_date,revision_counter,folder_id'
 const versionColumns =
   'version_id,record_id,version_number,revision_counter,state,previous_version_id,change_summary,correction_classification,approved_at,created_at,updated_at'
-const pageSize = 20
+const pageSize = 50
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 function object(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value))
@@ -188,7 +188,8 @@ export async function getAssignedRecords(
     client
       .from('master_records')
       .select(recordColumns)
-      .order('record_id')
+      .order('created_at', { ascending: false })
+      .order('record_id', { ascending: false })
       .range(page * pageSize, page * pageSize + pageSize)
       .abortSignal(signal),
   ])
