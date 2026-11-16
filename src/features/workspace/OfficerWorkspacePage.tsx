@@ -3,6 +3,7 @@ import HelpLink from '../../components/ui/HelpLink'
 import HistoryPanel from '../history/HistoryPanel'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { FormEvent, SubmitEvent } from 'react'
+import { getSupabaseClient } from '../../lib/supabase'
 import { getOfficerProfile } from '../auth/auth.api'
 import type { OfficerProfile } from '../auth/auth.api'
 import { RoleActionBanner } from '../auth/RoleActionBanner'
@@ -347,15 +348,32 @@ function SelectedRecord({
           <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-bold text-slate-900">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider ${
+                      details.record.accessClass === 'public'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : details.record.accessClass === 'restricted'
+                          ? 'bg-red-100 text-red-800'
+                          : 'bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    {details.record.accessClass}
+                  </span>
+                  {details.record.accessClass === 'restricted' && (
+                    <span className="text-xs text-red-700 font-medium">
+                      🔒 Visible to assigned officers and Council President
+                    </span>
+                  )}
+                </div>
+                <h2 className="mt-2 text-2xl font-bold text-slate-900">
                   {details.record.title}
                 </h2>
                 <p className="mt-1 break-all font-mono text-sm text-slate-600">
                   {details.record.recordId}
                 </p>
                 <p className="mt-2 text-sm text-slate-700">
-                  Classification: <strong className="uppercase">{details.record.accessClass}</strong> ·
-                  Custodian: {details.record.custodianPosition}
+                  Custodian: {details.record.custodianPosition} · Office: {details.record.originatingOffice}
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
                   {details.record.category}
@@ -456,6 +474,22 @@ function SelectedRecord({
                 </div>
               </div>
             )}
+          {/* Initial Draft guidance for new documents without versions */}
+          {details.versions.length === 0 && (
+            <div className="rounded-xl border border-emerald-300 bg-emerald-50/80 p-5 space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-700 text-xs font-bold text-white">
+                  1
+                </span>
+                <h3 className="text-sm font-bold text-emerald-950">
+                  Step 2: Upload Initial Draft (v1)
+                </h3>
+              </div>
+              <p className="text-xs text-emerald-800 leading-relaxed">
+                This document record has been created. To begin the review workflow, upload your initial draft file (PDF, DOCX, or PNG/JPEG up to 10 MB) below.
+              </p>
+            </div>
+          )}
           <UploadVersionForm
             key={`upload:${userId}:${recordId}`}
             userId={userId}
@@ -617,6 +651,34 @@ export default function OfficerWorkspacePage() {
     setPage(nextPage)
     setAttempt((n) => n + 1)
   }
+
+  // Realtime & Window Focus listener for automatic cross-device synchronization
+  useEffect(() => {
+    function onFocus() {
+      setAttempt((n) => n + 1)
+    }
+    window.addEventListener('focus', onFocus)
+
+    const client = getSupabaseClient()
+    const channel = client
+      .channel('workspace-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'master_records' },
+        () => setAttempt((n) => n + 1),
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'record_versions' },
+        () => setAttempt((n) => n + 1),
+      )
+      .subscribe()
+
+    return () => {
+      window.removeEventListener('focus', onFocus)
+      void client.removeChannel(channel)
+    }
+  }, [])
 
   async function handleCreateFolder(e: FormEvent) {
     e.preventDefault()

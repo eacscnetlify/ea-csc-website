@@ -82,6 +82,7 @@ export default function AccountPage() {
 
   // Role request form state
   const [selectedPreset, setSelectedPreset] = useState(POSITION_PRESETS[0].label)
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(['author'])
   const [studentId, setStudentId] = useState('')
   const [degreeProgram, setDegreeProgram] = useState('')
   const [justification, setJustification] = useState('')
@@ -154,14 +155,14 @@ export default function AccountPage() {
     setNotice(null)
 
     try {
-      const preset =
-        POSITION_PRESETS.find((p) => p.label === selectedPreset) ??
-        POSITION_PRESETS[0]
+      if (selectedRoles.length === 0) {
+        throw new Error('Please select at least one functional role privilege.')
+      }
       const { error: rpcErr } = await getSupabaseClient().rpc(
         'eacsc_submit_role_request',
         {
-          p_desired_position: preset.label,
-          p_requested_roles: preset.roles,
+          p_desired_position: selectedPreset,
+          p_requested_roles: selectedRoles,
           p_student_id: studentId.trim(),
           p_degree_program: degreeProgram.trim(),
           p_justification: justification.trim(),
@@ -404,7 +405,7 @@ export default function AccountPage() {
               htmlFor="role-preset"
               className="block text-sm font-semibold text-slate-800"
             >
-              Council Position & Role Package
+              1. Council Position (Your Appointed Title)
             </label>
             <select
               id="role-preset"
@@ -416,12 +417,56 @@ export default function AccountPage() {
                 <optgroup key={group} label={group}>
                   {POSITION_PRESETS.filter((p) => p.group === group).map((p) => (
                     <option key={p.label} value={p.label}>
-                      {p.label} ({p.roles.map((r) => r.replace('_', ' ')).join(', ')})
+                      {p.label}
                     </option>
                   ))}
                 </optgroup>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-800">
+              2. Requested Privileges / Functional Roles
+            </label>
+            <p className="text-xs text-slate-500 mb-2">
+              Check the permissions your position requires across the portal:
+            </p>
+            <div className="grid gap-2.5 sm:grid-cols-2 md:grid-cols-3">
+              {[
+                { role: 'author', name: 'Author', desc: 'Create docs & draft notes' },
+                { role: 'reviewer', name: 'Reviewer', desc: 'Give suggestions & pass to President' },
+                { role: 'approver', name: 'Approver', desc: '6-point check & approve (Executive)' },
+                { role: 'publisher', name: 'Publisher', desc: 'Publish approved docs to Home Library' },
+                { role: 'custodian', name: 'Custodian', desc: 'Compile bulletins & prepare turnover' },
+              ].map(({ role, name, desc }) => (
+                <label
+                  key={role}
+                  className={`flex items-start gap-2.5 rounded-xl border p-3 cursor-pointer transition ${
+                    selectedRoles.includes(role)
+                      ? 'border-emerald-600 bg-emerald-50/50'
+                      : 'border-slate-200 hover:border-slate-300 bg-white'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedRoles.includes(role)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedRoles((prev) => [...prev, role])
+                      } else {
+                        setSelectedRoles((prev) => prev.filter((r) => r !== role))
+                      }
+                    }}
+                    className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-700 focus:ring-emerald-700"
+                  />
+                  <div>
+                    <span className="block text-xs font-bold text-slate-900">{name}</span>
+                    <span className="block text-[11px] text-slate-500">{desc}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

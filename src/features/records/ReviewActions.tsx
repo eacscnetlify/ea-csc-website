@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { getSupabaseClient } from '../../lib/supabase'
 import type { AssignedVersion } from '../workspace/workspace.api'
 import { findDraftAttempt } from '../workspace/workspace.commands'
 import {
@@ -237,14 +238,43 @@ export default function ReviewActions({
           )}
 
           {error && <p role="alert">{error}</p>}
-          <button
-            type="button"
-            className="rounded-lg bg-emerald-800 px-4 py-2 font-semibold text-white disabled:opacity-50"
-            disabled={!selected || (operation === 'return' && !comment.trim())}
-            onClick={() => void send()}
-          >
-            {operation === 'submit' ? 'Submit for review' : 'Return to Draft'}
-          </button>
+          <div className="flex flex-wrap gap-2.5">
+            <button
+              type="button"
+              className="rounded-lg bg-rose-800 px-4 py-2 font-semibold text-white hover:bg-rose-900 disabled:opacity-50"
+              disabled={!selected || (operation === 'return' && !comment.trim())}
+              onClick={() => void send()}
+            >
+              {operation === 'submit' ? 'Submit for review' : 'Return with suggestions to Draft'}
+            </button>
+            {operation === 'return' && (
+              <button
+                type="button"
+                className="rounded-lg bg-emerald-800 px-4 py-2 font-semibold text-white hover:bg-emerald-900 disabled:opacity-50"
+                disabled={!selected}
+                onClick={async () => {
+                  if (!selected) return
+                  setError('')
+                  try {
+                    const { error: rpcErr } = await getSupabaseClient().rpc(
+                      'eacsc_reviewer_pass_version',
+                      {
+                        p_version_id: selected.versionId,
+                        p_expected_revision: selected.revision,
+                        p_feedback: comment.trim(),
+                      },
+                    )
+                    if (rpcErr) throw new Error(rpcErr.message)
+                    onConfirmed('For Review')
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : 'Could not pass version.')
+                  }
+                }}
+              >
+                Pass to President (Endorse)
+              </button>
+            )}
+          </div>
         </>
       )}
     </section>
