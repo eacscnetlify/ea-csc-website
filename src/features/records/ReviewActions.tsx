@@ -130,10 +130,12 @@ export default function ReviewActions({
 
   return (
     <section
-      aria-label="Review actions"
+      aria-label={canSubmit && !canReturn ? 'Submit for Review' : 'Review actions'}
       className="space-y-3 rounded-xl border border-emerald-200 bg-white p-5"
     >
-      <h3 className="text-xl font-bold">Review actions</h3>
+      <h3 className="text-xl font-bold">
+        {canSubmit && !canReturn ? 'Submit for Review' : 'Review actions'}
+      </h3>
 
       {attempt ? (
         <>
@@ -248,7 +250,7 @@ export default function ReviewActions({
               onClick={() => void send()}
             >
               {operation === 'submit'
-                ? 'Submit for review'
+                ? 'Submit'
                 : reviewerPassed
                   ? 'Return to Author (Requires Re-Review)'
                   : 'Return with suggestions to Draft'}
