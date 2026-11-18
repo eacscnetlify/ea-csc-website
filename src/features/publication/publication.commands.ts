@@ -138,7 +138,11 @@ export async function getPublisherWorkspace(
     }
   }
 
-  const publisherRecords = page.records.filter(() => true)
+  const publisherRecords = page.records.filter(
+    (record) =>
+      record.accessClass === 'public' &&
+      record.documentType !== 'Update bulletin',
+  )
 
   return publisherRecords.map((record) => {
     const activeRelease = releaseMap.get(record.recordId) ?? null

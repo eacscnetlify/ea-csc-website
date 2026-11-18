@@ -1,8 +1,8 @@
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { PdfCanvasViewer } from '../../components/ui/PdfCanvasViewer'
 import { shouldUseCanvasPdfViewer } from '../records/download'
-import { formatManilaDateTime } from '../../lib/dates'
+import { formatManilaDate, formatManilaDateTime } from '../../lib/dates'
 import { getSupabaseClient } from '../../lib/supabase'
 import { useAuth } from '../auth/useAuth'
 import { getOfficerProfile } from '../auth/auth.api'
@@ -28,6 +28,19 @@ function nowManilaDateTimeLocal(): string {
     parts.find((part) => part.type === type)?.value ?? '00'
   const hour = get('hour') === '24' ? '00' : get('hour')
   return `${get('year')}-${get('month')}-${get('day')}T${hour}:${get('minute')}`
+}
+
+interface IssuedBulletinRow {
+  issue_uuid: string
+  bulletin_id: string
+  issue_version: number
+  title: string
+  coverage_start: string
+  coverage_end: string
+  cutoff_at: string
+  audience: string
+  sources_count: number
+  issued_at: string
 }
 
 export default function BulletinBuilderPage() {
@@ -57,6 +70,42 @@ export default function BulletinBuilderPage() {
   const [issuing, setIssuing] = useState(false)
   const [issueNotice, setIssueNotice] = useState('')
   const [isCustodian, setIsCustodian] = useState<boolean | null>(null)
+  const [issuedBulletins, setIssuedBulletins] = useState<IssuedBulletinRow[]>([])
+  const [loadingIssued, setLoadingIssued] = useState(false)
+  const [withdrawingKey, setWithdrawingKey] = useState<string | null>(null)
+  const [withdrawReason, setWithdrawReason] = useState(
+    'Removed by Custodian to issue updated bulletin',
+  )
+
+  const loadIssuedBulletins = useCallback(async () => {
+    setLoadingIssued(true)
+    try {
+      const { data, error: rpcError } = await getSupabaseClient().rpc(
+        'eacsc_list_issued_bulletins',
+      )
+      if (!rpcError && Array.isArray(data)) {
+        setIssuedBulletins(data as IssuedBulletinRow[])
+      }
+    } finally {
+      setLoadingIssued(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isCustodian) return
+    let active = true
+    void getSupabaseClient()
+      .rpc('eacsc_list_issued_bulletins')
+      .then(({ data, error: rpcError }) => {
+        if (!active) return
+        if (!rpcError && Array.isArray(data)) {
+          setIssuedBulletins(data as IssuedBulletinRow[])
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [isCustodian])
 
   useEffect(() => {
     if (!userId) return
@@ -299,6 +348,7 @@ export default function BulletinBuilderPage() {
       setIssueNotice(
         `Successfully issued and preserved ${bulletinId} (v1). It is now recorded in council archives.`,
       )
+      void loadIssuedBulletins()
     } catch (failure) {
       setError(
         failure instanceof Error
@@ -307,6 +357,42 @@ export default function BulletinBuilderPage() {
       )
     } finally {
       setIssuing(false)
+    }
+  }
+
+  async function handleWithdrawBulletin(
+    targetBulletinId: string,
+    issueVersion: number,
+  ) {
+    const key = `${targetBulletinId}:${issueVersion}`
+    if (withdrawingKey) return
+    setWithdrawingKey(key)
+    setError('')
+    setIssueNotice('')
+    try {
+      const { error: rpcError } = await getSupabaseClient().rpc(
+        'eacsc_withdraw_bulletin',
+        {
+          p_bulletin_id: targetBulletinId,
+          p_issue_version: issueVersion,
+          p_reason: withdrawReason.trim() || 'Withdrawn by Custodian',
+        },
+      )
+      if (rpcError) {
+        throw new Error(rpcError.message)
+      }
+      setIssueNotice(
+        `Withdrew ${targetBulletinId} (v${issueVersion}). You may now issue a replacement bulletin.`,
+      )
+      await loadIssuedBulletins()
+    } catch (failure) {
+      setError(
+        failure instanceof Error
+          ? failure.message
+          : 'Bulletin could not be withdrawn.',
+      )
+    } finally {
+      setWithdrawingKey(null)
     }
   }
 
@@ -713,6 +799,102 @@ export default function BulletinBuilderPage() {
               src={previewUrl}
               className="h-150 w-full rounded-lg border border-slate-300"
             />
+          )}
+        </div>
+      )}
+
+      {isCustodian && (
+        <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="text-lg font-bold">4. Manage Posted Bulletins</h2>
+              <p className="text-xs text-slate-600">
+                Withdraw a previously posted Public or Internal bulletin so it
+                no longer appears on the portal and you can issue a new one.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void loadIssuedBulletins()}
+              disabled={loadingIssued}
+              className="rounded-md border border-slate-300 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+            >
+              {loadingIssued ? 'Refreshing…' : 'Refresh list'}
+            </button>
+          </div>
+
+          <div>
+            <label
+              htmlFor={`${id}-withdraw-reason`}
+              className="block text-xs font-semibold text-slate-700"
+            >
+              Withdrawal reason (applied when removing a bulletin)
+            </label>
+            <input
+              id={`${id}-withdraw-reason`}
+              type="text"
+              value={withdrawReason}
+              onChange={(e) => setWithdrawReason(e.target.value)}
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-1.5 text-sm"
+            />
+          </div>
+
+          {issuedBulletins.length === 0 ? (
+            <p className="rounded-lg border border-dashed border-slate-300 p-4 text-sm text-slate-600">
+              No active posted bulletins right now.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {issuedBulletins.map((b) => {
+                const key = `${b.bulletin_id}:${b.issue_version}`
+                const busy = withdrawingKey === key
+                return (
+                  <div
+                    key={b.issue_uuid}
+                    className="flex flex-col gap-3 rounded-lg border border-slate-200 p-3 sm:flex-row sm:items-center sm:justify-between"
+                  >
+                    <div className="space-y-0.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-xs font-semibold text-slate-700">
+                          {b.bulletin_id} (v{b.issue_version})
+                        </span>
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[11px] font-semibold uppercase ${
+                            b.audience === 'public'
+                              ? 'bg-emerald-100 text-emerald-800'
+                              : 'bg-sky-100 text-sky-800'
+                          }`}
+                        >
+                          {b.audience}
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold text-slate-900">
+                        {b.title}
+                      </p>
+                      <p className="text-xs text-slate-600">
+                        Coverage: {formatManilaDate(b.coverage_start)} –{' '}
+                        {formatManilaDate(b.coverage_end)} ·{' '}
+                        {b.sources_count} releases · Issued{' '}
+                        {formatManilaDateTime(b.issued_at)}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={Boolean(withdrawingKey)}
+                      onClick={() =>
+                        void handleWithdrawBulletin(
+                          b.bulletin_id,
+                          b.issue_version,
+                        )
+                      }
+                      className="shrink-0 rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-800 hover:bg-rose-100 disabled:opacity-50"
+                    >
+                      {busy ? 'Withdrawing…' : 'Withdraw / Remove'}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
           )}
         </div>
       )}

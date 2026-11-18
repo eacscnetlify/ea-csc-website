@@ -475,8 +475,17 @@ export default function ReleasePanel() {
             Publication &amp; release panel
           </h1>
           <p className="mt-3 text-slate-700">
-            Publish verified Approved versions, supersede prior public versions
-            at effective time, or withdraw a release in an emergency.
+            Publish verified Approved <strong>Public</strong> versions to the
+            student portal, supersede prior public versions at effective time,
+            or withdraw a release in an emergency. Internal and Restricted
+            documents are automatically published to the{' '}
+            <Link
+              to="/officer/library"
+              className="font-semibold text-emerald-800 underline"
+            >
+              Internal Library
+            </Link>{' '}
+            upon Presidential approval.
           </p>
         </div>
         <Link to="/officer" className={button}>
@@ -510,10 +519,11 @@ export default function ReleasePanel() {
         <p role="status">Loading publisher records…</p>
       ) : items.length === 0 ? (
         <div className="rounded-xl border border-slate-200 bg-white p-6">
-          <h2 className="text-lg font-bold">No publisher assignments</h2>
+          <h2 className="text-lg font-bold">No public releases pending</h2>
           <p className="mt-2 text-sm text-slate-600">
-            Your current account does not hold an active{' '}
-            <strong>publisher</strong> role and record assignment.
+            There are no <strong>Public</strong> documents assigned to your
+            publisher account right now. (Internal and Restricted documents
+            auto-publish to the Internal Library on Presidential approval.)
           </p>
         </div>
       ) : (

@@ -199,6 +199,7 @@ export async function getAssignedRecords(
     client
       .from('master_records')
       .select(recordColumns)
+      .neq('document_type', 'Update bulletin')
       .order('created_at', { ascending: false })
       .order('record_id', { ascending: false })
       .range(page * pageSize, page * pageSize + pageSize)
