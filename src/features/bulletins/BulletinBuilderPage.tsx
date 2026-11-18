@@ -81,7 +81,35 @@ export default function BulletinBuilderPage() {
     }
   }, [previewUrl])
 
+  function validateReportingWindow(checkFutureCutoff: boolean): string | null {
+    if (!coverageStart || !coverageEnd || !cutoffLocal) {
+      return 'Coverage start date, coverage end date, and cutoff timestamp are all required.'
+    }
+    if (coverageStart > coverageEnd) {
+      return 'Coverage start date cannot be after Coverage end date.'
+    }
+    const cutoffDate = cutoffLocal.slice(0, 10)
+    if (coverageEnd > cutoffDate) {
+      return `Coverage end date (${coverageEnd}) cannot be after the Cutoff timestamp's date (${cutoffDate}). Lower the Coverage end date or update the Cutoff timestamp.`
+    }
+    const cutoffMs = new Date(`${cutoffLocal}:00+08:00`).getTime()
+    if (Number.isNaN(cutoffMs)) {
+      return 'Cutoff timestamp is invalid.'
+    }
+    if (checkFutureCutoff && cutoffMs > Date.now() + 5000) {
+      return 'Cutoff timestamp cannot be in the future when issuing an official bulletin. Click "Use current time" and try again.'
+    }
+    return null
+  }
+
   async function loadCandidates() {
+    const windowError = validateReportingWindow(false)
+    if (windowError) {
+      setError(windowError)
+      setCandidates([])
+      setSelectedIds([])
+      return
+    }
     setLoading(true)
     setError('')
     setVerifiedPreview(false)
@@ -187,6 +215,11 @@ export default function BulletinBuilderPage() {
 
   async function handleIssue() {
     if (selectedItems.length === 0 || !verifiedPreview || issuing) return
+    const windowError = validateReportingWindow(true)
+    if (windowError) {
+      setError(windowError)
+      return
+    }
     setIssuing(true)
     setError('')
     setIssueNotice('')

@@ -8,6 +8,9 @@ const AccessPage = lazy(() => import('../features/admin/AccessPage'))
 const PublicBulletinsPage = lazy(
   () => import('../features/bulletins/PublicBulletinsPage'),
 )
+const InternalBulletinsPage = lazy(
+  () => import('../features/bulletins/InternalBulletinsPage'),
+)
 const BulletinBuilderPage = lazy(
   () => import('../features/bulletins/BulletinBuilderPage'),
 )
@@ -32,6 +35,9 @@ const ConnectionCheckPage = lazy(
 )
 const PublicLibraryPage = lazy(
   () => import('../features/records/PublicLibraryPage'),
+)
+const InternalLibraryPage = lazy(
+  () => import('../features/records/InternalLibraryPage'),
 )
 const RecordDetailPage = lazy(
   () => import('../features/records/RecordDetailPage'),
@@ -99,10 +105,26 @@ export default function AppRouter() {
               }
             />
             <Route
+              path="officer/library"
+              element={
+                <RequireAuth>
+                  <InternalLibraryPage />
+                </RequireAuth>
+              }
+            />
+            <Route
               path="officer/bulletins"
               element={
                 <RequireAuth>
                   <BulletinBuilderPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="officer/internal-bulletins"
+              element={
+                <RequireAuth>
+                  <InternalBulletinsPage />
                 </RequireAuth>
               }
             />

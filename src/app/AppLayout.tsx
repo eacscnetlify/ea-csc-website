@@ -39,7 +39,9 @@ const OFFICER_NAV_GROUPS = [
       { to: '/officer', label: 'Document Workspace', end: true },
       { to: '/officer/reviews', label: 'Review Queue', end: false },
       { to: '/officer/releases', label: 'Release Panel', end: false },
+      { to: '/officer/library', label: 'Internal Library', end: false },
       { to: '/officer/bulletins', label: 'Bulletin Compiler', end: false },
+      { to: '/officer/internal-bulletins', label: 'Internal Bulletins', end: false },
       { to: '/officer/history', label: 'Activity & History', end: false },
     ],
   },
@@ -93,8 +95,18 @@ const PAGE_LABELS: Array<{
     help: 'release-panel',
   },
   {
+    match: (p) => p === '/officer/library',
+    label: 'Internal Library',
+    help: 'release-panel',
+  },
+  {
     match: (p) => p === '/officer/bulletins',
     label: 'Bulletin Compiler',
+    help: 'bulletins',
+  },
+  {
+    match: (p) => p === '/officer/internal-bulletins',
+    label: 'Internal Bulletins',
     help: 'bulletins',
   },
   {
