@@ -350,7 +350,7 @@ export default function TurnoverPage() {
         setToken(null)
         setMemo(blankMemo(profile?.council_position ?? ''))
       }
-      await refreshPackages()
+      setPackages(await listTurnoverPackages())
       setNotice('Turnover package deleted.')
     } catch (failure) {
       setError(
