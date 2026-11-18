@@ -5,6 +5,7 @@ import { getOfficerProfile } from '../auth/auth.api'
 import type { OfficerProfile } from '../auth/auth.api'
 import { useAuth } from '../auth/useAuth'
 import { formatManilaDateTime } from '../../lib/dates'
+import { getSupabaseClient } from '../../lib/supabase'
 import {
   fetchPositionInventory,
   getTurnoverDirectory,
@@ -326,6 +327,42 @@ export default function TurnoverPage() {
     )
   }
 
+  async function deletePackage(packageId: string) {
+    if (blocked) return
+    if (
+      !window.confirm(
+        'Delete this turnover package? This cannot be undone.',
+      )
+    ) {
+      return
+    }
+    setBusy('Deleting package')
+    setError('')
+    setNotice('')
+    try {
+      const { error: rpcError } = await getSupabaseClient().rpc(
+        'eacsc_delete_turnover_package',
+        { p_package_id: packageId },
+      )
+      if (rpcError) throw new Error(rpcError.message)
+      if (token?.id === packageId) {
+        setPkg(null)
+        setToken(null)
+        setMemo(blankMemo(profile?.council_position ?? ''))
+      }
+      await refreshPackages()
+      setNotice('Turnover package deleted.')
+    } catch (failure) {
+      setError(
+        failure instanceof Error
+          ? failure.message
+          : 'Could not delete turnover package.',
+      )
+    } finally {
+      setBusy('')
+    }
+  }
+
   async function copyEdits() {
     try {
       await navigator.clipboard.writeText(JSON.stringify(memo, null, 2))
@@ -430,14 +467,28 @@ export default function TurnoverPage() {
               </p>
             </div>
 
-            <button
-              type="button"
-              disabled={blocked}
-              onClick={() => void openPackage(item.package_id)}
-              className={buttonClass}
-            >
-              Open package
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={blocked}
+                onClick={() => void openPackage(item.package_id)}
+                className={buttonClass}
+              >
+                Open package
+              </button>
+              {item.outgoing_officer_id === userId &&
+                item.status === 'draft' &&
+                !item.access_transferred_at && (
+                  <button
+                    type="button"
+                    disabled={blocked}
+                    onClick={() => void deletePackage(item.package_id)}
+                    className="rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-800 hover:bg-rose-100 disabled:opacity-50"
+                  >
+                    Delete package
+                  </button>
+                )}
+            </div>
           </div>
         ))}
 
@@ -491,12 +542,33 @@ export default function TurnoverPage() {
             Designated incoming officer
             <select
               value={memo.incoming_officer_id ?? ''}
-              onChange={(event) =>
+              onChange={(event) => {
+                const nextId = event.target.value || null
+                const isTechAdmin = Boolean(
+                  profile?.functional_roles.includes('technical_admin'),
+                )
+                const selectedPerson = nextId
+                  ? people.find((p) => p.user_id === nextId)
+                  : undefined
+                const nextPosition =
+                  isTechAdmin && selectedPerson?.council_position
+                    ? selectedPerson.council_position
+                    : isTechAdmin
+                      ? (profile?.council_position ?? memo.position_title)
+                      : memo.position_title
+
                 setMemo({
                   ...memo,
-                  incoming_officer_id: event.target.value || null,
+                  incoming_officer_id: nextId,
+                  position_title: nextPosition,
                 })
-              }
+
+                if (isTechAdmin && nextPosition) {
+                  void fetchPositionInventory(nextPosition)
+                    .then((items) => setInventory(items))
+                    .catch(() => {})
+                }
+              }}
               className={inputClass}
             >
               <option value="">Not designated yet</option>
