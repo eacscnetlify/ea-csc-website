@@ -17,13 +17,18 @@ import {
   assignDocumentFolder,
   createDocumentFolder,
   createWorkspaceDocument,
+  deleteWorkspaceDocument,
   executiveSelfApprove,
   getAssignedRecords,
   getAssignedVersions,
+  listActiveOfficers,
   listDocumentFolders,
+  listRestrictedAccess,
+  setRestrictedAccess,
   WorkspaceError,
 } from './workspace.api'
 import type {
+  ActiveOfficerSummary,
   AssignedVersion,
   DocumentFolder,
   DraftReceipt,
@@ -265,12 +270,14 @@ function SelectedRecord({
   recordId,
   folders,
   profile,
+  activeOfficers,
   onFolderChanged,
 }: {
   userId: string
   recordId: string
   folders: DocumentFolder[]
   profile: OfficerProfile | null
+  activeOfficers: ActiveOfficerSummary[]
   onFolderChanged: () => void
 }) {
   const [details, setDetails] = useState<RecordDetails | null>(null)
@@ -280,6 +287,11 @@ function SelectedRecord({
   const [movingFolder, setMovingFolder] = useState(false)
   const [fastRationale, setFastRationale] = useState('')
   const [fastApproving, setFastApproving] = useState(false)
+  const [restrictedOpen, setRestrictedOpen] = useState(false)
+  const [restrictedIds, setRestrictedIds] = useState<string[]>([])
+  const [savingRestricted, setSavingRestricted] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deletingDoc, setDeletingDoc] = useState(false)
   const refresh = useCallback(() => {
     setDetails(null)
     setError('')
@@ -474,6 +486,143 @@ function SelectedRecord({
                 </div>
               </div>
             )}
+          {/* Manage Restricted Access & Creator-Only Delete Document */}
+          {(details.canManageRestricted ||
+            (details.isCreator &&
+              !details.versions.some(
+                (v) => v.state === 'Approved' || v.state === 'Superseded',
+              ))) && (
+            <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                {details.canManageRestricted && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!restrictedOpen) {
+                        try {
+                          const ids = await listRestrictedAccess(recordId)
+                          setRestrictedIds(ids)
+                        } catch {
+                          setRestrictedIds([])
+                        }
+                      }
+                      setRestrictedOpen((o) => !o)
+                    }}
+                    className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50"
+                  >
+                    {restrictedOpen
+                      ? 'Hide Restricted Access'
+                      : 'Manage Restricted Access'}
+                  </button>
+                )}
+
+                {details.isCreator &&
+                  !details.versions.some(
+                    (v) => v.state === 'Approved' || v.state === 'Superseded',
+                  ) && (
+                    <div className="flex flex-wrap items-center gap-2 ml-auto">
+                      {!confirmDelete ? (
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDelete(true)}
+                          className="rounded-lg border border-rose-300 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-800 hover:bg-rose-100"
+                        >
+                          Delete Document
+                        </button>
+                      ) : (
+                        <>
+                          <span className="text-xs font-semibold text-rose-800">
+                            Delete permanently?
+                          </span>
+                          <button
+                            type="button"
+                            disabled={deletingDoc}
+                            onClick={async () => {
+                              setDeletingDoc(true)
+                              try {
+                                await deleteWorkspaceDocument(recordId)
+                                onFolderChanged()
+                              } catch (err) {
+                                setError(message(err))
+                                setDeletingDoc(false)
+                              }
+                            }}
+                            className="rounded-lg bg-rose-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-800 disabled:opacity-50"
+                          >
+                            {deletingDoc ? 'Deleting…' : 'Confirm Delete'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDelete(false)}
+                            className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-700"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
+              </div>
+
+              {restrictedOpen && details.canManageRestricted && (
+                <div className="space-y-3 border-t border-slate-100 pt-3">
+                  <p className="text-xs text-slate-600">
+                    Choose which active officers can view this Restricted
+                    document (Creator and Council President always have access):
+                  </p>
+                  <div className="max-h-48 overflow-y-auto grid gap-1.5 sm:grid-cols-2">
+                    {activeOfficers.map((off) => (
+                      <label
+                        key={off.userId}
+                        className="flex items-center gap-2 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs cursor-pointer hover:bg-slate-50"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={restrictedIds.includes(off.userId)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setRestrictedIds((prev) =>
+                                prev.includes(off.userId)
+                                  ? prev
+                                  : [...prev, off.userId],
+                              )
+                            } else {
+                              setRestrictedIds((prev) =>
+                                prev.filter((id) => id !== off.userId),
+                              )
+                            }
+                          }}
+                        />
+                        <span className="truncate">
+                          <strong>{off.councilPosition}</strong> ({off.fullName})
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={savingRestricted}
+                    onClick={async () => {
+                      setSavingRestricted(true)
+                      try {
+                        await setRestrictedAccess(recordId, restrictedIds)
+                        setNotice('Restricted access list updated.')
+                        setRestrictedOpen(false)
+                      } catch (err) {
+                        setError(message(err))
+                      } finally {
+                        setSavingRestricted(false)
+                      }
+                    }}
+                    className="rounded-lg bg-emerald-800 px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-900 disabled:opacity-50"
+                  >
+                    {savingRestricted ? 'Saving…' : 'Save Restricted Access'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Initial Draft guidance for new documents without versions */}
           {details.versions.length === 0 && (
             <div className="rounded-xl border border-emerald-300 bg-emerald-50/80 p-5 space-y-2">
@@ -486,7 +635,9 @@ function SelectedRecord({
                 </h3>
               </div>
               <p className="text-xs text-emerald-800 leading-relaxed">
-                This document record has been created. To begin the review workflow, upload your initial draft file (PDF, DOCX, or PNG/JPEG up to 10 MB) below.
+                {details.canEditDraft
+                  ? 'This document record has been created. To begin the review workflow, upload your initial draft file (PDF, DOCX, or PNG/JPEG up to 10 MB) below.'
+                  : 'Awaiting initial draft (v1) from the document creator before other Authors can upload subsequent drafts.'}
               </p>
             </div>
           )}
@@ -595,6 +746,7 @@ export default function OfficerWorkspacePage() {
   } | null>(null)
   const [folders, setFolders] = useState<DocumentFolder[]>([])
   const [profile, setProfile] = useState<OfficerProfile | null>(null)
+  const [activeOfficers, setActiveOfficers] = useState<ActiveOfficerSummary[]>([])
   const [folderFilter, setFolderFilter] = useState<string>('all')
   const [error, setError] = useState('')
   const [attempt, setAttempt] = useState(0)
@@ -611,6 +763,7 @@ export default function OfficerWorkspacePage() {
   const [docCategory, setDocCategory] = useState<string>(RECORD_CATEGORIES[0])
   const [docType, setDocType] = useState('Resolution')
   const [docAccess, setDocAccess] = useState<'public' | 'internal' | 'restricted'>('public')
+  const [docRestrictedIds, setDocRestrictedIds] = useState<string[]>([])
   const [docFolderId, setDocFolderId] = useState<string>('')
   const [docSummary, setDocSummary] = useState('')
   const [savingDoc, setSavingDoc] = useState(false)
@@ -625,12 +778,14 @@ export default function OfficerWorkspacePage() {
       getAssignedRecords(userId, page, controller.signal),
       listDocumentFolders(),
       getOfficerProfile(userId, controller.signal),
+      listActiveOfficers().catch(() => [] as ActiveOfficerSummary[]),
     ])
-      .then(([data, loadedFolders, loadedProfile]) => {
+      .then(([data, loadedFolders, loadedProfile, loadedOfficers]) => {
         if (!disposed) {
           setResult({ page, data })
           setFolders(loadedFolders)
           setProfile(loadedProfile)
+          setActiveOfficers(loadedOfficers)
         }
       })
       .catch((failure) => {
@@ -711,8 +866,12 @@ export default function OfficerWorkspacePage() {
         summary: docSummary.trim(),
         folderId: docFolderId || null,
       })
+      if (docAccess === 'restricted' && docRestrictedIds.length > 0) {
+        await setRestrictedAccess(created.record_id, docRestrictedIds)
+      }
       setDocTitle('')
       setDocSummary('')
+      setDocRestrictedIds([])
       setNewDocOpen(false)
       reload(0, created.record_id)
     } catch (err) {
@@ -917,6 +1076,7 @@ export default function OfficerWorkspacePage() {
                     recordId={recordId}
                     folders={folders}
                     profile={profile}
+                    activeOfficers={activeOfficers}
                     onFolderChanged={() => reload(page, recordId)}
                   />
                 </div>
@@ -1089,6 +1249,45 @@ export default function OfficerWorkspacePage() {
                   </select>
                 </div>
               </div>
+              {docAccess === 'restricted' && (
+                <div className="rounded-xl border border-red-200 bg-red-50/50 p-3 space-y-2">
+                  <p className="text-xs font-bold text-red-900">
+                    Choose Officers Allowed to View (Restricted)
+                  </p>
+                  <p className="text-[11px] text-red-800">
+                    You (creator) and the Council President always have access. Select additional officers below:
+                  </p>
+                  <div className="max-h-36 overflow-y-auto grid gap-1.5 sm:grid-cols-2">
+                    {activeOfficers.map((off) => (
+                      <label
+                        key={off.userId}
+                        className="flex items-center gap-2 rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-xs cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={docRestrictedIds.includes(off.userId)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setDocRestrictedIds((prev) =>
+                                prev.includes(off.userId)
+                                  ? prev
+                                  : [...prev, off.userId],
+                              )
+                            } else {
+                              setDocRestrictedIds((prev) =>
+                                prev.filter((id) => id !== off.userId),
+                              )
+                            }
+                          }}
+                        />
+                        <span className="truncate">
+                          <strong>{off.councilPosition}</strong> ({off.fullName})
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-semibold text-slate-800">
                   Summary / Purpose

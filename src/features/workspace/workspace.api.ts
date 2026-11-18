@@ -275,16 +275,111 @@ export async function getAssignedVersions(
       )
     })
 
-  const canEditDraft = hasFunction('author') || hasFunction('custodian')
+  const parsedVersions = versions.data
+    .slice(0, 100)
+    .map((v: unknown) => versionRow(v, recordId))
+  const isAssignedAuthor = hasFunction('author') || hasFunction('custodian')
+  const hasRestrictedAccess =
+    record.accessClass !== 'restricted' ||
+    currentProfile.functional_roles.includes('approver') ||
+    assignments.data.some((value: unknown) => {
+      const row = object(value)
+      return row.is_active === true && row.allow_restricted === true
+    })
+  const canAuthorRole =
+    currentProfile.functional_roles.includes('author') ||
+    currentProfile.functional_roles.includes('custodian')
+  const canEditDraft =
+    isAssignedAuthor ||
+    (parsedVersions.length >= 1 && canAuthorRole && hasRestrictedAccess)
+  const canSubmitForReview =
+    hasFunction('author') ||
+    (parsedVersions.length >= 1 &&
+      currentProfile.functional_roles.includes('author') &&
+      hasRestrictedAccess)
+  const isCreator =
+    assignments.data.some((value: unknown) => {
+      const row = object(value)
+      return (
+        row.is_active === true &&
+        (row.assignment_function === 'author' ||
+          row.assignment_function === 'custodian')
+      )
+    }) && record.originatingOffice === currentProfile.council_position
+  const canManageRestricted =
+    record.accessClass === 'restricted' &&
+    (currentProfile.functional_roles.includes('approver') ||
+      currentProfile.functional_roles.includes('technical_admin') ||
+      isCreator)
+
   return {
     record,
-    versions: versions.data
-      .slice(0, 100)
-      .map((v: unknown) => versionRow(v, recordId)),
+    versions: parsedVersions,
     truncated: versions.data.length > 100,
     canEditDraft,
-    canSubmitForReview: hasFunction('author'),
+    canSubmitForReview,
     canReturnForCorrection: hasFunction('reviewer'),
+    isCreator,
+    canManageRestricted,
+  }
+}
+
+export interface ActiveOfficerSummary {
+  userId: string
+  fullName: string
+  email: string
+  councilPosition: string
+  functionalRoles: string[]
+}
+
+export async function listActiveOfficers(): Promise<ActiveOfficerSummary[]> {
+  const { data, error } = await getSupabaseClient().rpc(
+    'eacsc_list_active_officers',
+  )
+  if (error || !Array.isArray(data)) {
+    throw new WorkspaceError('load', error?.message ?? 'Could not load officers.')
+  }
+  return data.map((row: Record<string, unknown>) => ({
+    userId: String(row.user_id),
+    fullName: String(row.full_name ?? ''),
+    email: String(row.email ?? ''),
+    councilPosition: String(row.council_position ?? 'Officer'),
+    functionalRoles: Array.isArray(row.functional_roles)
+      ? row.functional_roles.map(String)
+      : [],
+  }))
+}
+
+export async function listRestrictedAccess(recordId: string): Promise<string[]> {
+  const { data, error } = await getSupabaseClient().rpc(
+    'eacsc_list_restricted_access',
+    { p_record_id: recordId },
+  )
+  if (error) {
+    throw new WorkspaceError('load', error.message)
+  }
+  return Array.isArray(data) ? data.map(String) : []
+}
+
+export async function setRestrictedAccess(recordId: string, userIds: string[]) {
+  const { error } = await getSupabaseClient().rpc(
+    'eacsc_set_restricted_access',
+    {
+      p_record_id: recordId,
+      p_user_ids: userIds,
+    },
+  )
+  if (error) {
+    throw new WorkspaceError('validation', error.message)
+  }
+}
+
+export async function deleteWorkspaceDocument(recordId: string) {
+  const { error } = await getSupabaseClient().rpc('eacsc_delete_document', {
+    p_record_id: recordId,
+  })
+  if (error) {
+    throw new WorkspaceError('validation', error.message)
   }
 }
 

@@ -153,11 +153,23 @@ async function call(
     throw uncertain()
   }
   if (!response.ok) {
-    const code = object(value).code
+    const bodyObj = object(value)
+    const code = bodyObj.code
+    const serverMsg =
+      typeof bodyObj.message === 'string' && bodyObj.message.trim()
+        ? bodyObj.message.trim()
+        : null
     if (response.status === 401 || response.status === 403 || code === '42501')
       throw new UploadError(
         'denied',
-        'Current upload access could not be confirmed. Refresh access before retrying.',
+        serverMsg ??
+          'Current upload access could not be confirmed. Refresh access before retrying.',
+        response.status,
+      )
+    if (response.status === 413 || code === 'FILE_TOO_LARGE')
+      throw new UploadError(
+        'validation',
+        'File exceeds the 10 MB upload limit. Please compress or split the file.',
         response.status,
       )
     if (code === '55000')
