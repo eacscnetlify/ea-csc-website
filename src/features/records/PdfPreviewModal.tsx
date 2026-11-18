@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { PdfCanvasViewer } from '../../components/ui/PdfCanvasViewer'
 import { isInAppBrowser, shouldUseCanvasPdfViewer } from './download'
 
@@ -82,7 +83,7 @@ export function PdfPreviewModal({
     mimeType.startsWith('image/') ||
     /\.(png|jpe?g)$/i.test(resolvedName)
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 p-3 sm:p-6 backdrop-blur-xs"
       role="dialog"
@@ -202,6 +203,7 @@ export function PdfPreviewModal({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
