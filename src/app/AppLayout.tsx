@@ -142,8 +142,20 @@ export default function AppLayout() {
     Boolean(activeProfile?.is_active) &&
     (activeProfile?.functional_roles.length ?? 0) > 0
 
+  const isCustodian = Boolean(
+    activeProfile?.is_active &&
+      activeProfile?.functional_roles.includes('custodian'),
+  )
   const navGroups = isOfficer
-    ? [PUBLIC_NAV, ...OFFICER_NAV_GROUPS]
+    ? [
+        PUBLIC_NAV,
+        ...OFFICER_NAV_GROUPS.map((g) => ({
+          ...g,
+          items: g.items.filter(
+            (item) => item.to !== '/officer/bulletins' || isCustodian,
+          ),
+        })),
+      ]
     : status === 'signed-in'
       ? [PUBLIC_NAV, OBSERVER_NAV]
       : [PUBLIC_NAV, VISITOR_AUTH_NAV]

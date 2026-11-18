@@ -385,7 +385,7 @@ function SelectedRecord({
                   {details.record.recordId}
                 </p>
                 <p className="mt-2 text-sm text-slate-700">
-                  Custodian: {details.record.custodianPosition} · Office: {details.record.originatingOffice}
+                  Creator: {details.record.custodianPosition} · Office: {details.record.originatingOffice}
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
                   {details.record.category}
@@ -717,6 +717,16 @@ function SelectedRecord({
                     versionId={version.versionId}
                     versionNumber={version.versionNumber}
                   />
+                  {version.externalUrl && (
+                    <a
+                      href={version.externalUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-sky-300 bg-sky-50 px-3.5 py-2 text-xs font-semibold text-sky-900 hover:bg-sky-100"
+                    >
+                      Open Attached Google Drive File ↗
+                    </a>
+                  )}
                   <DraftNotesEditor
                     key={`${version.versionId}:${version.revision}`}
                     userId={userId}

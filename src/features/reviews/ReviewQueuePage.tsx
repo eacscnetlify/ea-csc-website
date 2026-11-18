@@ -246,6 +246,16 @@ function InspectionPanel({
               versionId={item.version.versionId}
               versionNumber={item.version.versionNumber}
             />
+            {item.version.externalUrl && (
+              <a
+                href={item.version.externalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-sky-300 bg-sky-50 px-3.5 py-2 text-xs font-semibold text-sky-900 hover:bg-sky-100"
+              >
+                Open Attached Google Drive File ↗
+              </a>
+            )}
           </>
         )}
       </div>
@@ -319,6 +329,7 @@ export default function ReviewQueuePage() {
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(
     null,
   )
+  const [stageTab, setStageTab] = useState<'all' | 'stage1' | 'stage2'>('all')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [attempt, setAttempt] = useState(0)
@@ -373,9 +384,20 @@ export default function ReviewQueuePage() {
     }
   }, [])
 
+  const stage1Items = (items ?? []).filter((i) => !i.version.reviewerPassedAt)
+  const stage2Items = (items ?? []).filter((i) =>
+    Boolean(i.version.reviewerPassedAt),
+  )
+  const filteredItems =
+    stageTab === 'stage1'
+      ? stage1Items
+      : stageTab === 'stage2'
+        ? stage2Items
+        : (items ?? [])
+
   const selected =
-    items?.find((item) => item.version.versionId === selectedVersionId) ??
-    items?.[0] ??
+    filteredItems.find((item) => item.version.versionId === selectedVersionId) ??
+    filteredItems[0] ??
     null
 
   return (
@@ -408,7 +430,43 @@ export default function ReviewQueuePage() {
         </p>
       )}
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-1.5 shadow-xs">
+          <button
+            type="button"
+            onClick={() => setStageTab('all')}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+              stageTab === 'all'
+                ? 'bg-slate-900 text-white'
+                : 'text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            All ({items?.length ?? 0})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStageTab('stage1')}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+              stageTab === 'stage1'
+                ? 'bg-amber-700 text-white'
+                : 'text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            Stage 1: Reviewer Queue ({stage1Items.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setStageTab('stage2')}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+              stageTab === 'stage2'
+                ? 'bg-emerald-800 text-white'
+                : 'text-slate-700 hover:bg-slate-100'
+            }`}
+          >
+            Stage 2: Executive 6-Point Approval ({stage2Items.length})
+          </button>
+        </div>
+
         <button type="button" className={button} onClick={reload}>
           Reload review queue
         </button>
@@ -423,19 +481,18 @@ export default function ReviewQueuePage() {
         </p>
       ) : !items ? (
         <p role="status">Loading versions awaiting review…</p>
-      ) : items.length === 0 ? (
+      ) : filteredItems.length === 0 ? (
         <div className="rounded-xl border border-slate-200 bg-white p-6">
-          <h2 className="text-lg font-bold">No versions awaiting review</h2>
+          <h2 className="text-lg font-bold">No versions in this review stage</h2>
           <p className="mt-2 text-sm text-slate-600">
-            No assigned records currently have a version in the{' '}
-            <strong>For Review</strong> state within your review scope.
+            No assigned records currently have a version matching this stage.
           </p>
         </div>
       ) : (
         <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
           <nav aria-label="Versions awaiting review">
             <ul className="list-none space-y-3 p-0">
-              {items.map((item) => {
+              {filteredItems.map((item) => {
                 const isSelected =
                   selected?.version.versionId === item.version.versionId
                 return (

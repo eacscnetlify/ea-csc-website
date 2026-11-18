@@ -36,6 +36,7 @@ export interface AssignedVersion {
   reviewerPassedAt: string | null
   reviewerPassedBy: string | null
   reviewerFeedback: string | null
+  externalUrl: string | null
   createdAt: string
   updatedAt: string
 }
@@ -80,7 +81,7 @@ export class WorkspaceError extends Error {
 const recordColumns =
   'record_id,title,summary,category,document_type,originating_office,access_class,custodian_position,record_date,revision_counter,folder_id'
 const versionColumns =
-  'version_id,record_id,version_number,revision_counter,state,previous_version_id,change_summary,correction_classification,approved_at,reviewer_passed_at,reviewer_passed_by,reviewer_feedback,created_at,updated_at'
+  'version_id,record_id,version_number,revision_counter,state,previous_version_id,change_summary,correction_classification,approved_at,reviewer_passed_at,reviewer_passed_by,reviewer_feedback,external_url,created_at,updated_at'
 const pageSize = 50
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 function object(value: unknown): Record<string, unknown> {
@@ -173,6 +174,7 @@ function versionRow(value: unknown, recordId: string): AssignedVersion {
         : timestamp(row.reviewer_passed_at),
     reviewerPassedBy: optionalText(row.reviewer_passed_by),
     reviewerFeedback: optionalText(row.reviewer_feedback),
+    externalUrl: optionalText(row.external_url),
     createdAt: timestamp(row.created_at),
     updatedAt: timestamp(row.updated_at),
   }
@@ -367,6 +369,22 @@ export async function setRestrictedAccess(recordId: string, userIds: string[]) {
     {
       p_record_id: recordId,
       p_user_ids: userIds,
+    },
+  )
+  if (error) {
+    throw new WorkspaceError('validation', error.message)
+  }
+}
+
+export async function setVersionExternalUrl(
+  versionId: string,
+  externalUrl: string,
+) {
+  const { error } = await getSupabaseClient().rpc(
+    'eacsc_set_version_external_url',
+    {
+      p_version_id: versionId,
+      p_external_url: externalUrl,
     },
   )
   if (error) {

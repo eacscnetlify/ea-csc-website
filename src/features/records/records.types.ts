@@ -77,4 +77,5 @@ export interface PublicRecordItem {
   releasedAt: string
   effectiveAt: string
   changeSummary: string
+  externalUrl?: string | null
 }

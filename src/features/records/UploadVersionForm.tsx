@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from 'react'
 import type { SubmitEvent } from 'react'
 import FileDropzone from '../../components/ui/FileDropzone'
+import { setVersionExternalUrl } from '../workspace/workspace.api'
 import { inspectSelectedFile, UploadError } from './upload.api'
 import type { Classification, SelectedFile } from './upload.api'
 import {
@@ -30,6 +31,8 @@ export default function UploadVersionForm({
 }) {
   useSyncExternalStore(subscribeUploads, uploadSnapshot, () => 0)
   const attempt = findUploadAttempt(userId, recordId)
+  const [mode, setMode] = useState<'file' | 'drive'>('file')
+  const [driveUrl, setDriveUrl] = useState('')
   const [selected, setSelected] = useState<SelectedFile | null>(null)
   const [notes, setNotes] = useState('')
   const [classification, setClassification] =
@@ -83,13 +86,46 @@ export default function UploadVersionForm({
       if (selection.current === current) setHashing(false)
     }
   }
-  function submit(event: SubmitEvent<HTMLFormElement>) {
+  async function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!selected || hashing || attempt || !canUpload) return
+    if (hashing || attempt || !canUpload) return
     setError('')
     try {
+      let fileToUpload = selected
+      let validatedDriveUrl: string | null = null
+
+      if (mode === 'drive') {
+        const cleanUrl = driveUrl.trim()
+        if (!/^https:\/\/(drive\.google\.com|docs\.google\.com)\//i.test(cleanUrl)) {
+          setError('Please enter a valid Google Drive or Google Docs HTTPS link (https://drive.google.com/... or https://docs.google.com/...).')
+          return
+        }
+        validatedDriveUrl = cleanUrl
+        setHashing(true)
+        const { jsPDF } = await import('jspdf')
+        const doc = new jsPDF({ unit: 'pt', format: 'a4' })
+        doc.setFontSize(14)
+        doc.text('EA-CSC External Attachment Reference Sheet', 48, 72)
+        doc.setFontSize(11)
+        doc.text(`Record ID: ${recordId}`, 48, 102)
+        doc.text('Attached Google Drive / Docs Link:', 48, 130)
+        const urlLines = doc.splitTextToSize(cleanUrl, 490) as string[]
+        doc.text(urlLines, 48, 148)
+        doc.text('Version Notes:', 48, 148 + urlLines.length * 16 + 14)
+        const noteLines = doc.splitTextToSize(notes.trim(), 490) as string[]
+        doc.text(noteLines, 48, 148 + urlLines.length * 16 + 32)
+        const blob = doc.output('blob')
+        const refFile = new File([blob], `${recordId}-drive-link-ref.pdf`, {
+          type: 'application/pdf',
+        })
+        fileToUpload = await inspectSelectedFile(refFile)
+        setHashing(false)
+      }
+
+      if (!fileToUpload) return
+
       const current = createUploadAttempt({
-        ...selected,
+        ...fileToUpload,
         actorId: userId,
         recordId,
         expectedRevision: recordRevision,
@@ -98,12 +134,19 @@ export default function UploadVersionForm({
         prepareId: crypto.randomUUID(),
         acceptId: crypto.randomUUID(),
       })
-      void sendUploadAttempt(current)
+      await sendUploadAttempt(current)
+      if (validatedDriveUrl && current.receipt?.versionId) {
+        await setVersionExternalUrl(current.receipt.versionId, validatedDriveUrl)
+        setDriveUrl('')
+      }
     } catch (failure) {
+      setHashing(false)
       setError(
         failure instanceof UploadError
           ? failure.message
-          : 'Check the file and notes before uploading.',
+          : failure instanceof Error
+            ? failure.message
+            : 'Check the file and notes before uploading.',
       )
     }
   }
@@ -122,10 +165,62 @@ export default function UploadVersionForm({
       </p>
       <form onSubmit={submit} className="mt-4 space-y-4">
         {!attempt && (
+          <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                setMode('file')
+                setError('')
+              }}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                mode === 'file'
+                  ? 'bg-emerald-900 text-white'
+                  : 'text-slate-700 hover:bg-white'
+              }`}
+            >
+              Upload File (≤ 10 MB)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode('drive')
+                setSelected(null)
+                setError('')
+              }}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                mode === 'drive'
+                  ? 'bg-emerald-900 text-white'
+                  : 'text-slate-700 hover:bg-white'
+              }`}
+            >
+              Attach Google Drive Link (Large Files)
+            </button>
+          </div>
+        )}
+        {!attempt && mode === 'file' && (
           <FileDropzone
             disabled={!canUpload || hashing}
             onSelect={(files) => void select(files)}
           />
+        )}
+        {!attempt && mode === 'drive' && (
+          <div>
+            <label htmlFor={`${id}-drive`} className="block font-semibold">
+              Google Drive / Docs Link
+            </label>
+            <input
+              id={`${id}-drive`}
+              type="url"
+              required
+              value={driveUrl}
+              onChange={(e) => setDriveUrl(e.target.value)}
+              placeholder="https://drive.google.com/file/d/..."
+              className="mt-2 w-full rounded-lg border border-slate-400 p-3 text-sm"
+            />
+            <p className="mt-1 text-xs text-slate-600">
+              For files larger than 10 MB, paste a shared Google Drive or Google Docs link. A verified reference PDF will be attached automatically.
+            </p>
+          </div>
         )}
         {hashing && (
           <p role="status">Reading the file and calculating its checksum…</p>
@@ -194,9 +289,16 @@ export default function UploadVersionForm({
           <button
             type="submit"
             className={button}
-            disabled={!canUpload || hashing || !selected || !notes.trim()}
+            disabled={
+              !canUpload ||
+              hashing ||
+              !notes.trim() ||
+              (mode === 'file' ? !selected : !driveUrl.trim())
+            }
           >
-            Upload as new Draft
+            {mode === 'drive'
+              ? 'Attach Google Drive Link as Draft'
+              : 'Upload as new Draft'}
           </button>
         )}
         {busy && (

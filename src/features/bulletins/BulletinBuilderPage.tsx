@@ -23,7 +23,7 @@ function nowManilaDateTimeLocal(): string {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-  }).formatToParts(new Date())
+  }).formatToParts(new Date(Date.now() - 60_000))
   const get = (type: string) =>
     parts.find((part) => part.type === type)?.value ?? '00'
   const hour = get('hour') === '24' ? '00' : get('hour')
@@ -56,6 +56,7 @@ export default function BulletinBuilderPage() {
   const [previewBlob, setPreviewBlob] = useState<Blob | null>(null)
   const [issuing, setIssuing] = useState(false)
   const [issueNotice, setIssueNotice] = useState('')
+  const [isCustodian, setIsCustodian] = useState<boolean | null>(null)
 
   useEffect(() => {
     if (!userId) return
@@ -63,8 +64,14 @@ export default function BulletinBuilderPage() {
     void getOfficerProfile(userId, controller.signal)
       .then((profile) => {
         if (profile?.full_name) setPreparerName(profile.full_name)
+        setIsCustodian(
+          Boolean(
+            profile?.is_active &&
+              profile?.functional_roles.includes('custodian'),
+          ),
+        )
       })
-      .catch(() => undefined)
+      .catch(() => setIsCustodian(false))
     return () => controller.abort()
   }, [userId])
 
@@ -270,6 +277,27 @@ export default function BulletinBuilderPage() {
     }
   }
 
+  if (isCustodian === false) {
+    return (
+      <section aria-labelledby="bulletin-builder-heading" className="space-y-4">
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-6 space-y-3">
+          <h1 id="bulletin-builder-heading" className="text-xl font-bold text-amber-950">
+            Custodian Role Required
+          </h1>
+          <p className="text-sm text-amber-900">
+            Only officers holding the <strong>Custodian</strong> role (such as the Secretary or Treasurer) can compile and issue Update Bulletins.
+          </p>
+          <Link
+            to="/officer"
+            className="inline-block rounded-lg border border-amber-700 bg-white px-4 py-2 text-sm font-semibold text-amber-950 hover:bg-amber-100"
+          >
+            Back to Document Workspace
+          </Link>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section aria-labelledby="bulletin-builder-heading" className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -443,12 +471,21 @@ export default function BulletinBuilderPage() {
             />
           </div>
           <div>
-            <label
-              htmlFor={`${id}-cutoff`}
-              className="block text-sm font-semibold"
-            >
-              Cutoff timestamp (Asia/Manila)
-            </label>
+            <div className="flex items-center justify-between gap-2">
+              <label
+                htmlFor={`${id}-cutoff`}
+                className="block text-sm font-semibold"
+              >
+                Cutoff timestamp (Asia/Manila)
+              </label>
+              <button
+                type="button"
+                onClick={() => setCutoffLocal(nowManilaDateTimeLocal())}
+                className="text-xs font-semibold text-emerald-800 hover:underline"
+              >
+                Use current time
+              </button>
+            </div>
             <input
               id={`${id}-cutoff`}
               type="datetime-local"
@@ -456,6 +493,9 @@ export default function BulletinBuilderPage() {
               onChange={(e) => setCutoffLocal(e.target.value)}
               className="mt-1 w-full rounded-lg border border-slate-400 p-2 text-sm"
             />
+            <p className="mt-1 text-[11px] text-slate-500">
+              Must be at or before the current Manila time when issuing an official bulletin.
+            </p>
           </div>
         </div>
 

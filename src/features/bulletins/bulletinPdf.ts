@@ -48,20 +48,21 @@ export function buildBulletinPdfBlob(input: BulletinDraftInput): Blob {
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(10)
   doc.setTextColor(6, 95, 70)
-  doc.text(
+  const orgLines = doc.splitTextToSize(
     'CATANDUANES STATE UNIVERSITY — ENGINEERING AND ARCHITECTURE COLLEGE STUDENT COUNCIL',
-    margin,
-    y,
-    { maxWidth: contentWidth },
-  )
-  y += 22
+    contentWidth,
+  ) as string[]
+  doc.text(orgLines, margin, y)
+  y += orgLines.length * 13 + 8
 
   doc.setFontSize(18)
   doc.setTextColor(15, 23, 42)
-  doc.text(input.title.trim() || 'EA-CSC Update Bulletin', margin, y, {
-    maxWidth: contentWidth,
-  })
-  y += 22
+  const titleLines = doc.splitTextToSize(
+    input.title.trim() || 'EA-CSC Update Bulletin',
+    contentWidth,
+  ) as string[]
+  doc.text(titleLines, margin, y)
+  y += titleLines.length * 22 + 4
 
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9.5)

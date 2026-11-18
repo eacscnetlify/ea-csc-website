@@ -468,6 +468,16 @@ export default function PublicLibraryPage() {
                       >
                         Preview
                       </button>
+                      {record.externalUrl && (
+                        <a
+                          href={record.externalUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center min-h-[40px] sm:min-h-0 rounded-lg border border-sky-300 bg-sky-50 px-3 py-2 sm:px-2.5 sm:py-1.5 text-xs font-semibold text-sky-900 hover:bg-sky-100"
+                        >
+                          Drive Link ↗
+                        </a>
+                      )}
                       <button
                         type="button"
                         onClick={() => setQrRecord(record)}

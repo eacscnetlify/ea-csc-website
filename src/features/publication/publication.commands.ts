@@ -138,14 +138,7 @@ export async function getPublisherWorkspace(
     }
   }
 
-  const publisherRecords = page.records.filter(
-    (record) =>
-      record.accessClass !== 'restricted' ||
-      (assignments.data as Record<string, unknown>[]).some(
-        (a) =>
-          a.record_id === record.recordId && a.allow_restricted === true,
-      ),
-  )
+  const publisherRecords = page.records.filter(() => true)
 
   return publisherRecords.map((record) => {
     const activeRelease = releaseMap.get(record.recordId) ?? null
@@ -173,6 +166,8 @@ export async function getPublisherWorkspace(
           typeof v.reviewer_passed_by === 'string' ? v.reviewer_passed_by : null,
         reviewerFeedback:
           typeof v.reviewer_feedback === 'string' ? v.reviewer_feedback : null,
+        externalUrl:
+          typeof v.external_url === 'string' ? v.external_url : null,
         createdAt: String(v.created_at),
         updatedAt: String(v.updated_at),
       }))

@@ -32,17 +32,30 @@ function mapCatalogRow(row: CatalogRow): PublicRecordItem {
 }
 
 export async function getPublicRecords(): Promise<PublicRecordItem[]> {
-  const { data, error } = await getSupabaseClient().rpc(
-    'eacsc_public_catalog',
-    { p_limit: 100, p_offset: 0 },
-  )
+  const client = getSupabaseClient()
+  const [{ data, error }, linksRes] = await Promise.all([
+    client.rpc('eacsc_public_catalog', { p_limit: 100, p_offset: 0 }),
+    client.rpc('eacsc_get_public_external_links'),
+  ])
 
   if (error || !Array.isArray(data)) {
     throw new Error('Public catalog could not be loaded.')
   }
 
+  const linkMap = new Map<string, string>()
+  if (Array.isArray(linksRes.data)) {
+    for (const row of linksRes.data as Array<{ version_id?: string; external_url?: string }>) {
+      if (row.version_id && row.external_url) {
+        linkMap.set(row.version_id, row.external_url)
+      }
+    }
+  }
+
   return (data as CatalogRow[])
-    .map(mapCatalogRow)
+    .map((row) => ({
+      ...mapCatalogRow(row),
+      externalUrl: linkMap.get(row.version_id) ?? null,
+    }))
     .sort((a, b) => a.title.localeCompare(b.title))
 }
 
