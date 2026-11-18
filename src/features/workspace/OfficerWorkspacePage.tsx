@@ -655,7 +655,7 @@ function SelectedRecord({
             recordId={recordId}
             versions={details.versions}
             canSubmit={details.canSubmitForReview}
-            canReturn={details.canReturnForCorrection}
+            canReturn={false}
             onConfirmed={reviewed}
             onReload={refresh}
           />
