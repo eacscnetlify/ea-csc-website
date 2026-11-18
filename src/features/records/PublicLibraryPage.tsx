@@ -453,7 +453,7 @@ export default function PublicLibraryPage() {
                             versionNumber: record.versionNumber,
                           })
                         }
-                        className={`rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${
+                        className={`min-h-[40px] sm:min-h-0 rounded-lg border px-3 py-2 sm:px-2.5 sm:py-1.5 text-xs font-semibold transition ${
                           isPinned(record.recordId)
                             ? 'border-amber-300 bg-amber-50 text-amber-900'
                             : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
@@ -464,27 +464,27 @@ export default function PublicLibraryPage() {
                       <button
                         type="button"
                         onClick={() => setPdfPreviewItem(record)}
-                        className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                        className="min-h-[40px] sm:min-h-0 rounded-lg border border-slate-300 bg-white px-3 py-2 sm:px-2.5 sm:py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                       >
                         Preview
                       </button>
                       <button
                         type="button"
                         onClick={() => setQrRecord(record)}
-                        className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                        className="min-h-[40px] sm:min-h-0 rounded-lg border border-slate-300 bg-white px-3 py-2 sm:px-2.5 sm:py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                       >
                         QR
                       </button>
                       <button
                         type="button"
                         onClick={() => setPreviewRecordId(record.recordId)}
-                        className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                        className="min-h-[40px] sm:min-h-0 rounded-lg border border-slate-300 bg-white px-3 py-2 sm:py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                       >
                         Details
                       </button>
                       <Link
                         to={`/records/${encodeURIComponent(record.recordId)}`}
-                        className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-800 transition"
+                        className="inline-flex items-center min-h-[40px] sm:min-h-0 rounded-lg bg-slate-900 px-3 py-2 sm:py-1.5 text-xs font-semibold text-white hover:bg-rose-800 transition"
                       >
                         Open →
                       </Link>

@@ -336,13 +336,13 @@ export default function AppLayout() {
         })()}
 
         <header className="sticky top-0 z-30 border-b border-slate-200/90 bg-white/90 backdrop-blur-md">
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-            <div className="flex min-w-0 items-center gap-3">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-3 py-2.5 sm:flex-nowrap sm:gap-3 sm:px-6 sm:py-3">
+            <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">
               <button
                 type="button"
                 onClick={() => setSidebarOpen(true)}
                 aria-label="Open navigation menu"
-                className="inline-flex min-h-[40px] items-center rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50 lg:hidden"
+                className="inline-flex min-h-[40px] shrink-0 items-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50 lg:hidden"
               >
                 Menu
               </button>
@@ -356,7 +356,7 @@ export default function AppLayout() {
               </div>
             </div>
 
-            <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5 sm:gap-2">
+            <div className="flex w-full items-center justify-end gap-1.5 sm:w-auto sm:shrink-0 sm:gap-2">
               {status === 'signed-in' && (
                 <button
                   type="button"

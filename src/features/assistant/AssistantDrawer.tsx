@@ -162,7 +162,7 @@ export default function AssistantDrawer({
       }}
     >
       <div
-        className={`flex h-full w-full max-w-md flex-col bg-white shadow-2xl transition-transform duration-300 ease-out ${
+        className={`flex h-dvh sm:h-full w-full max-w-md flex-col bg-white shadow-2xl transition-transform duration-300 ease-out ${
           visible ? 'translate-x-0' : 'translate-x-full'
         }`}
       >

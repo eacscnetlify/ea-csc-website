@@ -380,7 +380,7 @@ function SelectedRecord({
                 </p>
               </div>
 
-              <div className="min-w-[200px]">
+              <div className="w-full sm:w-auto sm:min-w-[200px]">
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-500">
                   Document Folder
                 </label>
@@ -437,7 +437,7 @@ function SelectedRecord({
                     placeholder="Urgent executive rationale (e.g., Immediate storm advisory)…"
                     value={fastRationale}
                     onChange={(e) => setFastRationale(e.target.value)}
-                    className="flex-1 min-w-[220px] rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs text-slate-900"
+                    className="w-full sm:flex-1 sm:min-w-[220px] rounded-lg border border-amber-300 bg-white px-3 py-2 text-xs text-slate-900"
                   />
                   <button
                     type="button"
@@ -587,6 +587,7 @@ function SelectedRecord({
 export default function OfficerWorkspacePage() {
   const { session } = useAuth()
   const userId = session?.user.id ?? ''
+  const detailRef = useRef<HTMLDivElement | null>(null)
   const [page, setPage] = useState(0)
   const [result, setResult] = useState<{
     page: number
@@ -780,11 +781,11 @@ export default function OfficerWorkspacePage() {
       </div>
 
       {/* Folder Filter Bar */}
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto rounded-xl border border-slate-200 bg-white p-3 shadow-sm sm:flex-wrap sm:overflow-visible">
         <button
           type="button"
           onClick={() => setFolderFilter('all')}
-          className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+          className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold transition sm:py-1.5 ${
             folderFilter === 'all'
               ? 'bg-slate-900 text-white'
               : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -795,7 +796,7 @@ export default function OfficerWorkspacePage() {
         <button
           type="button"
           onClick={() => setFolderFilter('unfiled')}
-          className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+          className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold transition sm:py-1.5 ${
             folderFilter === 'unfiled'
               ? 'bg-slate-900 text-white'
               : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -812,7 +813,7 @@ export default function OfficerWorkspacePage() {
               key={f.folderId}
               type="button"
               onClick={() => setFolderFilter(f.folderId)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+              className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold transition sm:py-1.5 ${
                 folderFilter === f.folderId
                   ? 'bg-rose-800 text-white'
                   : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -858,7 +859,17 @@ export default function OfficerWorkspacePage() {
                       <li key={record.recordId}>
                         <button
                           type="button"
-                          onClick={() => setSelected(record.recordId)}
+                          onClick={() => {
+                            setSelected(record.recordId)
+                            if (window.innerWidth < 1024) {
+                              window.setTimeout(() => {
+                                detailRef.current?.scrollIntoView({
+                                  behavior: 'smooth',
+                                  block: 'start',
+                                })
+                              }, 60)
+                            }
+                          }}
                           aria-current={
                             recordId === record.recordId ? 'true' : undefined
                           }
@@ -899,14 +910,16 @@ export default function OfficerWorkspacePage() {
                 </ul>
               </nav>
               {recordId && (
-                <SelectedRecord
-                  key={`${userId}:${recordId}`}
-                  userId={userId}
-                  recordId={recordId}
-                  folders={folders}
-                  profile={profile}
-                  onFolderChanged={() => reload(page, recordId)}
-                />
+                <div ref={detailRef} className="scroll-mt-24">
+                  <SelectedRecord
+                    key={`${userId}:${recordId}`}
+                    userId={userId}
+                    recordId={recordId}
+                    folders={folders}
+                    profile={profile}
+                    onFolderChanged={() => reload(page, recordId)}
+                  />
+                </div>
               )}
             </div>
           )}

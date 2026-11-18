@@ -150,6 +150,21 @@ export async function downloadVersionFile(
   return { blob: new Blob([bytes], { type: mime }), filename }
 }
 
+export function isInAppBrowser(): boolean {
+  if (typeof navigator === 'undefined') return false
+  return /FBAN|FBAV|Messenger|Instagram|Line\/|MicroMessenger/i.test(
+    navigator.userAgent,
+  )
+}
+
+export function shouldUseCanvasPdfViewer(): boolean {
+  if (typeof navigator === 'undefined') return false
+  return (
+    isInAppBrowser() ||
+    /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+  )
+}
+
 export function saveDownloadedFile(file: { blob: Blob; filename: string }) {
   const url = URL.createObjectURL(file.blob)
   const link = document.createElement('a')

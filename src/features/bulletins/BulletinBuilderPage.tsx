@@ -1,5 +1,7 @@
 import { useEffect, useId, useMemo, useState } from 'react'
 import { Link } from 'react-router'
+import { PdfCanvasViewer } from '../../components/ui/PdfCanvasViewer'
+import { shouldUseCanvasPdfViewer } from '../records/download'
 import { formatManilaDateTime } from '../../lib/dates'
 import { getSupabaseClient } from '../../lib/supabase'
 import { useAuth } from '../auth/useAuth'
@@ -51,6 +53,7 @@ export default function BulletinBuilderPage() {
   const [error, setError] = useState('')
   const [verifiedPreview, setVerifiedPreview] = useState(false)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [previewBlob, setPreviewBlob] = useState<Blob | null>(null)
   const [issuing, setIssuing] = useState(false)
   const [issueNotice, setIssueNotice] = useState('')
 
@@ -171,6 +174,7 @@ export default function BulletinBuilderPage() {
       items: selectedItems,
     })
     if (previewUrl) URL.revokeObjectURL(previewUrl)
+    setPreviewBlob(blob)
     setPreviewUrl(URL.createObjectURL(blob))
   }
 
@@ -626,11 +630,17 @@ export default function BulletinBuilderPage() {
               </a>
             </div>
           </div>
-          <iframe
-            title="Update Bulletin PDF Preview"
-            src={previewUrl}
-            className="h-150 w-full rounded-lg border border-slate-300"
-          />
+          {shouldUseCanvasPdfViewer() && previewBlob ? (
+            <div className="h-[70vh] rounded-lg border border-slate-300 bg-slate-50">
+              <PdfCanvasViewer blob={previewBlob} />
+            </div>
+          ) : (
+            <iframe
+              title="Update Bulletin PDF Preview"
+              src={previewUrl}
+              className="h-150 w-full rounded-lg border border-slate-300"
+            />
+          )}
         </div>
       )}
     </section>

@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import { PdfCanvasViewer } from '../../components/ui/PdfCanvasViewer'
+import { isInAppBrowser, shouldUseCanvasPdfViewer } from './download'
 
 interface PdfPreviewModalProps {
   open: boolean
@@ -29,6 +31,7 @@ export function PdfPreviewModal({
     'loading',
   )
   const [blobUrl, setBlobUrl] = useState<string | null>(null)
+  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null)
   const [mimeType, setMimeType] = useState('')
   const [sha256, setSha256] = useState('')
   const [resolvedName, setResolvedName] = useState(downloadFilename)
@@ -56,6 +59,7 @@ export function PdfPreviewModal({
         setMimeType(blob.type.toLowerCase())
         setResolvedName(name)
         setSha256(hash)
+        setPdfBlob(blob)
         setBlobUrl(createdUrl)
         setStatus('ready')
       })
@@ -129,9 +133,16 @@ export function PdfPreviewModal({
         </div>
 
         {sha256 && (
-          <div className="border-b border-emerald-200 bg-emerald-50/70 px-5 py-1.5 text-[11px] text-emerald-950 flex flex-wrap items-center gap-2">
+          <div className="border-b border-emerald-200 bg-emerald-50/70 px-4 py-1.5 text-[11px] text-emerald-950 flex flex-wrap items-center gap-2 sm:px-5">
             <span className="font-bold">Computed SHA-256:</span>
             <code className="font-mono break-all">{sha256}</code>
+          </div>
+        )}
+
+        {isInAppBrowser() && (
+          <div className="border-b border-amber-200 bg-amber-50 px-4 py-1.5 text-[11px] text-amber-950 sm:px-5">
+            Inside an in-app browser (e.g., Messenger), if Download doesn&apos;t start, tap{' '}
+            <strong>⋮ → Open in Browser</strong> (Chrome/Safari).
           </div>
         )}
 
@@ -154,11 +165,15 @@ export function PdfPreviewModal({
           )}
 
           {status === 'ready' && blobUrl && isPdf && (
-            <iframe
-              src={blobUrl}
-              title={`Preview of ${title}`}
-              className="h-full w-full rounded-xl border border-slate-200 bg-white"
-            />
+            shouldUseCanvasPdfViewer() && pdfBlob ? (
+              <PdfCanvasViewer blob={pdfBlob} />
+            ) : (
+              <iframe
+                src={blobUrl}
+                title={`Preview of ${title}`}
+                className="h-full w-full rounded-xl border border-slate-200 bg-white"
+              />
+            )
           )}
 
           {status === 'ready' && blobUrl && !isPdf && isImage && (
