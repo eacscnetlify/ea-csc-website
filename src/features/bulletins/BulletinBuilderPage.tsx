@@ -94,12 +94,21 @@ export default function BulletinBuilderPage() {
   useEffect(() => {
     if (!isCustodian) return
     let active = true
-    void getSupabaseClient()
+    const client = getSupabaseClient()
+    void client
       .rpc('eacsc_list_issued_bulletins')
       .then(({ data, error: rpcError }) => {
         if (!active) return
         if (!rpcError && Array.isArray(data)) {
           setIssuedBulletins(data as IssuedBulletinRow[])
+        }
+      })
+    void client
+      .rpc('eacsc_next_bulletin_id')
+      .then(({ data, error: rpcError }) => {
+        if (!active) return
+        if (!rpcError && typeof data === 'string' && data.trim()) {
+          setBulletinId(data)
         }
       })
     return () => {
@@ -349,6 +358,11 @@ export default function BulletinBuilderPage() {
         `Successfully issued and preserved ${bulletinId} (v1). It is now recorded in council archives.`,
       )
       void loadIssuedBulletins()
+      void client.rpc('eacsc_next_bulletin_id').then(({ data: nextId }) => {
+        if (typeof nextId === 'string' && nextId.trim()) {
+          setBulletinId(nextId)
+        }
+      })
     } catch (failure) {
       setError(
         failure instanceof Error
@@ -519,6 +533,10 @@ export default function BulletinBuilderPage() {
               onChange={(e) => setBulletinId(e.target.value)}
               className="mt-1 w-full rounded-lg border border-slate-400 p-2 font-mono text-sm"
             />
+            <p className="mt-1 text-xs text-slate-600">
+              Auto-assigned next available ID. Each Public or Internal bulletin
+              needs a unique Bulletin ID.
+            </p>
           </div>
           <div>
             <label
