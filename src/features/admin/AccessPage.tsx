@@ -321,7 +321,10 @@ export default function AccessPage() {
       {/* Incoming Officer Package Receipt (One-click Accept & Acknowledge) */}
       {data &&
         data.packages.filter(
-          (p) => p.incoming_officer_id === userId && p.access_transferred_at,
+          (p) =>
+            p.incoming_officer_id === userId &&
+            p.access_transferred_at &&
+            p.status === 'draft',
         ).length > 0 && (
           <div className="space-y-4 rounded-xl border border-emerald-300 bg-emerald-50/70 p-5">
             <h2 className="text-xl font-bold text-emerald-950">
@@ -338,7 +341,8 @@ export default function AccessPage() {
                 .filter(
                   (p) =>
                     p.incoming_officer_id === userId &&
-                    p.access_transferred_at,
+                    p.access_transferred_at &&
+                    p.status === 'draft',
                 )
                 .map((pkg) => {
                   const outgoing = data.people.find(
@@ -433,16 +437,18 @@ export default function AccessPage() {
             >
               <option value="">Choose a package</option>
 
-              {data.packages.map((item) => (
-                <option key={item.package_id} value={item.package_id}>
-                  {item.position_title} — {item.term_covered} —{' '}
-                  {item.access_transferred_at
-                    ? 'access transferred'
-                    : item.outgoing_confirmed_at
-                      ? 'confirmed'
-                      : 'awaiting outgoing confirmation'}
-                </option>
-              ))}
+              {data.packages
+                .filter((item) => item.status === 'draft')
+                .map((item) => (
+                  <option key={item.package_id} value={item.package_id}>
+                    {item.position_title} — {item.term_covered} —{' '}
+                    {item.access_transferred_at
+                      ? 'access transferred'
+                      : item.outgoing_confirmed_at
+                        ? 'confirmed'
+                        : 'awaiting outgoing confirmation'}
+                  </option>
+                ))}
             </select>
           </label>
 
