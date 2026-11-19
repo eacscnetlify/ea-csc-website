@@ -42,6 +42,7 @@ const POSITION_PRESETS: Array<{
   { group: 'Executive Officers', label: 'Budget Secretary', roles: ['custodian', 'author'] },
   { group: 'Executive Officers', label: 'Auditor', roles: ['reviewer'] },
   { group: 'Executive Officers', label: 'Public Information Officer', roles: ['publisher', 'author'] },
+  { group: 'Executive Officers', label: 'Business Manager', roles: ['author'] },
   { group: 'Executive Officers', label: 'Property Custodian', roles: ['custodian', 'author'] },
 
   // Legislative & Representatives
@@ -82,7 +83,7 @@ export default function AccountPage() {
 
   // Role request form state
   const [selectedPreset, setSelectedPreset] = useState(POSITION_PRESETS[0].label)
-  const [selectedRoles, setSelectedRoles] = useState<string[]>(['author'])
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([...POSITION_PRESETS[0].roles])
   const [studentId, setStudentId] = useState('')
   const [degreeProgram, setDegreeProgram] = useState('')
   const [justification, setJustification] = useState('')
@@ -432,7 +433,14 @@ export default function AccountPage() {
             <select
               id="role-preset"
               value={selectedPreset}
-              onChange={(e) => setSelectedPreset(e.target.value)}
+              onChange={(e) => {
+                const nextLabel = e.target.value
+                setSelectedPreset(nextLabel)
+                const preset = POSITION_PRESETS.find((p) => p.label === nextLabel)
+                if (preset) {
+                  setSelectedRoles([...preset.roles])
+                }
+              }}
               className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm focus:border-rose-700 focus:outline-none"
             >
               {POSITION_GROUPS.map((group) => (
