@@ -23,7 +23,7 @@ function nowManilaDateTimeLocal(): string {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-  }).formatToParts(new Date(Date.now() - 60_000))
+  }).formatToParts(new Date())
   const get = (type: string) =>
     parts.find((part) => part.type === type)?.value ?? '00'
   const hour = get('hour') === '24' ? '00' : get('hour')
